@@ -162,6 +162,10 @@ fn normal_slots(conn: &Connection, bet: i32, user: &User) -> bool {
         let slot1 = symbols[rng.random_range(0..symbols.len())];
         let slot2 = symbols[rng.random_range(0..symbols.len())];
         let slot3 = symbols[rng.random_range(0..symbols.len())];
+        // let slot1 = symbols[0];
+        // let slot2 = symbols[0];
+        // let slot3 = symbols[2];
+
         
         // Animate
         for _ in 0..30 {
@@ -184,16 +188,14 @@ fn normal_slots(conn: &Connection, bet: i32, user: &User) -> bool {
         if slot1 == slot2 && slot2 == slot3 {
             println!("\n{}", "🎉 JACKPOT! YOU WIN! 🎉".green().bold());
             println!("You win {}", 3 * bet);
-            transaction(conn, user, 3*bet);
+            println!("Current balance is {}", transaction(conn, user, 3*bet));
         } else if slot1 == slot2 || slot2 == slot3 || slot1 == slot3 {
             println!("\n{}", "Nice! Two matching!".yellow());
-            println!("You win {}", 2 * bet);
-            transaction(conn, user, 2*bet);
-
+            println!("Current balance is {}", transaction(conn, user, 2*bet));
         } else {
             println!("\n{}", "YOU LOSE!".red());
             println!("You lose {}", &bet);
-            transaction(conn, user, -(bet as i32));
+            println!("Current balance is {}", transaction(conn, user, -(bet as i32)));
         }
 
         println!();
@@ -216,7 +218,7 @@ fn normal_slots(conn: &Connection, bet: i32, user: &User) -> bool {
     }
 }
 
-fn transaction (conn: &Connection, user: &User, amount: i32) {
+fn transaction (conn: &Connection, user: &User, amount: i32) -> f64 {
     let mut stmt: rusqlite::Statement<'_> = conn.prepare(
         "update users set balance = balance + ?1 where id = ?2"
     ).unwrap();
@@ -233,18 +235,29 @@ fn transaction (conn: &Connection, user: &User, amount: i32) {
     }
 
     let mut query = conn.prepare(
-        "Select "
-    )
+        "Select balance from users where id = ?1"
+    ).unwrap();
+
+    let result:std::result::Result<f64, rusqlite::Error> = query.query_row([user.id], |row| {
+        row.get::<_, f64>(0)
+    });
+
+    match result {
+        Ok(_) => {}
+        Err(_) => {println!("No balance found!")}
+    }
+
+    return result.unwrap();
 
 }
 
-fn user_account(conn: &Connection, user: &User) -> i32 {
+fn user_account(conn: &Connection, user: &User) {
     let mut stmt: rusqlite::Statement<'_> = conn.prepare(
         "SELECT balance FROM users WHERE id = ?1"
     ).unwrap();
     
     let result:std::result::Result<f64, rusqlite::Error> = stmt.query_row([user.id], |row| {
-        row.get::<_, f64>(3)
+        row.get::<_, f64>(0)
     });
 
     match result {
