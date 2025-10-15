@@ -153,20 +153,24 @@ fn bet()-> i32 {
 
 fn normal_slots(conn: &Connection, bet: i32, user: &User) -> bool {
     loop {
+        if !check_funds(conn, user, bet as f64) {
+            println!("Insufficient more funds");
+            return true;
+        }
+
         let symbols = ["🍒", "🍋", "🍊", "💎", "7️⃣", "⭐"];
         let mut rng = rand::rng();
         
         println!("\n{}", "🎰 SLOT MACHINE 🎰".bright_yellow().bold());
                 
         // Spin the slots
-        let slot1 = symbols[rng.random_range(0..symbols.len())];
-        let slot2 = symbols[rng.random_range(0..symbols.len())];
-        let slot3 = symbols[rng.random_range(0..symbols.len())];
-        // let slot1 = symbols[0];
-        // let slot2 = symbols[0];
-        // let slot3 = symbols[2];
+        // let slot1 = symbols[rng.random_range(0..symbols.len())];
+        // let slot2 = symbols[rng.random_range(0..symbols.len())];
+        // let slot3 = symbols[rng.random_range(0..symbols.len())];
+        let slot1 = symbols[0];
+        let slot2 = symbols[1];
+        let slot3 = symbols[2];
 
-        
         // Animate
         for _ in 0..30 {
             print!("\r{} | {} | {}", 
@@ -234,53 +238,72 @@ fn transaction (conn: &Connection, user: &User, amount: i32) -> f64 {
         },
     }
 
-    let mut query = conn.prepare(
-        "Select balance from users where id = ?1"
-    ).unwrap();
+    let balance = user.get_balance(conn);
 
-    let result:std::result::Result<f64, rusqlite::Error> = query.query_row([user.id], |row| {
-        row.get::<_, f64>(0)
-    });
-
-    match result {
+    match balance {
         Ok(_) => {}
         Err(_) => {println!("No balance found!")}
     }
 
-    return result.unwrap();
+    return balance.unwrap();
 
 }
 
 fn user_account(conn: &Connection, user: &User) {
-    let mut stmt: rusqlite::Statement<'_> = conn.prepare(
-        "SELECT balance FROM users WHERE id = ?1"
-    ).unwrap();
-    
-    let result:std::result::Result<f64, rusqlite::Error> = stmt.query_row([user.id], |row| {
-        row.get::<_, f64>(0)
-    });
 
-    match result {
-        Ok(_) => {
+    match (user.get_username(conn), user.get_balance(conn)) {
+        (Ok(username), Ok(balance)) => {
+            println!("{}", "═══ 🎰 User Information 🎰 ═══".bright_cyan().bold());
+            println!("{}: {}", "Id".yellow(), user.id);
+            println!("{}: {}", "Username".yellow(), username);
+            println!("{}: {}", "Balance".yellow(), format!("${:.2}", balance).green());
+                
+            println!("\n{}", "Press Enter to continue...".dimmed());
+            let mut input = String::new();
+            std::io::stdin().read_line(&mut input).ok();
+        }
+        _ => {println!("User not found!")}
+    }
+}
+
+fn check_funds(conn: &Connection, user: &User, limit: f64) -> bool {
+    // Query the users funds
+    match user.get_balance(conn) {
+        Ok(balance) => {
+            if balance >= limit {
+                return true;
+            } else {
+                return false;
+            }
         }
         Err(_) => {
-        },
+            println!("Unable to check funds");
+            return false;
+        }
     }
-
-    println!("{}", "═══ 🎰 User Information 🎰 ═══".bright_cyan().bold());
-    println!("{}: {}", "Id".yellow(), user.id);
-    println!("{}: {}", "Username".yellow(), user.username);
-    println!("{}: {}", "Balance".yellow(), format!("${:.2}", result.unwrap()).green());
-        
-    println!("\n{}", "Press Enter to continue...".dimmed());
-    let mut input = String::new();
-    std::io::stdin().read_line(&mut input).ok();
 }
 
 struct User {
     id: i32,
-    username: String,
-    balance: f64,
+}
+
+impl User {
+    fn get_username(&self, conn: &Connection) -> Result<String, rusqlite::Error> {
+        conn.query_row(
+        "SELECT username FROM users WHERE id = ?1",
+        [self.id],
+        |row| row.get(0)
+        )
+    }
+
+
+    fn get_balance(&self, conn: &Connection) -> Result<f64, rusqlite::Error> {
+        conn.query_row(
+            "SELECT balance FROM users WHERE id = ?1",
+            [self.id],
+            |row| row.get(0)
+        )
+    }
 }
 
 fn register(conn: &Connection) -> Result<Option<User>> {
@@ -314,6 +337,7 @@ fn register(conn: &Connection) -> Result<Option<User>> {
 }
 
 fn sign_in(conn: &Connection) -> Result<Option<User>> {
+    println!();
     // Get username
     print!("Username: ");
     io::stdout().flush().unwrap();
@@ -330,22 +354,19 @@ fn sign_in(conn: &Connection) -> Result<Option<User>> {
     
     // Prepared query
     let mut stmt: rusqlite::Statement<'_> = conn.prepare(
-        "SELECT id, username, balance FROM users WHERE username = ?1 AND password = ?2"
+        "SELECT id, username FROM users WHERE username = ?1 AND password = ?2"
     )?;
     
-    let result: std::result::Result<(i32, String, f64), rusqlite::Error> = stmt.query_row([username, password], |row| {
-        Ok((
+    let result: std::result::Result<i32, rusqlite::Error> = stmt.query_row([username, password], |row| {
+        Ok(
             row.get::<_, i32>(0)?,
-            row.get::<_, String>(1)?,
-            row.get::<_, f64>(2)?,
-        ))
+        )
     });
     
     match result {
-        Ok((id, username, balance)) => {
+        Ok(id) => {
             println!("✓ Login successful!");
-            // println!("Welcome, {}! Balance: ${:.2}", username, balance);
-            return Ok(Some(User { id: id, username: username, balance: balance}))
+            return Ok(Some(User { id: id}))
         }
         Err(_) => {
             println!("✗ Invalid credentials");
@@ -359,18 +380,16 @@ fn get_user(username: &str, password: &str, conn: &Connection) -> Option<User> {
         "SELECT id, username, balance FROM users WHERE username = ?1 AND password = ?2"
     ).unwrap();
     
-    let result: std::result::Result<(i32, String, f64), rusqlite::Error> = stmt.query_row([username, password], |row| {
-        Ok((
-            row.get::<_, i32>(0)?,
-            row.get::<_, String>(1)?,
-            row.get::<_, f64>(2)?,
-        ))
+    let result: std::result::Result<i32, rusqlite::Error> = stmt.query_row([username, password], |row| {
+        Ok(
+            row.get::<_, i32>(0)?
+        )
     });
 
     match result {
-        Ok((id, username, balance)) => {
+        Ok(id) => {
             println!("Login successful!");
-            Some(User{id: id, username: username, balance: balance})
+            Some(User{id: id})
         }
         Err(_) => {
             println!("Invalid credentials");
