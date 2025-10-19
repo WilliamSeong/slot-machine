@@ -7,20 +7,47 @@ fn main() -> Result<()> {
     let conn = Connection::open("casino.db")?;
     
     // Create users table
-    conn.execute(
-        "CREATE TABLE IF NOT EXISTS users (
-            id INTEGER PRIMARY KEY,
-            username TEXT UNIQUE NOT NULL,
-            password TEXT NOT NULL,
-            user_type TEXT NOT NULL DEFAULT 'player',
-            balance REAL NOT NULL DEFAULT 0.0
-        )",
-        [],
-    )?;
+    initialize_db(&conn)?;
+
+    // Add technician account and commissioner account
+    add_technician_comissioner(&conn)?;
+
     login(&conn)
 }
 
-fn login(conn: &Connection) -> Result<()> {
+fn initialize_db(conn: &Connection) -> Result<(), rusqlite::Error> {
+    conn.execute(
+        "Create Table If Not Exists users (
+            id Integer Primary Key,
+            username Text Unique Not Null,
+            password Text Not Null,
+            user_type Text Not Null Default 'player',
+            balance Real Not Null Default 0.0,
+            role Text Default 'user' Check(role In ('user', 'technician', 'commissioner'))
+        )",
+        [],
+    )?;
+
+    Ok(())
+}
+
+fn add_technician_comissioner(conn: &Connection) -> Result<(),rusqlite::Error> {
+    conn.execute(
+        "Insert Or Ignore Into users (username, password, role, balance) 
+        VALUES ('technician', ?1, 'technician', 5000.0)",
+        ["123"]
+    )?;
+
+    conn.execute(
+        "Insert Or Ignore Into users (username, password, role, balance) 
+        VALUES ('commissioner', ?1, 'commissioner', 10000.0)",
+        ["123"]  // Change password after first login!
+    )?;
+
+    Ok(())
+}
+
+fn login(conn: &Connection) -> Result<(), rusqlite::Error> {
     loop {
         println!("\n{}", "═══ 🎰 Casino Login 🎰 ═══".bright_cyan().bold());
         println!("{}. {}", "1".yellow(), "Register".white());
@@ -153,10 +180,10 @@ fn bet()-> i32 {
 
 fn normal_slots(conn: &Connection, bet: i32, user: &User) -> bool {
     loop {
-        if !check_funds(conn, user, bet as f64) {
-            println!("Insufficient more funds");
-            return true;
-        }
+        // if !check_funds(conn, user, bet as f64) {
+        //     println!("Insufficient more funds");
+        //     return true;
+        // }
 
         let symbols = ["🍒", "🍋", "🍊", "💎", "7️⃣", "⭐"];
         let mut rng = rand::rng();
@@ -164,12 +191,12 @@ fn normal_slots(conn: &Connection, bet: i32, user: &User) -> bool {
         println!("\n{}", "🎰 SLOT MACHINE 🎰".bright_yellow().bold());
                 
         // Spin the slots
-        // let slot1 = symbols[rng.random_range(0..symbols.len())];
-        // let slot2 = symbols[rng.random_range(0..symbols.len())];
-        // let slot3 = symbols[rng.random_range(0..symbols.len())];
-        let slot1 = symbols[0];
-        let slot2 = symbols[1];
-        let slot3 = symbols[2];
+        let slot1 = symbols[rng.random_range(0..symbols.len())];
+        let slot2 = symbols[rng.random_range(0..symbols.len())];
+        let slot3 = symbols[rng.random_range(0..symbols.len())];
+        // let slot1 = symbols[0];
+        // let slot2 = symbols[1];
+        // let slot3 = symbols[2];
 
         // Animate
         for _ in 0..30 {
@@ -246,7 +273,6 @@ fn transaction (conn: &Connection, user: &User, amount: i32) -> f64 {
     }
 
     return balance.unwrap();
-
 }
 
 fn user_account(conn: &Connection, user: &User) {
