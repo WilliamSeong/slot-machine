@@ -66,8 +66,13 @@ fn login(conn: &Connection) -> Result<(), rusqlite::Error> {
             _ => {println!("Invalid choice"); None},
         };
 
+
         if let Some(user) = user {
-            user_menu(conn, &user);
+            match user.get_role(&conn).unwrap().as_str() {
+                "user" => user_menu(conn, &user),
+                "technician" => technician_menu(conn, &user),
+                _ => println!("User not found")
+            }
         }
     }
     Ok(())
@@ -100,6 +105,40 @@ fn user_menu(conn: &Connection, user: &User) {
                 println!("Let's type something valid buddy");
             }
         }
+    }
+}
+
+fn technician_menu(conn: &Connection, user: &User) {
+
+    loop {
+        println!("\n{}", "═══ 🎰 777 🎰 ═══".bright_magenta().bold());
+        println!("{}. {}", "1".yellow(), "Games".white());
+        println!("{}. {}", "2".yellow(), "Statistics".white());
+        println!("{}. {}", "3".yellow(), "Logout".red());
+        print!("{} ", "Choose:".green().bold());
+        io::stdout().flush().ok();
+
+        let mut choice: String = String::new();
+        io::stdin().read_line(&mut choice).ok();
+
+        // match choice.trim() {
+        //     "1" => {
+        //         play_menu(conn, user)
+        //     }
+        //     "2" => {
+        //         user_account(conn, user);
+        //     }
+        //     "3" => {
+        //         println!("Let's logout");
+        //         break;
+        //     }
+        //     _ => {
+        //         println!("Let's type something valid buddy");
+        //     }
+        // }
+
+        break;
+
     }
 }
 
@@ -180,10 +219,10 @@ fn bet()-> i32 {
 
 fn normal_slots(conn: &Connection, bet: i32, user: &User) -> bool {
     loop {
-        // if !check_funds(conn, user, bet as f64) {
-        //     println!("Insufficient more funds");
-        //     return true;
-        // }
+        if !check_funds(conn, user, bet as f64) {
+            println!("Insufficient more funds");
+            return true;
+        }
 
         let symbols = ["🍒", "🍋", "🍊", "💎", "7️⃣", "⭐"];
         let mut rng = rand::rng();
@@ -326,6 +365,14 @@ impl User {
     fn get_balance(&self, conn: &Connection) -> Result<f64, rusqlite::Error> {
         conn.query_row(
             "SELECT balance FROM users WHERE id = ?1",
+            [self.id],
+            |row| row.get(0)
+        )
+    }
+
+    fn get_role(&self, conn: &Connection) -> Result<String, rusqlite::Error> {
+        conn.query_row(
+            "SELECT role FROM users WHERE id = ?1",
             [self.id],
             |row| row.get(0)
         )
