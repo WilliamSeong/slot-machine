@@ -96,11 +96,11 @@ pub fn sign_in(conn: &Connection) -> Result<Option<User>> {
     
     match result {
         Ok(id) => {
-            println!("✓ Login successful!");
+            println!("Login successful!");
             return Ok(Some(User { id: id}))
         }
         Err(_) => {
-            println!("✗ Invalid credentials");
+            println!("Invalid credentials");
             return Ok(None)
         },
     }

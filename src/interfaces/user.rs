@@ -164,13 +164,16 @@ fn normal_slots(conn: &Connection, bet: i32, user: &User) -> bool {
             println!("\n{}", "🎉 JACKPOT! YOU WIN! 🎉".green().bold());
             println!("You win {}", 3 * bet);
             println!("Current balance is {}", dbqueries::transaction(conn, user, 3*bet));
+            let _ = dbqueries::add_win(conn, "normal");
         } else if slot1 == slot2 || slot2 == slot3 || slot1 == slot3 {
             println!("\n{}", "Nice! Two matching!".yellow());
             println!("Current balance is {}", dbqueries::transaction(conn, user, 2*bet));
+            let _ = dbqueries::add_win(conn, "normal");
         } else {
             println!("\n{}", "YOU LOSE!".red());
             println!("You lose {}", &bet);
             println!("Current balance is {}", dbqueries::transaction(conn, user, -(bet as i32)));
+            let _ = dbqueries::add_loss(conn, "normal");
         }
 
         println!();
