@@ -45,6 +45,15 @@ pub fn check_funds(conn: &Connection, user: &User, limit: f64) -> bool {
     }
 }
 
+pub fn change_balance(conn: &Connection, user: &User, deposit: f64) -> rusqlite::Result<bool> {
+    conn.execute(
+        "Update users Set balance = balance + ?1 where id = ?2",
+        rusqlite::params![deposit, user.id]
+    )?;
+
+    Ok(true)
+}
+
 pub fn get_user(username: &str, password: &str, conn: &Connection) -> Option<User> {
     let mut stmt: rusqlite::Statement<'_> = conn.prepare(
         "Select id, username, balance From users Where username = ?1 And password = ?2"

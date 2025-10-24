@@ -106,19 +106,95 @@ fn play_menu(conn: &Connection, user: &User) {
 }
 
 fn user_account(conn: &Connection, user: &User) {
+    loop {
+        match (user.get_username(conn), user.get_balance(conn)) {
+            (Ok(username), Ok(balance)) => {
+                println!("{}", "═══ 🎰 User Information 🎰 ═══".bright_cyan().bold());
+                println!("{}: {}", "Id".yellow(), user.id);
+                println!("{}: {}", "Username".yellow(), username);
+                println!("{}: {}", "Balance".yellow(), format!("${:.2}", balance).green());
+                println!();
 
-    match (user.get_username(conn), user.get_balance(conn)) {
-        (Ok(username), Ok(balance)) => {
-            println!("{}", "═══ 🎰 User Information 🎰 ═══".bright_cyan().bold());
-            println!("{}: {}", "Id".yellow(), user.id);
-            println!("{}: {}", "Username".yellow(), username);
-            println!("{}: {}", "Balance".yellow(), format!("${:.2}", balance).green());
-                
-            println!("\n{}", "Press Enter to continue...".dimmed());
-            let mut input = String::new();
-            std::io::stdin().read_line(&mut input).ok();
+                println!("{}", "═══ 🎰 User Options 🎰 ═══".bright_cyan().bold());
+                println!("{}. Deposit", "1".yellow());
+                println!("{}. Withdraw", "2".yellow());
+                println!("{}. Statistics", "3".yellow());
+                println!("{}. Settings", "4".yellow());
+                println!("{}. Exit", "5".yellow());
+                io::stdout().flush().ok();
+
+                let mut choice = String::new();
+                io::stdin().read_line(&mut choice).ok();
+
+                match choice.trim() {
+                    "1" => {
+                        if deposit(conn, user).unwrap() {
+                            println!("Deposit Successful");
+                        } else {
+                            println!("Deposit Fail");
+                        }
+                    }
+                    "2" => {
+                        if withdraw(conn, user).unwrap() {
+                            println!("Withdraw Successful");
+                        } else {
+                            println!("Withdraw Fail");
+                        }
+                    }
+                    "3" => {
+                        println!("statistics");
+                    }
+                    "4" => {
+                        println!("settings");
+                    }
+                    "5" => {
+                        println!("Exit");
+                    }
+                    _ => {
+                        println!("Let's type something valid buddy");
+                    }
+                }
+            }
+            _ => {println!("User not found!")}
         }
-        _ => {println!("User not found!")}
+    }
+}
+
+// Function to let users deposit funds
+fn deposit(conn: &Connection, user: &User) -> rusqlite::Result<bool>{
+    println!("{}", "═══ 🎰 Deposit 🎰 ═══".bright_cyan().bold());
+    print!("{}", "How much would you like to deposit: ".green());
+    io::stdout().flush().ok();
+
+    let mut choice: String = String::new();
+    io::stdin().read_line(&mut choice).ok();
+
+    let deposit_amount: Result<f64, std::num::ParseFloatError> = choice.trim().parse();
+    if let Ok(amount) = deposit_amount && amount > 0.0 {
+        println!("{}", amount);
+        dbqueries::change_balance(conn, user, amount)
+    } else {
+        println!("Invalid input");
+        Ok(false)
+    }
+}
+
+fn withdraw(conn: &Connection, user: &User) -> rusqlite::Result<bool>{
+    println!("{}", "═══ 🎰 Deposit 🎰 ═══".bright_cyan().bold());
+    print!("{}", "How much would you like to withdraw: ".green());
+    io::stdout().flush().ok();
+
+    let mut choice: String = String::new();
+    io::stdin().read_line(&mut choice).ok();
+
+    let deposit_amount: Result<f64, std::num::ParseFloatError> = choice.trim().parse();
+    println!(" parsed!");
+    if let Ok(amount) = deposit_amount && amount > 0.0 {
+        println!("{}", amount);
+        dbqueries::change_balance(conn, user, -1.0 * amount)
+    } else {
+        println!("Invalid input");
+        Ok(false)
     }
 }
 
