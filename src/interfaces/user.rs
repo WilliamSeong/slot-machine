@@ -149,6 +149,7 @@ fn user_account(conn: &Connection, user: &User) {
                     }
                     "5" => {
                         println!("Exit");
+                        break;
                     }
                     _ => {
                         println!("Let's type something valid buddy");
@@ -179,6 +180,7 @@ fn deposit(conn: &Connection, user: &User) -> rusqlite::Result<bool>{
     }
 }
 
+// Function to let user withdraw funds
 fn withdraw(conn: &Connection, user: &User) -> rusqlite::Result<bool>{
     println!("{}", "═══ 🎰 Deposit 🎰 ═══".bright_cyan().bold());
     print!("{}", "How much would you like to withdraw: ".green());
@@ -234,7 +236,6 @@ fn normal_slots(conn: &Connection, bet: i32, user: &User) -> bool {
 
         std::thread::sleep(std::time::Duration::from_millis(500));
 
-        
         // Check win (adjustable probability via symbol frequency)
         if slot1 == slot2 && slot2 == slot3 {
             println!("\n{}", "🎉 JACKPOT! YOU WIN! 🎉".green().bold());

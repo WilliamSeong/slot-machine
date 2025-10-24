@@ -2,9 +2,9 @@ use rusqlite::{Connection};
 use colored::*;
 use std::io::{self, Write};
 
-use crate::interfaces::user::User;
+use crate::{db::dbqueries, interfaces::user::User};
 
-pub fn technician_menu(_conn: &Connection, _user: &User) {
+pub fn technician_menu(conn: &Connection, user: &User) {
     loop {
         println!("\n{}", "═══ 🎰 777 🎰 ═══".bright_magenta().bold());
         println!("{}. {}", "1".yellow(), "Games".white());
@@ -16,23 +16,30 @@ pub fn technician_menu(_conn: &Connection, _user: &User) {
         let mut choice: String = String::new();
         io::stdin().read_line(&mut choice).ok();
 
-        // match choice.trim() {
-        //     "1" => {
-        //         play_menu(conn, user)
-        //     }
-        //     "2" => {
-        //         user_account(conn, user);
-        //     }
-        //     "3" => {
-        //         println!("Let's logout");
-        //         break;
-        //     }
-        //     _ => {
-        //         println!("Let's type something valid buddy");
-        //     }
-        // }
-
-        break;
+        match choice.trim() {
+            "1" => {
+                games_menu(conn, user)
+            }
+            "2" => {
+                technician_statistics(conn);
+            }
+            "3" => {
+                println!("Let's logout");
+                break;
+            }
+            _ => {
+                println!("Let's type something valid buddy");
+            }
+        }
 
     }
+}
+
+fn games_menu(conn: &Connection, user: &User) {
+
+}
+
+fn technician_statistics(conn: &Connection) {
+    println!("Printing stats");
+    let _ = dbqueries::get_game_statistics(conn);
 }

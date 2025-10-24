@@ -101,9 +101,23 @@ pub fn add_loss(conn: &Connection, game: &str) -> rusqlite::Result<()> {
     add_played(conn, game)?;
     
     conn.execute(
-        "Update games Set win = win + 1 Where name = ?1",
+        "Update games Set loss = loss + 1 Where name = ?1",
         [game]
     )?;
+
+    Ok(())
+}
+
+pub fn get_game_statistics(conn: &Connection) -> rusqlite::Result<()>{
+    let mut stmt = conn.prepare("Select * From games")?;
+    let games = stmt.query_map([], |row| {
+        Ok((row.get(1)?, row.get(2)?, row.get(3)?, row.get(4)?))
+    })?;
+
+    for game in games {
+        let (name, played, win, loss): (String, i32, i32, i32) = game?;
+        println!("game: {} played: {} win: {} loss:{}", name, played, win, loss);
+    }
 
     Ok(())
 }
