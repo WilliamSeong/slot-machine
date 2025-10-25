@@ -28,8 +28,8 @@ pub fn login(conn: &Connection) -> Result<(), rusqlite::Error> {
 
         if let Some(user) = user {
             match user.get_role(&conn).unwrap().as_str() {
-                "user" => interfaces::user::user_menu(conn, &user),
-                "technician" => interfaces::technician::technician_menu(conn, &user), 
+                "user" => interfaces::user::user_menu(conn, &user)?,
+                "technician" => interfaces::technician::technician_menu(conn, &user)?, 
                 _ => println!("User not found")
             }
         }

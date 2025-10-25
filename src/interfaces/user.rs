@@ -36,7 +36,7 @@ impl User {
 
 use crate::db::dbqueries;
 
-pub fn user_menu(conn: &Connection, user: &User) {
+pub fn user_menu(conn: &Connection, user: &User) -> rusqlite::Result<()> {
     loop {
         println!("\n{}", "═══ 🎰 777 🎰 ═══".bright_magenta().bold());
         println!("{}. {}", "1".yellow(), "Play".white());
@@ -50,7 +50,7 @@ pub fn user_menu(conn: &Connection, user: &User) {
 
         match choice.trim() {
             "1" => {
-                play_menu(conn, user)
+                play_menu(conn, user)?;
             }
             "2" => {
                 user_account(conn, user);
@@ -64,45 +64,71 @@ pub fn user_menu(conn: &Connection, user: &User) {
             }
         }
     }
+    Ok(())
 }
 
-fn play_menu(conn: &Connection, user: &User) {
+fn play_menu(conn: &Connection, user: &User) -> rusqlite::Result<()>{
     loop {
+
+        let all_games: Vec<(String, bool)> = dbqueries::get_games(conn)?;
+
+        let mut active_games: Vec<(String, bool)> = vec![];
+
+        for game in all_games {
+            let (_, active): (String, bool) = game;
+
+            if active {
+                active_games.push(game);
+            }
+        }
+
         println!("\n{}", "═══ 🎰 Modes 🎰 ═══".bright_cyan().bold());
-        println!("{}. Normal", "1".yellow());
-        println!("{}. Multi Hit", "2".yellow());
-        println!("{}. Holding", "3".yellow());
-        println!("{}. Back", "4".yellow());
+        for (index, (name, _)) in active_games.iter().enumerate(){
+            println!("{}: {}", (index+1).to_string().yellow(), name);
+        }
+        println!("{}. Back", (active_games.len()+1).to_string().yellow());
+
         print!("{} ", "Choose:".green());
         io::stdout().flush().ok();
 
         let mut choice = String::new();
         io::stdin().read_line(&mut choice).ok();
 
-        match choice.trim() {
-            "1" => {
+        if choice.trim() == (active_games.len()+1).to_string() {
+            println!("Go back");
+            break;
+        }
+
+        let num_choice: usize = choice.trim().parse().unwrap();
+        let index_choice: usize = num_choice - 1;
+
+        let (name_choice, _) = &active_games[index_choice];
+
+        match name_choice.trim() {
+            "normal" => {
                 loop{ 
                     let bet = bet();
-                    if !normal_slots(conn, bet, user) {
+                    if  bet != 0 {
+                        if !normal_slots(conn, bet, user) {
+                            break;
+                        }
+                    } else {
                         break;
                     }
                 }
             }
-            "2" => {
+            "multi" => {
                 println!("Entering Multi hit");
             }
-            "3" => {
+            "holding" => {
                 println!("Entering holding");
-            }
-            "4" => {
-                println!("Go back");
-                break;
             }
             _ => {
                 println!("Let's type something valid buddy");
             }
         }
     }
+    Ok(())
 }
 
 fn user_account(conn: &Connection, user: &User) {
@@ -281,6 +307,7 @@ fn bet()-> i32 {
         println!("{}. $5", "2".green());
         println!("{}. $10", "3".green());
         println!("{}. $20", "4".green());
+        println!("{}. Back", "4".red());
         print!("{} ", "Choose:".yellow());
         io::stdout().flush().ok();
 
@@ -303,6 +330,9 @@ fn bet()-> i32 {
             "4" => {
                 println!("Betting $20");
                 return 20
+            }
+            "5" => {
+                break;
             }
             _ => {println!("Invalid Input");}
         }

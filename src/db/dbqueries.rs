@@ -122,8 +122,6 @@ pub fn get_games(conn: &Connection) -> rusqlite::Result<Vec<(String, bool)>> {
 
 pub fn toggle_game(conn: &Connection, name: &str) -> rusqlite::Result<()> {
 
-    // println!("{} is the game we are toggling", name);
-
     let mut stmt: rusqlite::Statement<'_> = conn.prepare(
         "Update games Set active = Not active Where name = ?1"
     ).unwrap();

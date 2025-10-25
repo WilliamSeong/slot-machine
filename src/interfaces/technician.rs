@@ -4,7 +4,7 @@ use std::io::{self, Write};
 
 use crate::{db::dbqueries, interfaces::user::User};
 
-pub fn technician_menu(conn: &Connection, user: &User) {
+pub fn technician_menu(conn: &Connection, _user: &User) -> rusqlite::Result<()> {
     loop {
         println!("\n{}", "═══ 🎰 Tech Menu 🎰 ═══".bright_magenta().bold());
         println!("{}. {}", "1".yellow(), "Games".white());
@@ -33,6 +33,7 @@ pub fn technician_menu(conn: &Connection, user: &User) {
         }
 
     }
+    Ok(())
 }
 
 // Function to allow technician to change what games are available to the user
