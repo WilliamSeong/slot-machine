@@ -1,4 +1,5 @@
 use rusqlite::Connection;
+use colored::*;
 
 use crate::interfaces::user::User;
 
@@ -77,6 +78,7 @@ pub fn get_user(username: &str, password: &str, conn: &Connection) -> Option<Use
     }
 }
 
+// add_played, add_win, add_loss record game statistics
 pub fn add_played(conn: &Connection, game: &str) -> rusqlite::Result<()>{
     conn.execute(
         "Update games Set played = played + 1 Where name = ?1",
@@ -106,6 +108,16 @@ pub fn add_loss(conn: &Connection, game: &str) -> rusqlite::Result<()> {
     )?;
 
     Ok(())
+}
+
+pub fn get_games(conn: &Connection) -> rusqlite::Result<Vec<(String, bool)>> {
+    let mut stmt = conn.prepare("Select * From games")?;
+
+    let games = stmt.query_map([], |row| {
+        Ok((row.get::<_,String>(1)?, row.get::<_,bool>(5)?))
+    })?.collect::<rusqlite::Result<Vec<_>>>()?;
+
+    Ok(games)
 }
 
 pub fn get_game_statistics(conn: &Connection) -> rusqlite::Result<()>{

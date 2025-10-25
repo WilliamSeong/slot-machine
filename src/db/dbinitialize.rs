@@ -20,7 +20,8 @@ pub fn initialize_dbs(conn: &Connection) -> Result<(), rusqlite::Error> {
             name Text Unique Not Null,
             played Integer,
             win Integer,
-            loss Integer
+            loss Integer,
+            active Bool
         )",
         [],
     )?;
@@ -51,10 +52,10 @@ fn add_technician_commissioner(conn: &Connection) -> Result<(),rusqlite::Error> 
 // Add game modes to games table
 fn add_games(conn: &Connection) -> Result<(),rusqlite::Error> {
     conn.execute(
-        "Insert Or Ignore Into games (name, played, win, loss) 
-        Values ('normal', 0, 0, 0),
-                ('multi', 0, 0, 0),
-                ('holding', 0, 0, 0)",[]
+        "Insert Or Ignore Into games (name, played, win, loss, active) 
+        Values ('normal', 0, 0, 0, true),
+                ('multi', 0, 0, 0, true),
+                ('holding', 0, 0, 0, true)",[]
     )?;
 
     Ok(())

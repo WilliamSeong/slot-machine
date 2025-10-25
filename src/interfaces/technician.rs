@@ -6,7 +6,7 @@ use crate::{db::dbqueries, interfaces::user::User};
 
 pub fn technician_menu(conn: &Connection, user: &User) {
     loop {
-        println!("\n{}", "═══ 🎰 777 🎰 ═══".bright_magenta().bold());
+        println!("\n{}", "═══ 🎰 Tech Menu 🎰 ═══".bright_magenta().bold());
         println!("{}. {}", "1".yellow(), "Games".white());
         println!("{}. {}", "2".yellow(), "Statistics".white());
         println!("{}. {}", "3".yellow(), "Logout".red());
@@ -18,7 +18,7 @@ pub fn technician_menu(conn: &Connection, user: &User) {
 
         match choice.trim() {
             "1" => {
-                games_menu(conn, user)
+                let _ = games_menu(conn);
             }
             "2" => {
                 technician_statistics(conn);
@@ -35,8 +35,33 @@ pub fn technician_menu(conn: &Connection, user: &User) {
     }
 }
 
-fn games_menu(conn: &Connection, user: &User) {
+// Function to allow technician to change what games are available to the user
+fn games_menu(conn: &Connection) -> rusqlite::Result<()>{
+    loop {
+        let games = dbqueries::get_games(conn)?;
 
+        for game in games {
+            let (name, active): (String, bool) = game;
+
+            if active {
+                println!("game: {} active: {}", name, active.to_string().green());
+            } else {
+                println!("game: {} active: {}", name, active.to_string().red());
+            }
+        }
+
+        println!("\n{}", "═══ 🎰 Tech Games Control 🎰 ═══".bright_magenta().bold());
+        println!("Name to toggle game or exit");
+        print!("{} ", "Choose:".green().bold());
+        io::stdout().flush().ok();
+
+        let mut choice: String = String::new();
+        io::stdin().read_line(&mut choice).ok();
+
+        // match choice.trim() {
+
+        // }
+    }
 }
 
 fn technician_statistics(conn: &Connection) {
