@@ -120,6 +120,28 @@ pub fn get_games(conn: &Connection) -> rusqlite::Result<Vec<(String, bool)>> {
     Ok(games)
 }
 
+pub fn toggle_game(conn: &Connection, name: &str) -> rusqlite::Result<()> {
+
+    // println!("{} is the game we are toggling", name);
+
+    let mut stmt: rusqlite::Statement<'_> = conn.prepare(
+        "Update games Set active = Not active Where name = ?1"
+    ).unwrap();
+
+    let result = stmt.execute([name]);
+
+    match result {
+        Ok(_) => {
+            println!("{} toggled", name);
+        }
+        Err(_) => {
+            println!("Toggle failed");
+        }
+    }
+
+    Ok(())
+}
+
 pub fn get_game_statistics(conn: &Connection) -> rusqlite::Result<()>{
     let mut stmt = conn.prepare("Select * From games")?;
     let games = stmt.query_map([], |row| {

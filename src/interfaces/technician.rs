@@ -51,17 +51,19 @@ fn games_menu(conn: &Connection) -> rusqlite::Result<()>{
         }
 
         println!("\n{}", "═══ 🎰 Tech Games Control 🎰 ═══".bright_magenta().bold());
-        println!("Name to toggle game or exit");
+        println!("Toggle game or exit");
         print!("{} ", "Choose:".green().bold());
         io::stdout().flush().ok();
 
         let mut choice: String = String::new();
         io::stdin().read_line(&mut choice).ok();
 
-        // match choice.trim() {
-
-        // }
+        match choice.trim() {
+            "exit" => {break},
+            _ => {dbqueries::toggle_game(conn, choice.trim())?;}
+        }
     }
+    Ok(())
 }
 
 fn technician_statistics(conn: &Connection) {
