@@ -6,7 +6,7 @@ use crate::interfaces;
 use crate::interfaces::user::User;
 use crate::db::dbqueries;
 
-pub fn login(conn: &Connection) -> Result<(), rusqlite::Error> {
+pub fn login(conn: &Connection) -> rusqlite::Result<()> {
     loop {
         println!("\n{}", "═══ 🎰 Casino Login 🎰 ═══".bright_cyan().bold());
         println!("{}. {}", "1".yellow(), "Register".white());
@@ -19,8 +19,8 @@ pub fn login(conn: &Connection) -> Result<(), rusqlite::Error> {
         io::stdin().read_line(&mut choice).ok();
         
         let user = match choice.trim() {
-            "1" => register(&conn)?,
-            "2" => sign_in(&conn)?,
+            "1" => register(conn)?,
+            "2" => sign_in(conn)?,
             "3" => break,
             _ => {println!("Invalid choice"); None},
         };
@@ -55,17 +55,45 @@ pub fn register(conn: &Connection) -> Result<Option<User>> {
     // Insert user
     match conn.execute(
         "INSERT INTO users (username, password) VALUES (?1, ?2)",
-        [username, password],
+        rusqlite::params![username, password],
     ) {
         Ok(_) => {
+            // Create user statistics functions
+            initialize_user_statistics(conn, username, password)?;
             println!("Registration Complete!");
-            Ok(dbqueries::get_user(username, password, conn))
+            Ok(dbqueries::get_user(&username, &password, conn))
         }
         Err(_) => {
             Ok(None)
         },
     }
 }
+
+fn initialize_user_statistics(conn: &Connection, username: &str, password: &str) -> rusqlite::Result<()> {
+    // Query to get the user_id
+    let user_id: i32 = conn.query_row(
+        "SELECT id FROM users WHERE username = ?1 AND password = ?2",
+        rusqlite::params![username, password],
+        |row| row.get(0),
+    )?;
+
+    // Query to get all game_ids
+    let mut stmt = conn.prepare("SELECT id FROM games")?;
+    let game_ids: Vec<i32> = stmt.query_map([], |row| row.get(0))?
+        .collect::<rusqlite::Result<Vec<i32>>>()?;
+
+    // Insert a new entry for each game
+    for game_id in game_ids {
+        conn.execute(
+            "INSERT INTO user_statistics (user_id, game_id, win, loss, highest_payout, last_played)
+                    VALUES (?1, ?2, ?3, ?4, ?5, ?6)",
+            rusqlite::params![user_id, game_id, 0, 0, 0.0, ""],
+        )?;
+    }
+    println!("User statistics registered");
+    Ok(())
+}
+
 
 pub fn sign_in(conn: &Connection) -> Result<Option<User>> {
     println!();

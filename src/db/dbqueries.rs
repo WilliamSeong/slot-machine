@@ -1,5 +1,5 @@
 use rusqlite::Connection;
-use colored::*;
+use Chrono;
 
 use crate::interfaces::user::User;
 
@@ -110,6 +110,38 @@ pub fn add_loss(conn: &Connection, game: &str) -> rusqlite::Result<()> {
     Ok(())
 }
 
+pub fn add_user_win(conn: &Connection, user: &User, game: &str, winnings: f64) -> rusqlite::Result<()> {
+    // Query to get the game_id from the game name
+    let game_id: i32 = conn.query_row(
+        "SELECT id FROM games WHERE name = ?1",
+        rusqlite::params![game],
+        |row| row.get(0),
+    )?;
+
+    // Get the current highest_payout
+    let current_payout: f64 = conn.query_row(
+        "SELECT highest_payout FROM user_statistics WHERE user_id = ?1 AND game_id = ?2",
+        rusqlite::params![user.id, game_id],
+        |row| row.get(0),
+    )?;
+
+    // Update highest_payout if winnings is greater
+    let new_payout = if winnings > current_payout {
+        winnings
+    } else {
+        current_payout
+    };
+
+    // Update the user_statistics table
+    conn.execute(
+        "UPDATE user_statistics SET win = win + 1, highest_payout = ?1, last_played = ?2 WHERE user_id = ?3 AND game_id = ?4",
+        rusqlite::params![new_payout, chrono::Local::now().to_rfc3339(), user.id, game_id],
+    )?;
+
+    Ok(())
+}
+
+
 pub fn get_games(conn: &Connection) -> rusqlite::Result<Vec<(String, bool)>> {
     let mut stmt = conn.prepare("Select * From games")?;
 
@@ -153,3 +185,4 @@ pub fn get_game_statistics(conn: &Connection) -> rusqlite::Result<()>{
 
     Ok(())
 }
+
