@@ -87,7 +87,7 @@ fn initialize_user_statistics(conn: &Connection, username: &str, password: &str)
         conn.execute(
             "INSERT INTO user_statistics (user_id, game_id, win, loss, highest_payout, last_played)
                     VALUES (?1, ?2, ?3, ?4, ?5, ?6)",
-            rusqlite::params![user_id, game_id, 0, 0, 0.0, ""],
+            rusqlite::params![user_id, game_id, 0, 0, 0.0, "yesterday"],
         )?;
     }
     println!("User statistics registered");

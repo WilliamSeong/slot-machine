@@ -1,14 +1,14 @@
 use rusqlite::Connection;
-use Chrono;
+use chrono;
 
 use crate::interfaces::user::User;
 
-pub fn transaction (conn: &Connection, user: &User, amount: i32) -> f64 {
+pub fn transaction (conn: &Connection, user: &User, amount: f64) -> f64 {
     let mut stmt: rusqlite::Statement<'_> = conn.prepare(
         "Update users Set balance = balance + ?1 Where id = ?2"
     ).unwrap();
 
-    let result = stmt.execute([amount, user.id]);
+    let result = stmt.execute(rusqlite::params![amount, user.id]);
 
     match result {
         Ok(_) => {
@@ -141,6 +141,22 @@ pub fn add_user_win(conn: &Connection, user: &User, game: &str, winnings: f64) -
     Ok(())
 }
 
+pub fn add_user_loss(conn: &Connection, user: &User, game: &str) -> rusqlite::Result<()> {
+    // Query to get the game_id from the game name
+    let game_id: i32 = conn.query_row(
+        "SELECT id FROM games WHERE name = ?1",
+        rusqlite::params![game],
+        |row| row.get(0),
+    )?;
+
+    // Update the user_statistics table
+    conn.execute(
+        "UPDATE user_statistics SET loss = loss + 1, last_played = ?2 WHERE user_id = ?3 AND game_id = ?4",
+        rusqlite::params![chrono::Local::now().to_rfc3339(), user.id, game_id],
+    )?;
+
+    Ok(())
+}
 
 pub fn get_games(conn: &Connection) -> rusqlite::Result<Vec<(String, bool)>> {
     let mut stmt = conn.prepare("Select * From games")?;

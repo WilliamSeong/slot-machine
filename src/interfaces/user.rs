@@ -108,7 +108,7 @@ fn play_menu(conn: &Connection, user: &User) -> rusqlite::Result<()>{
             "normal" => {
                 loop{ 
                     let bet = bet();
-                    if  bet != 0 {
+                    if  bet != 0.0 {
                         if !normal_slots(conn, bet, user) {
                             break;
                         }
@@ -226,7 +226,7 @@ fn withdraw(conn: &Connection, user: &User) -> rusqlite::Result<bool>{
     }
 }
 
-fn normal_slots(conn: &Connection, bet: i32, user: &User) -> bool {
+fn normal_slots(conn: &Connection, bet: f64, user: &User) -> bool {
     loop {
         if !dbqueries::check_funds(conn, user, bet as f64) {
             println!("Insufficient more funds");
@@ -265,18 +265,21 @@ fn normal_slots(conn: &Connection, bet: i32, user: &User) -> bool {
         // Check win (adjustable probability via symbol frequency)
         if slot1 == slot2 && slot2 == slot3 {
             println!("\n{}", "🎉 JACKPOT! YOU WIN! 🎉".green().bold());
-            println!("You win {}", 3 * bet);
-            println!("Current balance is {}", dbqueries::transaction(conn, user, 3*bet));
+            println!("You win {}", 3.0 * bet);
+            println!("Current balance is {}", dbqueries::transaction(conn, user, 3.0 * bet));
             let _ = dbqueries::add_win(conn, "normal");
+            let _ = dbqueries::add_user_win(conn, user, "normal", 3.0 * bet);
         } else if slot1 == slot2 || slot2 == slot3 || slot1 == slot3 {
             println!("\n{}", "Nice! Two matching!".yellow());
-            println!("Current balance is {}", dbqueries::transaction(conn, user, 2*bet));
+            println!("Current balance is {}", dbqueries::transaction(conn, user, 2.0 * bet));
             let _ = dbqueries::add_win(conn, "normal");
+            let _ = dbqueries::add_user_win(conn, user, "normal", 2.0 * bet);
         } else {
             println!("\n{}", "YOU LOSE!".red());
             println!("You lose {}", &bet);
-            println!("Current balance is {}", dbqueries::transaction(conn, user, -(bet as i32)));
+            println!("Current balance is {}", dbqueries::transaction(conn, user, -(bet)));
             let _ = dbqueries::add_loss(conn, "normal");
+            let _ = dbqueries::add_user_loss(conn, user, "normal");
         }
 
         println!();
@@ -299,7 +302,7 @@ fn normal_slots(conn: &Connection, bet: i32, user: &User) -> bool {
     }
 }
 
-fn bet()-> i32 {
+fn bet()-> f64 {
 
     loop {
         println!("\n{}", "🎰 PLACE BET 🎰".bright_red().bold());
@@ -317,22 +320,22 @@ fn bet()-> i32 {
         match input.trim() {
             "1" => {
                 println!("Betting $1");
-                return 1
+                return 1.0
             }
             "2" => {
                 println!("Betting $5");
-                return 5
+                return 5.0
             }
             "3" => {
                 println!("Betting $10");
-                return 10
+                return 10.0
             }
             "4" => {
                 println!("Betting $20");
-                return 20
+                return 20.0
             }
             "5" => {
-                break 0;
+                break 0.0;
             }
             _ => {println!("Invalid Input");}
         }
