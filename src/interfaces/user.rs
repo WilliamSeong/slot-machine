@@ -307,7 +307,7 @@ fn bet()-> i32 {
         println!("{}. $5", "2".green());
         println!("{}. $10", "3".green());
         println!("{}. $20", "4".green());
-        println!("{}. Back", "4".red());
+        println!("{}. Back", "5".red());
         print!("{} ", "Choose:".yellow());
         io::stdout().flush().ok();
 
@@ -332,7 +332,7 @@ fn bet()-> i32 {
                 return 20
             }
             "5" => {
-                break;
+                break 0;
             }
             _ => {println!("Invalid Input");}
         }

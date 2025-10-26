@@ -26,6 +26,22 @@ pub fn initialize_dbs(conn: &Connection) -> Result<(), rusqlite::Error> {
         [],
     )?;
 
+    // Create User Statistics
+    conn.execute(
+        "Create Table If Not Exists user_statistics (
+            id Integer Primary Key,
+            user_id Integer Not Null,
+            game_id Integer Not Null,
+            win Integer,
+            loss Integer,
+            highest_payout Real,
+            last_played Text,
+            Foreign Key (user_id) References users(id),
+            Foreign Key (game_id) References games(id)
+        )",
+        [],
+    )?;
+
     add_technician_commissioner(&conn)?;
     add_games(&conn)?;
 
