@@ -51,7 +51,8 @@ pub fn register(conn: &Connection) -> Result<Option<User>> {
     let mut password = String::new();
     io::stdin().read_line(&mut password).unwrap();
     let password = password.trim();
-    
+
+
     // Insert user
     match conn.execute(
         "INSERT INTO users (username, password) VALUES (?1, ?2)",

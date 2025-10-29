@@ -3,6 +3,7 @@ use rusqlite::{Connection, Result};
 mod interfaces;
 mod db;
 mod authentication;
+mod play;
 
 fn main() -> Result<()> {
     let conn = Connection::open("casino.db")?;
