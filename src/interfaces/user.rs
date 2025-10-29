@@ -168,7 +168,7 @@ fn user_account(conn: &Connection, user: &User) {
                         }
                     }
                     "3" => {
-                        println!("statistics");
+                        user_statistics(conn, user);
                     }
                     "4" => {
                         println!("settings");
@@ -224,6 +224,10 @@ fn withdraw(conn: &Connection, user: &User) -> rusqlite::Result<bool>{
         println!("Invalid input");
         Ok(false)
     }
+}
+
+fn user_statistics(conn: &Connection, user: &User) {
+    let _ = dbqueries::query_user_statistics(conn, user);
 }
 
 fn normal_slots(conn: &Connection, bet: f64, user: &User) -> bool {

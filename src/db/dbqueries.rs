@@ -202,3 +202,17 @@ pub fn get_game_statistics(conn: &Connection) -> rusqlite::Result<()>{
     Ok(())
 }
 
+pub fn query_user_statistics(conn: &Connection, user: &User) -> rusqlite::Result<()> {
+    let mut stmt = conn.prepare("Select * From user_statistics Where user_id = ?1")?;
+    let stats = stmt.query_map([user.id], |row| {
+        Ok((row.get(2)?,row.get(3)?, row.get(4)?, row.get(5)?))
+    })?;
+
+    for stat in stats {
+        let (game_id, win, loss, high): (i32, i32, i32, f64) = stat?;
+        let mut stmt = conn.prepare("Select name From games Where id = ?1")?;
+        let game_name = stmt.query_row([game_id], |row| row.get::<_, String>(0))?;
+        println!("game: {} played: {} win: {} loss:{} highest:{}", game_name, win+loss, win, loss, high);
+    }
+    Ok(())
+}
