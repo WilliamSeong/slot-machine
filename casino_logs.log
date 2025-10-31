@@ -110,3 +110,33 @@
 [2025-10-31 16:36:44] [INFO] Retrieving list of games
 [2025-10-31 16:36:46] [INFO] User ID: 3 selected multi hit game (not implemented)
 [2025-10-31 16:36:46] [INFO] Retrieving list of games
+[2025-10-31 17:01:39] [INFO] Application is starting
+[2025-10-31 17:01:39] [INFO] Database connection established
+[2025-10-31 17:01:39] [INFO] Foreign keys enabled
+[2025-10-31 17:01:39] [INFO] Database is initialized
+[2025-10-31 17:01:39] [INFO] starting application login flow
+[2025-10-31 17:02:36] [INFO] Application is starting
+[2025-10-31 17:02:36] [INFO] Database connection established
+[2025-10-31 17:02:36] [INFO] Foreign keys enabled
+[2025-10-31 17:02:36] [INFO] Database is initialized
+[2025-10-31 17:02:36] [INFO] starting application login flow
+[2025-10-31 17:02:38] [INFO] User selected sign-in option
+[2025-10-31 17:02:39] [SECURITY] Login attempt for username: will
+[2025-10-31 17:02:39] [INFO] Checking credentials for user: will
+[2025-10-31 17:02:39] [SECURITY] Successful login for username: will (User ID: 3)
+[2025-10-31 17:02:39] [INFO] User ID: 3 logged in as regular user
+[2025-10-31 17:02:39] [INFO] User ID: 3 (will) accessed the main menu
+[2025-10-31 17:02:40] [INFO] User ID: 3 selected Play option
+[2025-10-31 17:02:40] [INFO] User ID: 3 entered game selection menu
+[2025-10-31 17:02:40] [INFO] Retrieving list of games
+[2025-10-31 17:02:43] [TRANSACTION] User ID: 3 placed bet of $20.00 on multiwin slots
+[2025-10-31 17:02:43] [INFO] Checking funds for User ID: 3 against limit: 20.00
+[2025-10-31 17:02:43] [INFO] Checking funds for User ID: 3 against limit: 20.00
+[2025-10-31 17:02:50] [INFO] User ID: 3 continuing with same bet
+[2025-10-31 17:02:50] [INFO] Checking funds for User ID: 3 against limit: 20.00
+[2025-10-31 17:02:53] [INFO] User ID: 3 changing bet
+[2025-10-31 17:02:55] [TRANSACTION] User ID: 3 placed bet of $10.00 on multiwin slots
+[2025-10-31 17:02:55] [INFO] Checking funds for User ID: 3 against limit: 10.00
+[2025-10-31 17:02:55] [INFO] Checking funds for User ID: 3 against limit: 10.00
+[2025-10-31 17:02:59] [INFO] User ID: 3 exiting slots game
+[2025-10-31 17:02:59] [INFO] Retrieving list of games

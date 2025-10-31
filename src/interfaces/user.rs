@@ -4,6 +4,7 @@ use std::io::{self, Write};
 use crate::play;
 use crate::logger::logger;
 
+// User struct to hold the id of the user
 pub struct User {
     pub id: i32,
 }
@@ -124,7 +125,7 @@ fn play_menu(conn: &Connection, user: &User) -> rusqlite::Result<()>{
         match name_choice.trim() {
             "normal" => {
                 loop{ 
-                    // Get the bed amount
+                    // Get the bet amount
                     let bet = bet();
                     if bet != 0.0 {
                         logger::transaction(&format!("User ID: {} placed bet of ${:.2} on normal slots", user.id, bet));
@@ -146,8 +147,27 @@ fn play_menu(conn: &Connection, user: &User) -> rusqlite::Result<()>{
                 }
             }
             "multi" => {
-                logger::info(&format!("User ID: {} selected multi hit game (not implemented)", user.id));
-                println!("Entering Multi hit");
+                loop{
+                    // Get the bet amount
+                    let bet = bet();
+                    if bet != 0.0 {
+                        logger::transaction(&format!("User ID: {} placed bet of ${:.2} on multiwin slots", user.id, bet));
+                        
+                        // Check if user has sufficient funds
+                        if !dbqueries::check_funds(conn, user, bet) {
+                            logger::warning(&format!("User ID: {} attempted to bet ${:.2} with insufficient funds", user.id, bet));
+                            println!("{}", "Insufficient funds for this bet".red());
+                            break;
+                        }
+                        
+                        if !play::multiwin::multi_win(conn, user, bet) {
+                            break;
+                        }
+                    } else {
+                        logger::info(&format!("User ID: {} cancelled betting", user.id));
+                        break;
+                    }
+                }
             }
             "holding" => {
                 logger::info(&format!("User ID: {} selected holding game (not implemented)", user.id));

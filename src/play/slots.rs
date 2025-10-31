@@ -20,7 +20,7 @@ pub fn normal_slots(conn: &Connection, bet: f64, user: &User) -> bool {
             return true;
         }
 
-        let symbols = ["🍒", "🍋", "🍊", "💎", "7️⃣", "⭐"];
+        let symbols = ["🍒", "🍋", "🍊", "💎", "🔔", "⭐"];
         let mut rng = ChaCha20Rng::from_seed(Default::default());
 
         logger::info(&format!("User ID: {} spinning slots with bet: ${:.2}", user.id, bet));

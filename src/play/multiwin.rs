@@ -1,14 +1,17 @@
 use rand::Rng;
-use std::io;
+use std::io::{self, Write};
 use std::thread;
 use std::time::Duration;
+use clearscreen;
+use rusqlite::{Connection};
+use crate::interfaces::user::User;
+use crate::db::dbqueries;
+use crate::logger::logger;
 
 const GRID_SIZE: usize = 5;
 const SYMBOLS: [char; 6] = ['🍒', '🍊', '🍋', '🔔', '⭐', '💎'];
 
-
 type Grid = [[char; GRID_SIZE]; GRID_SIZE];
-
 
 struct WinCheckResults {
     win_descriptions: Vec<String>,
@@ -16,21 +19,28 @@ struct WinCheckResults {
     has_four_corner_win: bool,
 }
 
-pub fn multi_win(){
-    let mut rng = rand::thread_rng();
+pub fn multi_win(conn: &Connection, user: &User, bet: f64) -> bool{
+    let mut rng = rand::rng();
     println!("--- 🎰 Welcome to the 5x5 Rust Slot Machine! 🎰 ---");
 
     loop {
-        //Get user input 
-        println!("\nPress ENTER to spin (or 'q' to quit)...");
-        let mut input = String::new();
-        io::stdin()
-            .read_line(&mut input)
-            .expect("Failed to read line");
-
-        if input.trim().eq_ignore_ascii_case("q") {
-            break; // Exit the game loop
+        // Check if player has the funds
+        if !dbqueries::check_funds(conn, user, bet as f64) {
+            logger::warning(&format!("User ID: {} has insufficient funds for bet: ${:.2}", user.id, bet));
+            println!("Insufficient funds");
+            return true;
         }
+
+        //Get user input 
+        // println!("\nPress ENTER to spin (or 'q' to quit)...");
+        // let mut input = String::new();
+        // io::stdin()
+        //     .read_line(&mut input)
+        //     .expect("Failed to read line");
+
+        // if input.trim().eq_ignore_ascii_case("q") {
+        //     break; // Exit the game loop
+        // }
 
         //spinning animation
         run_spin_animation(&mut rng);
@@ -64,9 +74,36 @@ pub fn multi_win(){
                 println!("    > {}", win_line);
             }
         }
-    }
 
-    println!("Thanks for playing!");
+        println!("Play Again?");
+        println!("Press Enter to continue");
+        println!("Press 1 to change bet");
+        println!("Press 2 to exit");
+        io::stdout().flush().ok();
+
+        let mut input = String::new();
+        io::stdin().read_line(&mut input).ok();
+
+        match input.trim() {
+            "" => {
+                logger::info(&format!("User ID: {} continuing with same bet", user.id));
+                continue;
+            }
+            "1" => {
+                logger::info(&format!("User ID: {} changing bet", user.id));
+                return true;
+            }
+            "2" => {
+                logger::info(&format!("User ID: {} exiting slots game", user.id));
+                return false;
+            }
+            _ => {
+                logger::info(&format!("User ID: {} made invalid selection, continuing game", user.id));
+                println!("Playing again..."); 
+                continue;
+            }
+        }
+    }
 }
 
  //spining animation
@@ -88,7 +125,7 @@ fn spin(rng: &mut impl Rng) -> Grid {
     let mut grid = [[' '; GRID_SIZE]; GRID_SIZE];
     for r in 0..GRID_SIZE {
         for c in 0..GRID_SIZE {
-            let symbol_index = rng.gen_range(0..SYMBOLS.len());
+            let symbol_index = rng.random_range(0..SYMBOLS.len());
             grid[r][c] = SYMBOLS[symbol_index];
         }
     }
