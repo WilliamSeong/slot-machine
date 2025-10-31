@@ -94,3 +94,19 @@
 [2025-10-31 11:25:21] [SECURITY] Technician (User ID: 1) accessed technician menu
 [2025-10-31 11:25:26] [SECURITY] Technician (User ID: 1) accessed security logs
 [2025-10-31 11:25:26] [SECURITY] User ID: 1 accessed log verification menu
+[2025-10-31 14:09:05] [INFO] Application is starting
+[2025-10-31 14:09:05] [INFO] Database connection established
+[2025-10-31 14:09:05] [INFO] Foreign keys enabled
+[2025-10-31 14:09:05] [INFO] Database is initialized
+[2025-10-31 14:09:05] [INFO] starting application login flow
+[2025-10-31 16:36:36] [INFO] User selected sign-in option
+[2025-10-31 16:36:42] [SECURITY] Login attempt for username: will
+[2025-10-31 16:36:42] [INFO] Checking credentials for user: will
+[2025-10-31 16:36:42] [SECURITY] Successful login for username: will (User ID: 3)
+[2025-10-31 16:36:42] [INFO] User ID: 3 logged in as regular user
+[2025-10-31 16:36:42] [INFO] User ID: 3 (will) accessed the main menu
+[2025-10-31 16:36:44] [INFO] User ID: 3 selected Play option
+[2025-10-31 16:36:44] [INFO] User ID: 3 entered game selection menu
+[2025-10-31 16:36:44] [INFO] Retrieving list of games
+[2025-10-31 16:36:46] [INFO] User ID: 3 selected multi hit game (not implemented)
+[2025-10-31 16:36:46] [INFO] Retrieving list of games
