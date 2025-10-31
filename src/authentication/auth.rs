@@ -6,8 +6,10 @@ use crate::interfaces;
 use crate::interfaces::user::User;
 use crate::db::dbqueries;
 
+// main entry point into the application
 pub fn login(conn: &Connection) -> rusqlite::Result<()> {
     loop {
+        // Show options to user
         println!("\n{}", "═══ 🎰 Casino Login 🎰 ═══".bright_cyan().bold());
         println!("{}. {}", "1".yellow(), "Register".white());
         println!("{}. {}", "2".yellow(), "Sign In".white());
@@ -15,9 +17,11 @@ pub fn login(conn: &Connection) -> rusqlite::Result<()> {
         print!("{} ", "Choose:".green().bold());
         io::stdout().flush().ok();
         
+        // Get user input
         let mut choice = String::new();
         io::stdin().read_line(&mut choice).ok();
         
+        // check user input
         let user = match choice.trim() {
             "1" => register(conn)?,
             "2" => sign_in(conn)?,
@@ -25,7 +29,7 @@ pub fn login(conn: &Connection) -> rusqlite::Result<()> {
             _ => {println!("Invalid choice"); None},
         };
 
-
+        // if registration or sign in was successful and returned the User struct
         if let Some(user) = user {
             match user.get_role(&conn).unwrap().as_str() {
                 "user" => interfaces::user::user_menu(conn, &user)?,
@@ -37,6 +41,7 @@ pub fn login(conn: &Connection) -> rusqlite::Result<()> {
     Ok(())
 }
 
+// Function to handle a new user trying to register their account, returns a user struct
 pub fn register(conn: &Connection) -> Result<Option<User>> {
     // Get username
     print!("Username: ");
@@ -53,14 +58,12 @@ pub fn register(conn: &Connection) -> Result<Option<User>> {
     let password = password.trim();
 
 
-    // Insert user
-    match conn.execute(
-        "INSERT INTO users (username, password) VALUES (?1, ?2)",
-        rusqlite::params![username, password],
-    ) {
+    // Insert user and check if insert was successful
+    match dbqueries::insert_users(conn, username, password)
+    {
         Ok(_) => {
             // Create user statistics functions
-            initialize_user_statistics(conn, username, password)?;
+            dbqueries::initialize_user_statistics(conn, username, password)?;
             println!("Registration Complete!");
             Ok(dbqueries::get_user(&username, &password, conn))
         }
@@ -70,32 +73,7 @@ pub fn register(conn: &Connection) -> Result<Option<User>> {
     }
 }
 
-fn initialize_user_statistics(conn: &Connection, username: &str, password: &str) -> rusqlite::Result<()> {
-    // Query to get the user_id
-    let user_id: i32 = conn.query_row(
-        "SELECT id FROM users WHERE username = ?1 AND password = ?2",
-        rusqlite::params![username, password],
-        |row| row.get(0),
-    )?;
-
-    // Query to get all game_ids
-    let mut stmt = conn.prepare("SELECT id FROM games")?;
-    let game_ids: Vec<i32> = stmt.query_map([], |row| row.get(0))?
-        .collect::<rusqlite::Result<Vec<i32>>>()?;
-
-    // Insert a new entry for each game
-    for game_id in game_ids {
-        conn.execute(
-            "INSERT INTO user_statistics (user_id, game_id, win, loss, highest_payout, last_played)
-                    VALUES (?1, ?2, ?3, ?4, ?5, ?6)",
-            rusqlite::params![user_id, game_id, 0, 0, 0.0, "yesterday"],
-        )?;
-    }
-    println!("User statistics registered");
-    Ok(())
-}
-
-
+// function to handle user signing in with existing account in users db, returns a user struct wrapped in a Option wrapped in a Result
 pub fn sign_in(conn: &Connection) -> Result<Option<User>> {
     println!();
     // Get username
@@ -112,24 +90,16 @@ pub fn sign_in(conn: &Connection) -> Result<Option<User>> {
     io::stdin().read_line(&mut password).unwrap();
     let password = password.trim();
     
-    // Prepared query
-    let mut stmt: rusqlite::Statement<'_> = conn.prepare(
-        "SELECT id, username FROM users WHERE username = ?1 AND password = ?2"
-    )?;
-    
-    let result: std::result::Result<i32, rusqlite::Error> = stmt.query_row([username, password], |row| {
-        Ok(
-            row.get::<_, i32>(0)?,
-        )
-    });
-    
+    // insert new user
+    let result = dbqueries::check_users(conn, username, password);
+
     match result {
         Ok(id) => {
-            println!("Login successful!");
+            println!("{}", "Login successful!".green());
             return Ok(Some(User { id: id}))
         }
         Err(_) => {
-            println!("Invalid credentials");
+            println!("{}", "Invalid credentials".red());
             return Ok(None)
         },
     }

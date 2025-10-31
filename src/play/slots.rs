@@ -16,7 +16,7 @@ pub fn normal_slots(conn: &Connection, bet: f64, user: &User) -> bool {
         }
 
         let symbols = ["🍒", "🍋", "🍊", "💎", "7️⃣", "⭐"];
-        let mut rng = ChaCha20Rng::from_os_rng();
+        let mut rng = ChaCha20Rng::from_seed(Default::default());
 
         
         println!("\n{}", "🎰 SLOT MACHINE 🎰".bright_yellow().bold());

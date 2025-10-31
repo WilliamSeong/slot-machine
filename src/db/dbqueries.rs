@@ -3,6 +3,30 @@ use chrono;
 
 use crate::interfaces::user::User;
 
+// db queries for registering and signing in users
+pub fn insert_users(conn: &Connection, username: &str, password: &str) -> rusqlite::Result<usize> {
+    conn.execute(
+        "Insert Into users (username, password) Values (?1, ?2)",
+        rusqlite::params![username, password],
+    )
+}
+
+pub fn check_users(conn: &Connection, username: &str, password: &str) -> rusqlite::Result<i32> {
+    let mut stmt: rusqlite::Statement<'_> = conn.prepare(
+        "Select id, username From users Where username = ?1 And password = ?2"
+    )?;
+    
+    let result: rusqlite::Result<i32> = stmt.query_row([username, password], |row| {
+        Ok(
+            row.get::<_, i32>(0)?,
+        )
+    });
+
+    result
+}
+
+// ----------------------------------------------------------------------------------------------------------------------------------
+
 pub fn transaction (conn: &Connection, user: &User, amount: f64) -> f64 {
     let mut stmt: rusqlite::Statement<'_> = conn.prepare(
         "Update users Set balance = balance + ?1 Where id = ?2"
@@ -113,14 +137,14 @@ pub fn add_loss(conn: &Connection, game: &str) -> rusqlite::Result<()> {
 pub fn add_user_win(conn: &Connection, user: &User, game: &str, winnings: f64) -> rusqlite::Result<()> {
     // Query to get the game_id from the game name
     let game_id: i32 = conn.query_row(
-        "SELECT id FROM games WHERE name = ?1",
+        "Select id From games Where name = ?1",
         rusqlite::params![game],
         |row| row.get(0),
     )?;
 
     // Get the current highest_payout
     let current_payout: f64 = conn.query_row(
-        "SELECT highest_payout FROM user_statistics WHERE user_id = ?1 AND game_id = ?2",
+        "Select highest_payout From user_statistics Where user_id = ?1 And game_id = ?2",
         rusqlite::params![user.id, game_id],
         |row| row.get(0),
     )?;
@@ -134,7 +158,7 @@ pub fn add_user_win(conn: &Connection, user: &User, game: &str, winnings: f64) -
 
     // Update the user_statistics table
     conn.execute(
-        "UPDATE user_statistics SET win = win + 1, highest_payout = ?1, last_played = ?2 WHERE user_id = ?3 AND game_id = ?4",
+        "Update user_statistics SET win = win + 1, highest_payout = ?1, last_played = ?2 where user_id = ?3 And game_id = ?4",
         rusqlite::params![new_payout, chrono::Local::now().to_rfc3339(), user.id, game_id],
     )?;
 
@@ -144,14 +168,14 @@ pub fn add_user_win(conn: &Connection, user: &User, game: &str, winnings: f64) -
 pub fn add_user_loss(conn: &Connection, user: &User, game: &str) -> rusqlite::Result<()> {
     // Query to get the game_id from the game name
     let game_id: i32 = conn.query_row(
-        "SELECT id FROM games WHERE name = ?1",
+        "Select id From games Where name = ?1",
         rusqlite::params![game],
         |row| row.get(0),
     )?;
 
     // Update the user_statistics table
     conn.execute(
-        "UPDATE user_statistics SET loss = loss + 1, last_played = ?2 WHERE user_id = ?3 AND game_id = ?4",
+        "Update user_statistics Set loss = loss + 1, last_played = ?2 Where user_id = ?3 And game_id = ?4",
         rusqlite::params![chrono::Local::now().to_rfc3339(), user.id, game_id],
     )?;
 
@@ -214,5 +238,30 @@ pub fn query_user_statistics(conn: &Connection, user: &User) -> rusqlite::Result
         let game_name = stmt.query_row([game_id], |row| row.get::<_, String>(0))?;
         println!("game: {} played: {} win: {} loss:{} highest:{}", game_name, win+loss, win, loss, high);
     }
+    Ok(())
+}
+
+pub fn initialize_user_statistics(conn: &Connection, username: &str, password: &str) -> rusqlite::Result<()> {
+    // Query to get the user_id
+    let user_id: i32 = conn.query_row(
+        "Select id From users Where username = ?1 And password = ?2",
+        rusqlite::params![username, password],
+        |row| row.get(0),
+    )?;
+
+    // Query to get all game_ids
+    let mut stmt = conn.prepare("Select id From games")?;
+    let game_ids: Vec<i32> = stmt.query_map([], |row| row.get(0))?
+        .collect::<rusqlite::Result<Vec<i32>>>()?;
+
+    // Insert a new entry for each game
+    for game_id in game_ids {
+        conn.execute(
+            "Insert Into user_statistics (user_id, game_id, win, loss, highest_payout, last_played)
+                    Values (?1, ?2, ?3, ?4, ?5, ?6)",
+            rusqlite::params![user_id, game_id, 0, 0, 0.0, "yesterday"],
+        )?;
+    }
+    println!("User statistics registered");
     Ok(())
 }

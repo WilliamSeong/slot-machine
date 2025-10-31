@@ -10,7 +10,7 @@ pub struct User {
 impl User {
     pub fn get_username(&self, conn: &Connection) -> Result<String, rusqlite::Error> {
         conn.query_row(
-        "SELECT username FROM users WHERE id = ?1",
+        "Select username From users Where id = ?1",
         [self.id],
         |row| row.get(0)
         )
@@ -19,7 +19,7 @@ impl User {
 
     pub fn get_balance(&self, conn: &Connection) -> Result<f64, rusqlite::Error> {
         conn.query_row(
-            "SELECT balance FROM users WHERE id = ?1",
+            "Select balance From users Where id = ?1",
             [self.id],
             |row| row.get(0)
         )
@@ -27,7 +27,7 @@ impl User {
 
     pub fn get_role(&self, conn: &Connection) -> Result<String, rusqlite::Error> {
         conn.query_row(
-            "SELECT role FROM users WHERE id = ?1",
+            "Select role From users Where id = ?1",
             [self.id],
             |row| row.get(0)
         )
@@ -56,11 +56,10 @@ pub fn user_menu(conn: &Connection, user: &User) -> rusqlite::Result<()> {
                 user_account(conn, user);
             }
             "3" => {
-                println!("Let's logout");
                 break;
             }
             _ => {
-                println!("Let's type something valid buddy");
+                println!("{}", "Invalid input".red().bold());
             }
         }
     }
@@ -70,6 +69,7 @@ pub fn user_menu(conn: &Connection, user: &User) -> rusqlite::Result<()> {
 fn play_menu(conn: &Connection, user: &User) -> rusqlite::Result<()>{
     loop {
 
+        // The available games are queried through the get_games function that scans the games table and checks which games were made available by the technician
         let all_games: Vec<(String, bool)> = dbqueries::get_games(conn)?;
 
         let mut active_games: Vec<(String, bool)> = vec![];
