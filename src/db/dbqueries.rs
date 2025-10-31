@@ -33,6 +33,31 @@ pub fn check_users(conn: &Connection, username: &str, password: &str) -> rusqlit
 }
 
 // ----------------------------------------------------------------------------------------------------------------------------------
+// queries for users to access details in their records
+pub fn user_get_username(conn: &Connection, id: i32) -> rusqlite::Result<String> {
+    conn.query_row(
+    "Select username From users Where id = ?1",
+    [id],
+    |row| row.get(0)
+    )
+}
+
+pub fn user_get_balance(conn: &Connection, id: i32) -> rusqlite::Result<f64> {
+    conn.query_row(
+        "Select balance From users Where id = ?1",
+        [id],
+        |row| row.get(0)
+    )
+}
+
+pub fn user_get_role(conn: &Connection, id: i32) -> rusqlite::Result<String> {
+    conn.query_row(
+        "Select role From users Where id = ?1",
+        [id],
+        |row| row.get(0)
+    )
+}
+
 
 pub fn transaction(conn: &Connection, user: &User, amount: f64) -> f64 {
     // Log the transaction attempt
