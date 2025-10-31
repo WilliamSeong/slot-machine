@@ -1,0 +1,96 @@
+[2025-10-31 11:16:49] [INFO] Application is starting
+[2025-10-31 11:16:49] [INFO] Database connection established
+[2025-10-31 11:16:49] [INFO] Foreign keys enabled
+[2025-10-31 11:16:49] [INFO] Database is initialized
+[2025-10-31 11:16:49] [INFO] starting application login flow
+[2025-10-31 11:16:54] [INFO] User selected registration option
+[2025-10-31 11:17:04] [SECURITY] Registration attempt for username: hsk
+[2025-10-31 11:17:04] [INFO] Attempting to insert new user: hsk
+[2025-10-31 11:17:04] [INFO] Initializing statistics for new user: hsk
+[2025-10-31 11:17:04] [INFO] User statistics successfully registered for User ID: 3
+[2025-10-31 11:17:04] [SECURITY] Registration successful for username: hsk
+[2025-10-31 11:17:04] [INFO] Retrieving user data for: hsk
+[2025-10-31 11:17:04] [INFO] Successfully retrieved user data for ID: 3
+[2025-10-31 11:17:04] [SECURITY] New user created with ID: 3
+[2025-10-31 11:17:04] [INFO] User ID: 3 logged in as regular user
+[2025-10-31 11:17:04] [INFO] User ID: 3 (hsk) accessed the main menu
+[2025-10-31 11:17:06] [INFO] User ID: 3 selected Play option
+[2025-10-31 11:17:06] [INFO] User ID: 3 entered game selection menu
+[2025-10-31 11:17:06] [INFO] Retrieving list of games
+[2025-10-31 11:17:08] [INFO] User ID: 3 selected game: normal
+[2025-10-31 11:17:09] [TRANSACTION] User ID: 3 placed bet of $1.00 on normal slots
+[2025-10-31 11:17:09] [INFO] Checking funds for User ID: 3 against limit: 1.00
+[2025-10-31 11:17:09] [WARNING] Insufficient funds for User ID: 3. Balance: 0.00, Required: 1.00
+[2025-10-31 11:17:09] [WARNING] User ID: 3 attempted to bet $1.00 with insufficient funds
+[2025-10-31 11:17:09] [INFO] Retrieving list of games
+[2025-10-31 11:17:14] [INFO] User ID: 3 exited game selection menu
+[2025-10-31 11:17:16] [INFO] User ID: 3 selected Account option
+[2025-10-31 11:17:16] [INFO] User ID: 3 accessed account information
+[2025-10-31 11:17:20] [INFO] User ID: 3 selected deposit option
+[2025-10-31 11:17:23] [TRANSACTION] User ID: 3 deposited $500.00
+[2025-10-31 11:17:23] [TRANSACTION] Balance change for User ID: 3 amount: 500.00
+[2025-10-31 11:17:23] [TRANSACTION] User ID: 3 new balance after change: 500.00
+[2025-10-31 11:17:29] [INFO] User ID: 3 selected deposit option
+[2025-10-31 11:17:36] [WARNING] User ID: 3 attempted to deposit invalid amount: $-311.00
+[2025-10-31 11:17:42] [WARNING] User ID: 3 made invalid account menu selection
+[2025-10-31 11:17:45] [WARNING] User ID: 3 made invalid account menu selection
+[2025-10-31 11:17:54] [INFO] User ID: 3 exited account menu
+[2025-10-31 11:17:55] [INFO] User ID: 3 selected Play option
+[2025-10-31 11:17:55] [INFO] User ID: 3 entered game selection menu
+[2025-10-31 11:17:55] [INFO] Retrieving list of games
+[2025-10-31 11:17:56] [INFO] User ID: 3 selected game: normal
+[2025-10-31 11:17:58] [TRANSACTION] User ID: 3 placed bet of $20.00 on normal slots
+[2025-10-31 11:17:58] [INFO] Checking funds for User ID: 3 against limit: 20.00
+[2025-10-31 11:17:58] [INFO] User ID: 3 started normal slots game with bet: $20.00
+[2025-10-31 11:17:58] [INFO] Checking funds for User ID: 3 against limit: 20.00
+[2025-10-31 11:17:58] [INFO] User ID: 3 spinning slots with bet: $20.00
+[2025-10-31 11:18:00] [INFO] User ID: 3 slot result: 🍒 | 🍒 | 🍒
+[2025-10-31 11:18:00] [TRANSACTION] User ID: 3 won jackpot of $60.00 in normal slots
+[2025-10-31 11:18:00] [TRANSACTION] User ID: 3 transaction attempt for amount: 60.00
+[2025-10-31 11:18:00] [TRANSACTION] User ID: 3 transaction completed successfully for amount: 60.00
+[2025-10-31 11:18:00] [INFO] User ID: 3 new balance: 560.00
+[2025-10-31 11:18:00] [INFO] Recording game win: normal
+[2025-10-31 11:18:00] [INFO] Recording game played: normal
+[2025-10-31 11:18:00] [TRANSACTION] User ID: 3 won 60.00 in game: normal
+[2025-10-31 11:18:00] [INFO] New highest payout for User ID: 3 in game normal: 60.00
+[2025-10-31 11:18:06] [INFO] User ID: 3 changing bet
+[2025-10-31 11:18:07] [TRANSACTION] User ID: 3 placed bet of $5.00 on normal slots
+[2025-10-31 11:18:07] [INFO] Checking funds for User ID: 3 against limit: 5.00
+[2025-10-31 11:18:07] [INFO] User ID: 3 started normal slots game with bet: $5.00
+[2025-10-31 11:18:07] [INFO] Checking funds for User ID: 3 against limit: 5.00
+[2025-10-31 11:18:07] [INFO] User ID: 3 spinning slots with bet: $5.00
+[2025-10-31 11:18:09] [INFO] User ID: 3 slot result: 🍒 | 🍒 | 🍒
+[2025-10-31 11:18:09] [TRANSACTION] User ID: 3 won jackpot of $15.00 in normal slots
+[2025-10-31 11:18:09] [TRANSACTION] User ID: 3 transaction attempt for amount: 15.00
+[2025-10-31 11:18:09] [TRANSACTION] User ID: 3 transaction completed successfully for amount: 15.00
+[2025-10-31 11:18:09] [INFO] User ID: 3 new balance: 575.00
+[2025-10-31 11:18:09] [INFO] Recording game win: normal
+[2025-10-31 11:18:09] [INFO] Recording game played: normal
+[2025-10-31 11:18:09] [TRANSACTION] User ID: 3 won 15.00 in game: normal
+[2025-10-31 11:18:17] [INFO] User ID: 3 exiting slots game
+[2025-10-31 11:18:17] [INFO] Retrieving list of games
+[2025-10-31 11:18:18] [INFO] User ID: 3 exited game selection menu
+[2025-10-31 11:18:20] [INFO] User ID: 3 logged out
+[2025-10-31 11:18:23] [INFO] User selected sign-in option
+[2025-10-31 11:23:55] [INFO] Application is starting
+[2025-10-31 11:23:55] [INFO] Database connection established
+[2025-10-31 11:23:55] [INFO] Foreign keys enabled
+[2025-10-31 11:23:56] [INFO] Database is initialized
+[2025-10-31 11:23:56] [INFO] starting application login flow
+[2025-10-31 11:23:58] [INFO] User selected sign-in option
+[2025-10-31 11:24:00] [SECURITY] Login attempt for username: technician
+[2025-10-31 11:24:00] [INFO] Checking credentials for user: technician
+[2025-10-31 11:24:00] [SECURITY] Failed login for username: technician. Error: Query returned no rows
+[2025-10-31 11:25:04] [INFO] Application is starting
+[2025-10-31 11:25:05] [INFO] Database connection established
+[2025-10-31 11:25:05] [INFO] Foreign keys enabled
+[2025-10-31 11:25:05] [INFO] Database is initialized
+[2025-10-31 11:25:05] [INFO] starting application login flow
+[2025-10-31 11:25:10] [INFO] User selected sign-in option
+[2025-10-31 11:25:21] [SECURITY] Login attempt for username: technician
+[2025-10-31 11:25:21] [INFO] Checking credentials for user: technician
+[2025-10-31 11:25:21] [SECURITY] Successful login for username: technician (User ID: 1)
+[2025-10-31 11:25:21] [INFO] User ID: 1 logged in as technician
+[2025-10-31 11:25:21] [SECURITY] Technician (User ID: 1) accessed technician menu
+[2025-10-31 11:25:26] [SECURITY] Technician (User ID: 1) accessed security logs
+[2025-10-31 11:25:26] [SECURITY] User ID: 1 accessed log verification menu
