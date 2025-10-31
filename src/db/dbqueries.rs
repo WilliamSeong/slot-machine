@@ -3,7 +3,10 @@ use chrono;
 
 use crate::interfaces::user::User;
 
+/*  ---------------------------------------------------------------------------------------------------------------------------------- */
 // db queries for registering and signing in users
+
+// inserts a user into the users db given a username and password string
 pub fn insert_users(conn: &Connection, username: &str, password: &str) -> rusqlite::Result<usize> {
     conn.execute(
         "Insert Into users (username, password) Values (?1, ?2)",
@@ -11,6 +14,7 @@ pub fn insert_users(conn: &Connection, username: &str, password: &str) -> rusqli
     )
 }
 
+// checks and returns the id if a record in the users db matches the input username and password
 pub fn check_users(conn: &Connection, username: &str, password: &str) -> rusqlite::Result<i32> {
     let mut stmt: rusqlite::Statement<'_> = conn.prepare(
         "Select id, username From users Where username = ?1 And password = ?2"
@@ -25,7 +29,46 @@ pub fn check_users(conn: &Connection, username: &str, password: &str) -> rusqlit
     result
 }
 
-// ----------------------------------------------------------------------------------------------------------------------------------
+/*  ---------------------------------------------------------------------------------------------------------------------------------- */
+// User struct queries, queries the user's details with the user id
+
+pub fn user_get_username(conn: &Connection, id: i32) -> rusqlite::Result<String> {
+    conn.query_row(
+    "Select username From users Where id = ?1",
+    [id],
+    |row| row.get(0)
+    )
+}
+
+pub fn user_get_balance(conn: &Connection, id: i32) -> rusqlite::Result<f64> {
+    conn.query_row(
+        "Select balance From users Where id = ?1",
+        [id],
+        |row| row.get(0)
+    )
+}
+
+pub fn user_get_role(conn: &Connection, id: i32) -> rusqlite::Result<String> {
+    conn.query_row(
+        "Select role From users Where id = ?1",
+        [id],
+        |row| row.get(0)
+    )
+}
+
+/*  ---------------------------------------------------------------------------------------------------------------------------------- */
+
+// queries the games db to see what games exist, returns a Vec of tuples (name of game, active status)
+pub fn get_games(conn: &Connection) -> rusqlite::Result<Vec<(String, bool)>> {
+    let mut stmt = conn.prepare("Select * From games")?;
+
+    let games = stmt.query_map([], |row| {
+        Ok((row.get::<_,String>(1)?, row.get::<_,bool>(5)?))
+    })?.collect::<rusqlite::Result<Vec<_>>>()?;
+
+    Ok(games)
+}
+
 
 pub fn transaction (conn: &Connection, user: &User, amount: f64) -> f64 {
     let mut stmt: rusqlite::Statement<'_> = conn.prepare(
@@ -180,16 +223,6 @@ pub fn add_user_loss(conn: &Connection, user: &User, game: &str) -> rusqlite::Re
     )?;
 
     Ok(())
-}
-
-pub fn get_games(conn: &Connection) -> rusqlite::Result<Vec<(String, bool)>> {
-    let mut stmt = conn.prepare("Select * From games")?;
-
-    let games = stmt.query_map([], |row| {
-        Ok((row.get::<_,String>(1)?, row.get::<_,bool>(5)?))
-    })?.collect::<rusqlite::Result<Vec<_>>>()?;
-
-    Ok(games)
 }
 
 pub fn toggle_game(conn: &Connection, name: &str) -> rusqlite::Result<()> {

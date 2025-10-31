@@ -7,9 +7,10 @@ use rand::SeedableRng;
 use rand::RngCore;
 use std::io::{self, Write};
 
-
+// function to run the normal slots game, returns a bool to indiciate whether to change bet (true) or to exit the game (false)
 pub fn normal_slots(conn: &Connection, bet: f64, user: &User) -> bool {
     loop {
+        // Check if player has the funds
         if !dbqueries::check_funds(conn, user, bet as f64) {
             println!("Insufficient more funds");
             return true;

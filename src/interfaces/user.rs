@@ -8,29 +8,16 @@ pub struct User {
 }
 
 impl User {
-    pub fn get_username(&self, conn: &Connection) -> Result<String, rusqlite::Error> {
-        conn.query_row(
-        "Select username From users Where id = ?1",
-        [self.id],
-        |row| row.get(0)
-        )
+    pub fn get_username(&self, conn: &Connection) -> rusqlite::Result<String> {
+        dbqueries::user_get_username(conn, self.id)
     }
 
-
-    pub fn get_balance(&self, conn: &Connection) -> Result<f64, rusqlite::Error> {
-        conn.query_row(
-            "Select balance From users Where id = ?1",
-            [self.id],
-            |row| row.get(0)
-        )
+    pub fn get_balance(&self, conn: &Connection) -> rusqlite::Result<f64> {
+        dbqueries::user_get_balance(conn, self.id)
     }
 
-    pub fn get_role(&self, conn: &Connection) -> Result<String, rusqlite::Error> {
-        conn.query_row(
-            "Select role From users Where id = ?1",
-            [self.id],
-            |row| row.get(0)
-        )
+    pub fn get_role(&self, conn: &Connection) -> rusqlite::Result<String> {
+        dbqueries::user_get_role(conn, self.id)
     }
 }
 
@@ -68,20 +55,21 @@ pub fn user_menu(conn: &Connection, user: &User) -> rusqlite::Result<()> {
 
 fn play_menu(conn: &Connection, user: &User) -> rusqlite::Result<()>{
     loop {
-
         // The available games are queried through the get_games function that scans the games table and checks which games were made available by the technician
         let all_games: Vec<(String, bool)> = dbqueries::get_games(conn)?;
 
+        // Initialize a new Vec
         let mut active_games: Vec<(String, bool)> = vec![];
 
+        // Go through all existing games and just get the active games
         for game in all_games {
             let (_, active): (String, bool) = game;
-
             if active {
                 active_games.push(game);
             }
         }
 
+        // print playable games according to the active games vec
         println!("\n{}", "═══ 🎰 Modes 🎰 ═══".bright_cyan().bold());
         for (index, (name, _)) in active_games.iter().enumerate(){
             println!("{}: {}", (index+1).to_string().yellow(), name);
@@ -94,20 +82,26 @@ fn play_menu(conn: &Connection, user: &User) -> rusqlite::Result<()>{
         let mut choice = String::new();
         io::stdin().read_line(&mut choice).ok();
 
+        // In the case the user selects to go back
         if choice.trim() == (active_games.len()+1).to_string() {
             println!("Go back");
             break;
         }
 
+        // else get the number to index the active games Vec
         let num_choice: usize = choice.trim().parse().unwrap();
         let index_choice: usize = num_choice - 1;
 
+        // Get the name of the game user selected
         let (name_choice, _) = &active_games[index_choice];
 
+        // match to that name
         match name_choice.trim() {
             "normal" => {
                 loop{ 
+                    // Get the bed amount
                     let bet = bet();
+                    // If valid bet is chosen then play normal slots
                     if  bet != 0.0 {
                         if !play::slots::normal_slots(conn, bet, user) {
                             break;
@@ -129,6 +123,31 @@ fn play_menu(conn: &Connection, user: &User) -> rusqlite::Result<()>{
         }
     }
     Ok(())
+}
+
+fn bet()-> f64 {
+    loop {
+        println!("\n{}", "🎰 PLACE BET 🎰".bright_red().bold());
+        println!("{}. $1", "1".green());
+        println!("{}. $5", "2".green());
+        println!("{}. $10", "3".green());
+        println!("{}. $20", "4".green());
+        println!("{}. Back", "5".red());
+        print!("{} ", "Choose:".yellow());
+        io::stdout().flush().ok();
+
+        let mut input: String = String::new();
+        io::stdin().read_line(&mut input).ok();
+        
+        match input.trim() {
+            "1" => return 1.0,
+            "2" => return 5.0,
+            "3" => return 10.0,
+            "4" => return 20.0,
+            "5" => return 0.0,
+            _ => println!("Invalid Input")
+        }
+    }
 }
 
 fn user_account(conn: &Connection, user: &User) {
@@ -228,44 +247,4 @@ fn withdraw(conn: &Connection, user: &User) -> rusqlite::Result<bool>{
 
 fn user_statistics(conn: &Connection, user: &User) {
     let _ = dbqueries::query_user_statistics(conn, user);
-}
-
-fn bet()-> f64 {
-
-    loop {
-        println!("\n{}", "🎰 PLACE BET 🎰".bright_red().bold());
-        println!("{}. $1", "1".green());
-        println!("{}. $5", "2".green());
-        println!("{}. $10", "3".green());
-        println!("{}. $20", "4".green());
-        println!("{}. Back", "5".red());
-        print!("{} ", "Choose:".yellow());
-        io::stdout().flush().ok();
-
-        let mut input: String = String::new();
-        io::stdin().read_line(&mut input).ok();
-        
-        match input.trim() {
-            "1" => {
-                println!("Betting $1");
-                return 1.0
-            }
-            "2" => {
-                println!("Betting $5");
-                return 5.0
-            }
-            "3" => {
-                println!("Betting $10");
-                return 10.0
-            }
-            "4" => {
-                println!("Betting $20");
-                return 20.0
-            }
-            "5" => {
-                break 0.0;
-            }
-            _ => {println!("Invalid Input");}
-        }
-    }
 }
