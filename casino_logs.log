@@ -431,3 +431,41 @@
 [2025-11-02 00:41:50] [INFO] Technician (User ID: 1) logged out
 [2025-11-02 00:41:55] [INFO] User selected exit option
 [2025-11-02 00:41:55] [INFO] Application shutting down
+[2025-11-02 05:59:51] [INFO] Application is starting
+[2025-11-02 05:59:51] [INFO] Database connection established
+[2025-11-02 05:59:51] [INFO] Foreign keys enabled
+[2025-11-02 05:59:51] [INFO] Database is initialized
+[2025-11-02 05:59:51] [INFO] starting application login flow
+[2025-11-02 05:59:55] [INFO] User selected sign-in option
+[2025-11-02 05:59:58] [SECURITY] Login attempt for username: will
+[2025-11-02 05:59:58] [INFO] Checking credentials for user: will
+[2025-11-02 05:59:58] [SECURITY] Successful login for username: will (User ID: 3)
+[2025-11-02 05:59:58] [INFO] User ID: 3 logged in as regular user
+[2025-11-02 05:59:58] [INFO] User ID: 3 (will) accessed the main menu
+[2025-11-02 06:00:00] [INFO] User ID: 3 selected Play option
+[2025-11-02 06:00:00] [INFO] User ID: 3 entered game selection menu
+[2025-11-02 06:00:00] [INFO] Retrieving list of games
+[2025-11-02 06:00:07] [TRANSACTION] User ID: 3 placed bet of $20.00 on multiwin slots
+[2025-11-02 06:00:07] [INFO] Checking funds for User ID: 3 against limit: 20.00
+[2025-11-02 06:00:07] [INFO] Checking funds for User ID: 3 against limit: 20.00
+[2025-11-02 07:13:09] [INFO] Application is starting
+[2025-11-02 07:13:09] [INFO] Database connection established
+[2025-11-02 07:13:09] [INFO] Foreign keys enabled
+[2025-11-02 07:13:09] [INFO] Database is initialized
+[2025-11-02 07:13:09] [INFO] starting application login flow
+[2025-11-02 07:13:16] [INFO] User selected sign-in option
+[2025-11-02 07:13:17] [SECURITY] Login attempt for username: wil
+[2025-11-02 07:13:17] [INFO] Checking credentials for user: wil
+[2025-11-02 07:13:17] [SECURITY] Failed login for username: wil. Error: Query returned no rows
+[2025-11-02 07:13:18] [INFO] User selected sign-in option
+[2025-11-02 07:13:20] [SECURITY] Login attempt for username: will
+[2025-11-02 07:13:20] [INFO] Checking credentials for user: will
+[2025-11-02 07:13:20] [SECURITY] Successful login for username: will (User ID: 3)
+[2025-11-02 07:13:20] [INFO] User ID: 3 logged in as regular user
+[2025-11-02 07:13:20] [INFO] User ID: 3 (will) accessed the main menu
+[2025-11-02 07:13:23] [INFO] User ID: 3 selected Play option
+[2025-11-02 07:13:23] [INFO] User ID: 3 entered game selection menu
+[2025-11-02 07:13:23] [INFO] Retrieving list of games
+[2025-11-02 07:13:25] [TRANSACTION] User ID: 3 placed bet of $20.00 on holding slots
+[2025-11-02 07:13:25] [INFO] Checking funds for User ID: 3 against limit: 20.00
+[2025-11-02 07:15:31] [INFO] User ID: 3 continuing with same bet

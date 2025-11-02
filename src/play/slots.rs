@@ -88,15 +88,6 @@ pub fn normal_slots(conn: &Connection, bet: f64, user: &User) -> bool {
         let menu_options = vec!["Spin Again", "Change Bet", "Exit"];
         let user_input = menu_generator("═══ 🎰 Play Again? 🎰 ═══", &menu_options);
 
-        // println!("Play Again?");
-        // println!("Press Enter to continue");
-        // println!("Press 1 to change bet");
-        // println!("Press 2 to exit");
-        // io::stdout().flush().ok();
-
-        // let mut input = String::new();
-        // io::stdin().read_line(&mut input).ok();
-
         match user_input.trim() {
             "Spin Again" => {
                 logger::info(&format!("User ID: {} continuing with same bet", user.id));

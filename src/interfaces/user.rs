@@ -104,45 +104,6 @@ fn play_menu(conn: &Connection, user: &User) -> rusqlite::Result<()>{
 
         let user_input = menu_generator("Select a game", &menu_options);
 
-
-        // print playable games according to the active games vec
-        // println!("\n{}", "═══ 🎰 Modes 🎰 ═══".bright_cyan().bold());
-        // for (index, (name, _)) in active_games.iter().enumerate(){
-        //     println!("{}: {}", (index+1).to_string().yellow(), name);
-        // }
-        // println!("{}. Back", (active_games.len()+1).to_string().yellow());
-
-        // print!("{} ", "Choose:".green());
-        // io::stdout().flush().ok();
-
-        // let mut choice = String::new();
-        // io::stdin().read_line(&mut choice).ok();
-
-        // In the case the user selects to go back
-        // if choice.trim() == (active_games.len()+1).to_string() {
-        //     logger::info(&format!("User ID: {} exited game selection menu", user.id));
-        //     println!("Go back");
-        //     break;
-        // }
-
-        // let num_choice: usize = match choice.trim().parse() {
-        //     Ok(num) => num,
-        //     Err(_) => {
-        //         logger::warning(&format!("User ID: {} made invalid game selection", user.id));
-        //         println!("Invalid selection");
-        //         continue;
-        //     }
-        // };
-        
-        // if num_choice < 1 || num_choice > active_games.len() {
-        //     logger::warning(&format!("User ID: {} selected out of range game number: {}", user.id, num_choice));
-        //     println!("Invalid game number");
-        //     continue;
-        // }
-        
-        // let index_choice: usize = num_choice - 1;
-        // let (name_choice, _) = &active_games[index_choice];
-
         match user_input.trim() {
             "normal" => {
                 loop{ 
@@ -190,8 +151,26 @@ fn play_menu(conn: &Connection, user: &User) -> rusqlite::Result<()>{
                 }
             }
             "holding" => {
-                logger::info(&format!("User ID: {} selected holding game (not implemented)", user.id));
-                println!("Entering holding");
+                loop{
+                    // Get the bet amount
+                    let bet = bet();
+                    if bet != 0.0 {
+                        logger::transaction(&format!("User ID: {} placed bet of ${:.2} on holding slots", user.id, bet));
+
+                        // Check if user has sufficient funds
+                        if !dbqueries::check_funds(conn, user, bet) {
+                            logger::warning(&format!("User ID: {} attempted to bet ${:.2} with insufficient funds", user.id, bet));
+                            println!("{}", "Insufficient funds for this bet".red());
+                            break;
+                        }
+                        if !play::holding::hold_game(conn, user, bet) {
+                            break;
+                        }
+                    } else {
+                        logger::info(&format!("User ID: {} cancelled betting", user.id));
+                        break;
+                    }
+                }
             }
             "Back" => {
                 logger::info(&format!("User ID: {} selected holding game (not implemented)", user.id));
@@ -210,18 +189,6 @@ fn bet()-> f64 {
 
         let menu_options = vec!["$1", "$5", "$10", "$20", "Back"];
         let user_input = menu_generator("How much will you bet?", &menu_options);
-
-        // println!("\n{}", "🎰 PLACE BET 🎰".bright_red().bold());
-        // println!("{}. $1", "1".green());
-        // println!("{}. $5", "2".green());
-        // println!("{}. $10", "3".green());
-        // println!("{}. $20", "4".green());
-        // println!("{}. Back", "5".red());
-        // print!("{} ", "Choose:".yellow());
-        // io::stdout().flush().ok();
-
-        // let mut input: String = String::new();
-        // io::stdin().read_line(&mut input).ok();
         
         match user_input.trim() {
             "$1" => return 1.0,
@@ -249,17 +216,6 @@ fn user_account(conn: &Connection, user: &User) {
                 // Show options to user
                 let menu_options = vec!["Deposit", "Withdraw", "Statistics", "Settings", "Exit"];
                 let user_input = menu_generator("═══ 🎰 User Options 🎰 ═══", &menu_options);
-
-                // println!("{}", "═══ 🎰 User Options 🎰 ═══".bright_cyan().bold());
-                // println!("{}. Deposit", "1".yellow());
-                // println!("{}. Withdraw", "2".yellow());
-                // println!("{}. Statistics", "3".yellow());
-                // println!("{}. Settings", "4".yellow());
-                // println!("{}. Exit", "5".yellow());
-                // io::stdout().flush().ok();
-
-                // let mut choice = String::new();
-                // io::stdin().read_line(&mut choice).ok();
 
                 match user_input.trim() {
                     "Deposit" => {

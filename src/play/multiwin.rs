@@ -33,17 +33,6 @@ pub fn multi_win(conn: &Connection, user: &User, bet: f64) -> bool{
             return true;
         }
 
-        //Get user input 
-        // println!("\nPress ENTER to spin (or 'q' to quit)...");
-        // let mut input = String::new();
-        // io::stdin()
-        //     .read_line(&mut input)
-        //     .expect("Failed to read line");
-
-        // if input.trim().eq_ignore_ascii_case("q") {
-        //     break; // Exit the game loop
-        // }
-
         //spinning animation
         run_spin_animation(&mut rng);
 
@@ -80,15 +69,6 @@ pub fn multi_win(conn: &Connection, user: &User, bet: f64) -> bool{
         // Show options to user
         let menu_options = vec!["Spin Again", "Change Bet", "Exit"];
         let user_input = menu_generator("═══ 🎰 Play Again? 🎰 ═══", &menu_options);
-
-        // println!("Play Again?");
-        // println!("Press Enter to continue");
-        // println!("Press 1 to change bet");
-        // println!("Press 2 to exit");
-        // io::stdout().flush().ok();
-
-        // let mut user_input = String::new();
-        // io::stdin().read_line(&mut input).ok();
 
         match user_input.trim() {
             "Spin Again" => {
