@@ -65,9 +65,8 @@ const ANIMATION_FRAMES: [&str; 4] = [
     ",
 ];
 
-//game loop request user input
-fn main() {
-    //let mut rng = rand::thread_rng();
+//game play public fun
+pub fn gameplay_wheel(){
     let mut rng = rand::rng();
     let mut player_money = STARTING_MONEY;
 
