@@ -9,6 +9,8 @@ use crate::logger::logger;
 
 use crate::interfaces::menus::menu_generator;
 
+use clearscreen;
+
 // main entry point into the application
 pub fn login(conn: &Connection) -> rusqlite::Result<()> {
     loop {
@@ -16,8 +18,6 @@ pub fn login(conn: &Connection) -> rusqlite::Result<()> {
         let menu_options = vec!["Register", "Sign In", "Exit"];
         let user_input = menu_generator("═══ 🎰 Casino Login 🎰 ═══", &menu_options);
         
-        // println!("user input: {}", user_input);
-
         // check user input
         let user = match user_input.trim() {
             "Register" => {
@@ -86,7 +86,8 @@ pub fn register(conn: &Connection) -> Result<Option<User>> {
             // Create user statistics functions
             dbqueries::initialize_user_statistics(conn, username, password)?;
             logger::security(&format!("Registration successful for username: {}", username));
-            println!("Registration Complete!");
+            // println!("Registration Complete!");
+            clearscreen::clear().expect("Failed clearscreen");
             let user = dbqueries::get_user(&username, &password, conn);
             if let Some(ref u) = user {
                 logger::security(&format!("New user created with ID: {}", u.id));
@@ -126,7 +127,8 @@ pub fn sign_in(conn: &Connection) -> Result<Option<User>> {
     match result {
         Ok(id) => {
             logger::security(&format!("Successful login for username: {} (User ID: {})", username, id));
-            println!("{}", "Login successful!".green());
+            // println!("{}", "Login successful!".green());
+            clearscreen::clear().expect("Failed clearscreen");
             return Ok(Some(User { id: id}))
         }
         Err(e) => {

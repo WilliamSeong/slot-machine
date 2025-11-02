@@ -8,6 +8,8 @@ use rand::SeedableRng;
 use rand::RngCore;
 use std::io::{self, Write};
 
+use crate::interfaces::menus::menu_generator;
+
 // function to run the normal slots game, returns a bool to indiciate whether to change bet (true) or to exit the game (false)
 pub fn normal_slots(conn: &Connection, bet: f64, user: &User) -> bool {
     logger::info(&format!("User ID: {} started normal slots game with bet: ${:.2}", user.id, bet));
@@ -82,27 +84,29 @@ pub fn normal_slots(conn: &Connection, bet: f64, user: &User) -> bool {
             let _ = dbqueries::add_user_loss(conn, user, "normal");
         }
 
-        println!();
+        // Show options to user
+        let menu_options = vec!["Spin Again", "Change Bet", "Exit"];
+        let user_input = menu_generator("═══ 🎰 Play Again? 🎰 ═══", &menu_options);
 
-        println!("Play Again?");
-        println!("Press Enter to continue");
-        println!("Press 1 to change bet");
-        println!("Press 2 to exit");
-        io::stdout().flush().ok();
+        // println!("Play Again?");
+        // println!("Press Enter to continue");
+        // println!("Press 1 to change bet");
+        // println!("Press 2 to exit");
+        // io::stdout().flush().ok();
 
-        let mut input = String::new();
-        io::stdin().read_line(&mut input).ok();
+        // let mut input = String::new();
+        // io::stdin().read_line(&mut input).ok();
 
-        match input.trim() {
-            "" => {
+        match user_input.trim() {
+            "Spin Again" => {
                 logger::info(&format!("User ID: {} continuing with same bet", user.id));
                 continue;
             }
-            "1" => {
+            "Change Bet" => {
                 logger::info(&format!("User ID: {} changing bet", user.id));
                 return true;
             }
-            "2" => {
+            "Exit" => {
                 logger::info(&format!("User ID: {} exiting slots game", user.id));
                 return false;
             }

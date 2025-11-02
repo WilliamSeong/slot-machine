@@ -1,4 +1,5 @@
 use rusqlite::{Connection, Result};
+use clearscreen;
 
 mod interfaces;
 mod db;
@@ -8,6 +9,8 @@ mod logger;
 
 // Main function, creates and connects to db, casino.db
 fn main() -> Result<()> {
+
+    clearscreen::clear().expect("Failed clearscreen");
     // Initialize logger first thing
     logger::logger::info("Application is starting");
     

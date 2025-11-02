@@ -8,6 +8,8 @@ use crate::interfaces::user::User;
 use crate::db::dbqueries;
 use crate::logger::logger;
 
+use crate::interfaces::menus::menu_generator;
+
 const GRID_SIZE: usize = 5;
 const SYMBOLS: [char; 6] = ['🍒', '🍊', '🍋', '🔔', '⭐', '💎'];
 
@@ -75,25 +77,29 @@ pub fn multi_win(conn: &Connection, user: &User, bet: f64) -> bool{
             }
         }
 
-        println!("Play Again?");
-        println!("Press Enter to continue");
-        println!("Press 1 to change bet");
-        println!("Press 2 to exit");
-        io::stdout().flush().ok();
+        // Show options to user
+        let menu_options = vec!["Spin Again", "Change Bet", "Exit"];
+        let user_input = menu_generator("═══ 🎰 Play Again? 🎰 ═══", &menu_options);
 
-        let mut input = String::new();
-        io::stdin().read_line(&mut input).ok();
+        // println!("Play Again?");
+        // println!("Press Enter to continue");
+        // println!("Press 1 to change bet");
+        // println!("Press 2 to exit");
+        // io::stdout().flush().ok();
 
-        match input.trim() {
-            "" => {
+        // let mut user_input = String::new();
+        // io::stdin().read_line(&mut input).ok();
+
+        match user_input.trim() {
+            "Spin Again" => {
                 logger::info(&format!("User ID: {} continuing with same bet", user.id));
                 continue;
             }
-            "1" => {
+            "Change Bet" => {
                 logger::info(&format!("User ID: {} changing bet", user.id));
                 return true;
             }
-            "2" => {
+            "Exit" => {
                 logger::info(&format!("User ID: {} exiting slots game", user.id));
                 return false;
             }

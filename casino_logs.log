@@ -180,3 +180,254 @@
 [2025-11-01 23:08:10] [SECURITY] New user created with ID: 5
 [2025-11-01 23:08:10] [INFO] User ID: 5 logged in as regular user
 [2025-11-01 23:08:10] [INFO] User ID: 5 (william) accessed the main menu
+[2025-11-01 23:16:15] [INFO] Application is starting
+[2025-11-01 23:16:15] [INFO] Database connection established
+[2025-11-01 23:16:15] [INFO] Foreign keys enabled
+[2025-11-01 23:16:15] [INFO] Database is initialized
+[2025-11-01 23:16:15] [INFO] starting application login flow
+[2025-11-01 23:16:21] [INFO] User selected registration option
+[2025-11-01 23:16:27] [SECURITY] Registration attempt for username: will
+[2025-11-01 23:16:27] [INFO] Attempting to insert new user: will
+[2025-11-01 23:16:27] [INFO] Initializing statistics for new user: will
+[2025-11-01 23:16:27] [INFO] User statistics successfully registered for User ID: 3
+[2025-11-01 23:16:27] [SECURITY] Registration successful for username: will
+[2025-11-01 23:16:27] [INFO] Retrieving user data for: will
+[2025-11-01 23:16:27] [INFO] Successfully retrieved user data for ID: 3
+[2025-11-01 23:16:27] [SECURITY] New user created with ID: 3
+[2025-11-01 23:16:27] [INFO] User ID: 3 logged in as regular user
+[2025-11-01 23:16:27] [INFO] User ID: 3 (will) accessed the main menu
+[2025-11-01 23:16:30] [INFO] User ID: 3 logged out
+[2025-11-01 23:16:33] [INFO] User selected registration option
+[2025-11-01 23:16:35] [SECURITY] Registration attempt for username: will
+[2025-11-01 23:16:35] [INFO] Attempting to insert new user: will
+[2025-11-01 23:16:35] [ERROR] Registration failed for username: will. Error: UNIQUE constraint failed: users.username
+[2025-11-01 23:17:03] [INFO] User selected registration option
+[2025-11-01 23:17:06] [SECURITY] Registration attempt for username: will
+[2025-11-01 23:17:06] [INFO] Attempting to insert new user: will
+[2025-11-01 23:17:06] [ERROR] Registration failed for username: will. Error: UNIQUE constraint failed: users.username
+[2025-11-02 00:14:35] [INFO] Application is starting
+[2025-11-02 00:14:35] [INFO] Database connection established
+[2025-11-02 00:14:35] [INFO] Foreign keys enabled
+[2025-11-02 00:14:35] [INFO] Database is initialized
+[2025-11-02 00:14:35] [INFO] starting application login flow
+[2025-11-02 00:14:37] [INFO] User selected sign-in option
+[2025-11-02 00:14:38] [SECURITY] Login attempt for username: will
+[2025-11-02 00:14:38] [INFO] Checking credentials for user: will
+[2025-11-02 00:14:38] [SECURITY] Successful login for username: will (User ID: 3)
+[2025-11-02 00:14:38] [INFO] User ID: 3 logged in as regular user
+[2025-11-02 00:14:38] [INFO] User ID: 3 (will) accessed the main menu
+[2025-11-02 00:14:42] [INFO] User ID: 3 selected Play option
+[2025-11-02 00:14:42] [INFO] User ID: 3 entered game selection menu
+[2025-11-02 00:14:42] [INFO] Retrieving list of games
+[2025-11-02 00:28:02] [INFO] Application is starting
+[2025-11-02 00:28:02] [INFO] Database connection established
+[2025-11-02 00:28:02] [INFO] Foreign keys enabled
+[2025-11-02 00:28:02] [INFO] Database is initialized
+[2025-11-02 00:28:02] [INFO] starting application login flow
+[2025-11-02 00:28:09] [INFO] User selected sign-in option
+[2025-11-02 00:28:11] [SECURITY] Login attempt for username: will
+[2025-11-02 00:28:11] [INFO] Checking credentials for user: will
+[2025-11-02 00:28:11] [SECURITY] Successful login for username: will (User ID: 3)
+[2025-11-02 00:28:11] [INFO] User ID: 3 logged in as regular user
+[2025-11-02 00:28:11] [INFO] User ID: 3 (will) accessed the main menu
+[2025-11-02 00:28:16] [INFO] User ID: 3 selected Play option
+[2025-11-02 00:28:16] [INFO] User ID: 3 entered game selection menu
+[2025-11-02 00:28:16] [INFO] Retrieving list of games
+[2025-11-02 00:30:35] [INFO] Application is starting
+[2025-11-02 00:30:35] [INFO] Database connection established
+[2025-11-02 00:30:35] [INFO] Foreign keys enabled
+[2025-11-02 00:30:35] [INFO] Database is initialized
+[2025-11-02 00:30:35] [INFO] starting application login flow
+[2025-11-02 00:30:37] [INFO] User selected sign-in option
+[2025-11-02 00:30:40] [SECURITY] Login attempt for username: will
+[2025-11-02 00:30:40] [INFO] Checking credentials for user: will
+[2025-11-02 00:30:40] [SECURITY] Successful login for username: will (User ID: 3)
+[2025-11-02 00:30:40] [INFO] User ID: 3 logged in as regular user
+[2025-11-02 00:30:40] [INFO] User ID: 3 (will) accessed the main menu
+[2025-11-02 00:30:41] [INFO] User ID: 3 selected Play option
+[2025-11-02 00:30:41] [INFO] User ID: 3 entered game selection menu
+[2025-11-02 00:30:41] [INFO] Retrieving list of games
+[2025-11-02 00:30:43] [TRANSACTION] User ID: 3 placed bet of $20.00 on multiwin slots
+[2025-11-02 00:30:43] [INFO] Checking funds for User ID: 3 against limit: 20.00
+[2025-11-02 00:30:43] [WARNING] Insufficient funds for User ID: 3. Balance: 0.00, Required: 20.00
+[2025-11-02 00:30:43] [WARNING] User ID: 3 attempted to bet $20.00 with insufficient funds
+[2025-11-02 00:30:43] [INFO] Retrieving list of games
+[2025-11-02 00:30:47] [INFO] User ID: 3 selected holding game (not implemented)
+[2025-11-02 00:30:47] [INFO] Retrieving list of games
+[2025-11-02 00:30:48] [INFO] User ID: 3 selected holding game (not implemented)
+[2025-11-02 00:30:48] [INFO] Retrieving list of games
+[2025-11-02 00:30:52] [INFO] User ID: 3 selected holding game (not implemented)
+[2025-11-02 00:30:52] [INFO] Retrieving list of games
+[2025-11-02 00:32:52] [INFO] Application is starting
+[2025-11-02 00:32:52] [INFO] Database connection established
+[2025-11-02 00:32:52] [INFO] Foreign keys enabled
+[2025-11-02 00:32:52] [INFO] Database is initialized
+[2025-11-02 00:32:52] [INFO] starting application login flow
+[2025-11-02 00:32:56] [INFO] User selected sign-in option
+[2025-11-02 00:32:58] [SECURITY] Login attempt for username: will
+[2025-11-02 00:32:58] [INFO] Checking credentials for user: will
+[2025-11-02 00:32:58] [SECURITY] Successful login for username: will (User ID: 3)
+[2025-11-02 00:32:58] [INFO] User ID: 3 logged in as regular user
+[2025-11-02 00:32:58] [INFO] User ID: 3 (will) accessed the main menu
+[2025-11-02 00:33:00] [INFO] User ID: 3 selected Account option
+[2025-11-02 00:33:00] [INFO] User ID: 3 accessed account information
+[2025-11-02 00:33:01] [WARNING] User ID: 3 made invalid account menu selection
+[2025-11-02 00:34:00] [INFO] Application is starting
+[2025-11-02 00:34:00] [INFO] Database connection established
+[2025-11-02 00:34:00] [INFO] Foreign keys enabled
+[2025-11-02 00:34:00] [INFO] Database is initialized
+[2025-11-02 00:34:00] [INFO] starting application login flow
+[2025-11-02 00:34:01] [INFO] User selected sign-in option
+[2025-11-02 00:34:02] [SECURITY] Login attempt for username: will
+[2025-11-02 00:34:02] [INFO] Checking credentials for user: will
+[2025-11-02 00:34:02] [SECURITY] Successful login for username: will (User ID: 3)
+[2025-11-02 00:34:02] [INFO] User ID: 3 logged in as regular user
+[2025-11-02 00:34:02] [INFO] User ID: 3 (will) accessed the main menu
+[2025-11-02 00:34:04] [INFO] User ID: 3 selected Account option
+[2025-11-02 00:34:04] [INFO] User ID: 3 accessed account information
+[2025-11-02 00:34:05] [INFO] User ID: 3 selected deposit option
+[2025-11-02 00:34:08] [TRANSACTION] User ID: 3 deposited $1000.00
+[2025-11-02 00:34:08] [TRANSACTION] Balance change for User ID: 3 amount: 1000.00
+[2025-11-02 00:34:08] [TRANSACTION] User ID: 3 new balance after change: 1000.00
+[2025-11-02 00:34:10] [INFO] User ID: 3 exited account menu
+[2025-11-02 00:34:12] [INFO] User ID: 3 selected Play option
+[2025-11-02 00:34:12] [INFO] User ID: 3 entered game selection menu
+[2025-11-02 00:34:12] [INFO] Retrieving list of games
+[2025-11-02 00:34:14] [TRANSACTION] User ID: 3 placed bet of $20.00 on multiwin slots
+[2025-11-02 00:34:14] [INFO] Checking funds for User ID: 3 against limit: 20.00
+[2025-11-02 00:34:14] [INFO] Checking funds for User ID: 3 against limit: 20.00
+[2025-11-02 00:36:50] [INFO] Application is starting
+[2025-11-02 00:36:50] [INFO] Database connection established
+[2025-11-02 00:36:50] [INFO] Foreign keys enabled
+[2025-11-02 00:36:50] [INFO] Database is initialized
+[2025-11-02 00:36:50] [INFO] starting application login flow
+[2025-11-02 00:36:52] [INFO] User selected sign-in option
+[2025-11-02 00:36:55] [SECURITY] Login attempt for username: will
+[2025-11-02 00:36:55] [INFO] Checking credentials for user: will
+[2025-11-02 00:36:55] [SECURITY] Successful login for username: will (User ID: 3)
+[2025-11-02 00:36:55] [INFO] User ID: 3 logged in as regular user
+[2025-11-02 00:36:55] [INFO] User ID: 3 (will) accessed the main menu
+[2025-11-02 00:36:56] [INFO] User ID: 3 selected Play option
+[2025-11-02 00:36:56] [INFO] User ID: 3 entered game selection menu
+[2025-11-02 00:36:56] [INFO] Retrieving list of games
+[2025-11-02 00:36:59] [TRANSACTION] User ID: 3 placed bet of $20.00 on multiwin slots
+[2025-11-02 00:36:59] [INFO] Checking funds for User ID: 3 against limit: 20.00
+[2025-11-02 00:36:59] [INFO] Checking funds for User ID: 3 against limit: 20.00
+[2025-11-02 00:37:02] [INFO] User ID: 3 made invalid selection, continuing game
+[2025-11-02 00:37:02] [INFO] Checking funds for User ID: 3 against limit: 20.00
+[2025-11-02 00:38:17] [INFO] Application is starting
+[2025-11-02 00:38:17] [INFO] Database connection established
+[2025-11-02 00:38:17] [INFO] Foreign keys enabled
+[2025-11-02 00:38:17] [INFO] Database is initialized
+[2025-11-02 00:38:17] [INFO] starting application login flow
+[2025-11-02 00:38:19] [INFO] User selected sign-in option
+[2025-11-02 00:38:21] [SECURITY] Login attempt for username: will
+[2025-11-02 00:38:21] [INFO] Checking credentials for user: will
+[2025-11-02 00:38:21] [SECURITY] Successful login for username: will (User ID: 3)
+[2025-11-02 00:38:21] [INFO] User ID: 3 logged in as regular user
+[2025-11-02 00:38:21] [INFO] User ID: 3 (will) accessed the main menu
+[2025-11-02 00:38:22] [INFO] User ID: 3 selected Play option
+[2025-11-02 00:38:22] [INFO] User ID: 3 entered game selection menu
+[2025-11-02 00:38:22] [INFO] Retrieving list of games
+[2025-11-02 00:38:25] [TRANSACTION] User ID: 3 placed bet of $20.00 on multiwin slots
+[2025-11-02 00:38:25] [INFO] Checking funds for User ID: 3 against limit: 20.00
+[2025-11-02 00:38:25] [INFO] Checking funds for User ID: 3 against limit: 20.00
+[2025-11-02 00:38:27] [INFO] User ID: 3 continuing with same bet
+[2025-11-02 00:38:27] [INFO] Checking funds for User ID: 3 against limit: 20.00
+[2025-11-02 00:38:29] [INFO] User ID: 3 changing bet
+[2025-11-02 00:38:31] [TRANSACTION] User ID: 3 placed bet of $5.00 on multiwin slots
+[2025-11-02 00:38:31] [INFO] Checking funds for User ID: 3 against limit: 5.00
+[2025-11-02 00:38:31] [INFO] Checking funds for User ID: 3 against limit: 5.00
+[2025-11-02 00:38:35] [INFO] User ID: 3 exiting slots game
+[2025-11-02 00:38:35] [INFO] Retrieving list of games
+[2025-11-02 00:38:37] [TRANSACTION] User ID: 3 placed bet of $10.00 on normal slots
+[2025-11-02 00:38:37] [INFO] Checking funds for User ID: 3 against limit: 10.00
+[2025-11-02 00:38:37] [INFO] User ID: 3 started normal slots game with bet: $10.00
+[2025-11-02 00:38:37] [INFO] Checking funds for User ID: 3 against limit: 10.00
+[2025-11-02 00:38:37] [INFO] User ID: 3 spinning slots with bet: $10.00
+[2025-11-02 00:38:39] [INFO] User ID: 3 slot result: 🍒 | 🍒 | 🍒
+[2025-11-02 00:38:39] [TRANSACTION] User ID: 3 won jackpot of $30.00 in normal slots
+[2025-11-02 00:38:39] [TRANSACTION] User ID: 3 transaction attempt for amount: 30.00
+[2025-11-02 00:38:39] [TRANSACTION] User ID: 3 transaction completed successfully for amount: 30.00
+[2025-11-02 00:38:39] [INFO] User ID: 3 new balance: 1030.00
+[2025-11-02 00:38:39] [INFO] Recording game win: normal
+[2025-11-02 00:38:39] [INFO] Recording game played: normal
+[2025-11-02 00:38:39] [TRANSACTION] User ID: 3 won 30.00 in game: normal
+[2025-11-02 00:38:39] [INFO] New highest payout for User ID: 3 in game normal: 30.00
+[2025-11-02 00:38:43] [INFO] User ID: 3 changing bet
+[2025-11-02 00:38:44] [TRANSACTION] User ID: 3 placed bet of $20.00 on normal slots
+[2025-11-02 00:38:44] [INFO] Checking funds for User ID: 3 against limit: 20.00
+[2025-11-02 00:38:44] [INFO] User ID: 3 started normal slots game with bet: $20.00
+[2025-11-02 00:38:44] [INFO] Checking funds for User ID: 3 against limit: 20.00
+[2025-11-02 00:38:44] [INFO] User ID: 3 spinning slots with bet: $20.00
+[2025-11-02 00:38:46] [INFO] User ID: 3 slot result: 🍒 | 🍒 | 🍒
+[2025-11-02 00:38:46] [TRANSACTION] User ID: 3 won jackpot of $60.00 in normal slots
+[2025-11-02 00:38:46] [TRANSACTION] User ID: 3 transaction attempt for amount: 60.00
+[2025-11-02 00:38:46] [TRANSACTION] User ID: 3 transaction completed successfully for amount: 60.00
+[2025-11-02 00:38:46] [INFO] User ID: 3 new balance: 1090.00
+[2025-11-02 00:38:46] [INFO] Recording game win: normal
+[2025-11-02 00:38:46] [INFO] Recording game played: normal
+[2025-11-02 00:38:46] [TRANSACTION] User ID: 3 won 60.00 in game: normal
+[2025-11-02 00:38:46] [INFO] New highest payout for User ID: 3 in game normal: 60.00
+[2025-11-02 00:38:49] [INFO] User ID: 3 continuing with same bet
+[2025-11-02 00:38:49] [INFO] Checking funds for User ID: 3 against limit: 20.00
+[2025-11-02 00:38:49] [INFO] User ID: 3 spinning slots with bet: $20.00
+[2025-11-02 00:38:51] [INFO] User ID: 3 slot result: 🍒 | 🍒 | 🍒
+[2025-11-02 00:38:51] [TRANSACTION] User ID: 3 won jackpot of $60.00 in normal slots
+[2025-11-02 00:38:51] [TRANSACTION] User ID: 3 transaction attempt for amount: 60.00
+[2025-11-02 00:38:51] [TRANSACTION] User ID: 3 transaction completed successfully for amount: 60.00
+[2025-11-02 00:38:51] [INFO] User ID: 3 new balance: 1150.00
+[2025-11-02 00:38:51] [INFO] Recording game win: normal
+[2025-11-02 00:38:51] [INFO] Recording game played: normal
+[2025-11-02 00:38:51] [TRANSACTION] User ID: 3 won 60.00 in game: normal
+[2025-11-02 00:39:51] [INFO] User ID: 3 exiting slots game
+[2025-11-02 00:39:51] [INFO] Retrieving list of games
+[2025-11-02 00:39:52] [INFO] User ID: 3 selected holding game (not implemented)
+[2025-11-02 00:39:53] [INFO] User ID: 3 logged out
+[2025-11-02 00:39:54] [INFO] User selected sign-in option
+[2025-11-02 00:39:57] [SECURITY] Login attempt for username: technician
+[2025-11-02 00:39:57] [INFO] Checking credentials for user: technician
+[2025-11-02 00:39:57] [SECURITY] Successful login for username: technician (User ID: 1)
+[2025-11-02 00:39:57] [INFO] User ID: 1 logged in as technician
+[2025-11-02 00:39:57] [SECURITY] Technician (User ID: 1) accessed technician menu
+[2025-11-02 00:39:59] [INFO] Technician (User ID: 1) accessed games menu
+[2025-11-02 00:39:59] [INFO] Retrieving list of games
+[2025-11-02 00:40:02] [SECURITY] Game status toggle attempt for: multiwin
+[2025-11-02 00:40:02] [SECURITY] Game status toggle attempt for: multiwin
+[2025-11-02 00:40:02] [SECURITY] Game status successfully toggled for: multiwin
+[2025-11-02 00:40:02] [INFO] Retrieving list of games
+[2025-11-02 00:41:32] [INFO] Application is starting
+[2025-11-02 00:41:32] [INFO] Database connection established
+[2025-11-02 00:41:32] [INFO] Foreign keys enabled
+[2025-11-02 00:41:32] [INFO] Database is initialized
+[2025-11-02 00:41:32] [INFO] starting application login flow
+[2025-11-02 00:41:33] [INFO] User selected sign-in option
+[2025-11-02 00:41:35] [SECURITY] Login attempt for username: technician
+[2025-11-02 00:41:35] [INFO] Checking credentials for user: technician
+[2025-11-02 00:41:35] [SECURITY] Successful login for username: technician (User ID: 1)
+[2025-11-02 00:41:35] [INFO] User ID: 1 logged in as technician
+[2025-11-02 00:41:35] [SECURITY] Technician (User ID: 1) accessed technician menu
+[2025-11-02 00:41:37] [INFO] Technician (User ID: 1) accessed games menu
+[2025-11-02 00:41:37] [INFO] Retrieving list of games
+[2025-11-02 00:41:38] [SECURITY] Game status toggle attempt for: multi
+[2025-11-02 00:41:38] [SECURITY] Game status toggle attempt for: multi
+[2025-11-02 00:41:38] [SECURITY] Game status successfully toggled for: multi
+[2025-11-02 00:41:38] [INFO] Retrieving list of games
+[2025-11-02 00:41:39] [SECURITY] Game status toggle attempt for: multi
+[2025-11-02 00:41:39] [SECURITY] Game status toggle attempt for: multi
+[2025-11-02 00:41:39] [SECURITY] Game status successfully toggled for: multi
+[2025-11-02 00:41:39] [INFO] Retrieving list of games
+[2025-11-02 00:41:40] [SECURITY] Game status toggle attempt for: holding
+[2025-11-02 00:41:40] [SECURITY] Game status toggle attempt for: holding
+[2025-11-02 00:41:40] [SECURITY] Game status successfully toggled for: holding
+[2025-11-02 00:41:40] [INFO] Retrieving list of games
+[2025-11-02 00:41:42] [SECURITY] Game status toggle attempt for: holding
+[2025-11-02 00:41:42] [SECURITY] Game status toggle attempt for: holding
+[2025-11-02 00:41:42] [SECURITY] Game status successfully toggled for: holding
+[2025-11-02 00:41:42] [INFO] Retrieving list of games
+[2025-11-02 00:41:44] [INFO] Technician (User ID: 1) accessed statistics
+[2025-11-02 00:41:44] [INFO] Retrieving game statistics
+[2025-11-02 00:41:47] [WARNING] Technician (User ID: 1) entered invalid menu choice
+[2025-11-02 00:41:50] [INFO] Technician (User ID: 1) logged out
+[2025-11-02 00:41:55] [INFO] User selected exit option
+[2025-11-02 00:41:55] [INFO] Application shutting down
