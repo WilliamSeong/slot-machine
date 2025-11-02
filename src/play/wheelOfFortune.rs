@@ -1,11 +1,11 @@
 use rand::Rng;
 use rusqlite::Connection;
-use std::io;
 use std::thread;
 use std::time::Duration;
 use crate::interfaces::user::User;
 use crate::interfaces::menus::menu_generator;
 use crate::logger::logger;
+use crate::db::dbqueries;
 
 const STARTING_MONEY: u32 = 100;
 const MIN_BET: u32 = 5;
@@ -114,8 +114,14 @@ pub fn gameplay_wheel(conn: &Connection, user: &User, bet: f64) -> bool{
 
         if winnings == 0.0 {
             println!("\nOh no! You lost your bet.");
+            println!("Current balance is {}", dbqueries::transaction(conn, user, -(bet)));
+            let _ = dbqueries::add_loss(conn, "wheel of fortune");
+            let _ = dbqueries::add_user_loss(conn, user, "wheel of fortune");
         } else {
             println!("\nCongratulations! You won ${}", winnings);
+            println!("Current balance is {}", dbqueries::transaction(conn, user, winnings));
+            let _ = dbqueries::add_win(conn, "wheel of fortune");
+            let _ = dbqueries::add_user_win(conn, user, "wheel of fortune", winnings);
         }
 
         // Show options to user
@@ -148,50 +154,50 @@ pub fn gameplay_wheel(conn: &Connection, user: &User, bet: f64) -> bool{
 }
 
 //promt uer for bet 
-fn get_player_bet(current_money: u32) -> u32 {
-    //see if uer chooses max bet
-    let current_max_bet = current_money.min(MAX_BET);
+// fn get_player_bet(current_money: u32) -> u32 {
+//     //see if uer chooses max bet
+//     let current_max_bet = current_money.min(MAX_BET);
 
-    loop {
-        println!(
-            "Enter your bet (min: ${}, max: ${})",
-            MIN_BET, current_max_bet
-        );
-        println!("(You have ${}) or type 'q' to quit:", current_money);
+//     loop {
+//         println!(
+//             "Enter your bet (min: ${}, max: ${})",
+//             MIN_BET, current_max_bet
+//         );
+//         println!("(You have ${}) or type 'q' to quit:", current_money);
 
         
-        let mut input = String::new();
-        io::stdin()
-            .read_line(&mut input)
-            .expect("Failed to read line");
+//         let mut input = String::new();
+//         io::stdin()
+//             .read_line(&mut input)
+//             .expect("Failed to read line");
 
-        // Check for quit
-        if input.trim().eq_ignore_ascii_case("q") {
-            return 0; //to quit or exit
-        }
+//         // Check for quit
+//         if input.trim().eq_ignore_ascii_case("q") {
+//             return 0; //to quit or exit
+//         }
 
-        //check user input make sure its correct type
-        match input.trim().parse::<u32>() {
-            Ok(bet_amount) => {
-                // Check bet constraints
-                if bet_amount < MIN_BET {
-                    println!("Bet is too small! Minimum bet is ${}.", MIN_BET);
-                } else if bet_amount > current_max_bet {
-                    println!(
-                        "Bet is too large! Your max bet is ${}.",
-                        current_max_bet
-                    );
-                } else {
-                    // Valid bet
-                    return bet_amount;
-                }
-            }
-            Err(_) => {
-                println!("That's not a valid number. Please try again.");
-            }
-        }
-    }
-}
+//         //check user input make sure its correct type
+//         match input.trim().parse::<u32>() {
+//             Ok(bet_amount) => {
+//                 // Check bet constraints
+//                 if bet_amount < MIN_BET {
+//                     println!("Bet is too small! Minimum bet is ${}.", MIN_BET);
+//                 } else if bet_amount > current_max_bet {
+//                     println!(
+//                         "Bet is too large! Your max bet is ${}.",
+//                         current_max_bet
+//                     );
+//                 } else {
+//                     // Valid bet
+//                     return bet_amount;
+//                 }
+//             }
+//             Err(_) => {
+//                 println!("That's not a valid number. Please try again.");
+//             }
+//         }
+//     }
+// }
 
 // Runs a spinning animation
 fn run_spin_animation(rng: &mut impl Rng) {

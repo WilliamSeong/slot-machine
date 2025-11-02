@@ -22,13 +22,13 @@ pub fn hold_game(conn: &Connection, user: &User, bet: f64) -> bool {
                                     symbols[rng.random_range(0..symbols.len())],
                                     symbols[rng.random_range(0..symbols.len())]
                                     ];
-        let mut held = [false; 5];    
+        let mut held = [false; 5]; 
 
         // First result
         println!("\n{}", "🎰 First Spin 🎰".bright_yellow().bold());
         // Animate
         for _ in 0..30 {
-            print!("\r{} | {} | {} | {} | {}", 
+            print!("\r{} | {} | {} | {} | {} ANIMATION", 
                 symbols[rng.random_range(0..symbols.len())],
                 symbols[rng.random_range(0..symbols.len())],
                 symbols[rng.random_range(0..symbols.len())],
@@ -38,12 +38,14 @@ pub fn hold_game(conn: &Connection, user: &User, bet: f64) -> bool {
             io::stdout().flush().ok();
             std::thread::sleep(std::time::Duration::from_millis(50));
         }
+
         print!("\r{} | {} | {} | {} | {}", reels[0], reels[1], reels[2], reels[3], reels[4]);
+        io::stdout().flush().ok();
         logger::info(&format!("User ID: {} slot result: {} | {} | {} | {} | {}", user.id, reels[0], reels[1], reels[2], reels[3], reels[4]));
         
         
         let menu_options = vec!["1", "2", "3", "4", "5"];
-        let user_input = menu_generator_multi("Select up to 2 slots to hold", &menu_options);
+        let user_input = menu_generator_multi("Select up to 2 slots to hold (space to select)", &menu_options);
         
         // let mut input = String::new();
         // io::stdin().read_line(&mut input).unwrap();
@@ -71,13 +73,6 @@ pub fn hold_game(conn: &Connection, user: &User, bet: f64) -> bool {
         // println!("\n{}", "🎰 First Spin 🎰".bright_yellow().bold());
         // print!("\r{} | {} | {} | {} | {}", reels[0], reels[1], reels[2], reels[3], reels[4]);
         
-        // Second spin
-        for i in 0..5 {
-            if !held[i] {
-                reels[i] = symbols[rng.random_range(0..symbols.len())];
-            }
-        }
-
         println!("\n{}", "🎰 Second Spin 🎰".bright_cyan().bold());
         // Check if user holds then animate if so
         if held.iter().any(|&h| h) {
@@ -94,6 +89,14 @@ pub fn hold_game(conn: &Connection, user: &User, bet: f64) -> bool {
                 std::thread::sleep(std::time::Duration::from_millis(50));
             }
         }
+
+        // Second spin
+        for i in 0..5 {
+            if !held[i] {
+                reels[i] = symbols[rng.random_range(0..symbols.len())];
+            }
+        }
+
         // Show second spin
         println!("\r{} | {} | {} | {} | {}", reels[0], reels[1], reels[2], reels[3], reels[4]);
 
@@ -112,11 +115,13 @@ pub fn hold_game(conn: &Connection, user: &User, bet: f64) -> bool {
 
         if payout > 0.0 {
             println!("{}", format!("🎉 You won ${:.2}!", payout).green().bold());
+            println!("Current balance is {}", dbqueries::transaction(conn, user, payout));
             let _ = dbqueries::add_win(conn, "holding");
-            let _ = dbqueries::add_user_win(conn, user, "normal", payout);
+            let _ = dbqueries::add_user_win(conn, user, "holding", payout);
 
         } else {
             println!("{}", "❌ No win this time!".red().bold());
+            println!("Current balance is {}", dbqueries::transaction(conn, user, -(bet)));
             let _ = dbqueries::add_loss(conn, "holding");
             let _ = dbqueries::add_user_loss(conn, user, "holding");
 
