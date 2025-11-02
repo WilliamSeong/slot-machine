@@ -140,3 +140,43 @@
 [2025-10-31 17:02:55] [INFO] Checking funds for User ID: 3 against limit: 10.00
 [2025-10-31 17:02:59] [INFO] User ID: 3 exiting slots game
 [2025-10-31 17:02:59] [INFO] Retrieving list of games
+[2025-11-01 23:00:17] [INFO] Application is starting
+[2025-11-01 23:00:17] [INFO] Database connection established
+[2025-11-01 23:00:17] [INFO] Foreign keys enabled
+[2025-11-01 23:00:17] [INFO] Database is initialized
+[2025-11-01 23:00:17] [INFO] starting application login flow
+[2025-11-01 23:00:24] [INFO] User selected exit option
+[2025-11-01 23:00:24] [INFO] Application shutting down
+[2025-11-01 23:01:03] [INFO] Application is starting
+[2025-11-01 23:01:03] [INFO] Database connection established
+[2025-11-01 23:01:03] [INFO] Foreign keys enabled
+[2025-11-01 23:01:03] [INFO] Database is initialized
+[2025-11-01 23:01:03] [INFO] starting application login flow
+[2025-11-01 23:01:05] [INFO] User selected sign-in option
+[2025-11-01 23:01:45] [INFO] Application is starting
+[2025-11-01 23:01:45] [INFO] Database connection established
+[2025-11-01 23:01:45] [INFO] Foreign keys enabled
+[2025-11-01 23:01:45] [INFO] Database is initialized
+[2025-11-01 23:01:45] [INFO] starting application login flow
+[2025-11-01 23:01:49] [INFO] User selected exit option
+[2025-11-01 23:01:49] [INFO] Application shutting down
+[2025-11-01 23:06:44] [INFO] Application is starting
+[2025-11-01 23:06:44] [INFO] Database connection established
+[2025-11-01 23:06:44] [INFO] Foreign keys enabled
+[2025-11-01 23:06:44] [INFO] Database is initialized
+[2025-11-01 23:06:44] [INFO] starting application login flow
+[2025-11-01 23:06:47] [INFO] User selected registration option
+[2025-11-01 23:06:53] [SECURITY] Registration attempt for username: will
+[2025-11-01 23:06:53] [INFO] Attempting to insert new user: will
+[2025-11-01 23:06:53] [ERROR] Registration failed for username: will. Error: UNIQUE constraint failed: users.username
+[2025-11-01 23:08:02] [INFO] User selected registration option
+[2025-11-01 23:08:10] [SECURITY] Registration attempt for username: william
+[2025-11-01 23:08:10] [INFO] Attempting to insert new user: william
+[2025-11-01 23:08:10] [INFO] Initializing statistics for new user: william
+[2025-11-01 23:08:10] [INFO] User statistics successfully registered for User ID: 5
+[2025-11-01 23:08:10] [SECURITY] Registration successful for username: william
+[2025-11-01 23:08:10] [INFO] Retrieving user data for: william
+[2025-11-01 23:08:10] [INFO] Successfully retrieved user data for ID: 5
+[2025-11-01 23:08:10] [SECURITY] New user created with ID: 5
+[2025-11-01 23:08:10] [INFO] User ID: 5 logged in as regular user
+[2025-11-01 23:08:10] [INFO] User ID: 5 (william) accessed the main menu

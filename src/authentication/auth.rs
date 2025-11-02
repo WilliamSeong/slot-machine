@@ -7,32 +7,28 @@ use crate::interfaces::user::User;
 use crate::db::dbqueries;
 use crate::logger::logger;
 
+use crate::interfaces::menus::menu_generator;
+
 // main entry point into the application
 pub fn login(conn: &Connection) -> rusqlite::Result<()> {
     loop {
         // Show options to user
-        println!("\n{}", "═══ 🎰 Casino Login 🎰 ═══".bright_cyan().bold());
-        println!("{}. {}", "1".yellow(), "Register".white());
-        println!("{}. {}", "2".yellow(), "Sign In".white());
-        println!("{}. {}", "3".yellow(), "Exit".red());
-        print!("{} ", "Choose:".green().bold());
-        io::stdout().flush().ok();
+        let menu_options = vec!["Register", "Sign In", "Exit"];
+        let user_input = menu_generator("═══ 🎰 Casino Login 🎰 ═══", &menu_options);
         
-        // Get user input
-        let mut choice = String::new();
-        io::stdin().read_line(&mut choice).ok();
-        
+        // println!("user input: {}", user_input);
+
         // check user input
-        let user = match choice.trim() {
-            "1" => {
+        let user = match user_input.trim() {
+            "Register" => {
                 logger::info("User selected registration option");
                 register(conn)?
             },
-            "2" => {
+            "Sign In" => {
                 logger::info("User selected sign-in option");
                 sign_in(conn)?
             },
-            "3" => {
+            "Exit" => {
                 logger::info("User selected exit option");
                 break
             },
