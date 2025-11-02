@@ -1,7 +1,11 @@
 use rand::Rng;
+use rusqlite::Connection;
 use std::io;
 use std::thread;
 use std::time::Duration;
+use crate::interfaces::user::User;
+use crate::interfaces::menus::menu_generator;
+use crate::logger::logger;
 
 const STARTING_MONEY: u32 = 100;
 const MIN_BET: u32 = 5;
@@ -66,33 +70,33 @@ const ANIMATION_FRAMES: [&str; 4] = [
 ];
 
 //game play public fun
-pub fn gameplay_wheel(){
+pub fn gameplay_wheel(conn: &Connection, user: &User, bet: f64) -> bool{
     let mut rng = rand::rng();
-    let mut player_money = STARTING_MONEY;
+    // let mut player_money = STARTING_MONEY;
 
     println!("--- ♛ Welcome to the Wheel of Fortune! ♛ ---");
 
     loop {
         println!("\n------------------------------------");
-        println!("Your Wallet: ${}", player_money);
+        // println!("Your Wallet: ${}", player_money);
 
         // Check if player has funds and can still play
-        if player_money < MIN_BET {
-            println!("You don't have enough money for the minimum bet (${}).", MIN_BET);
-            println!("Thanks for playing!");
-            break;
-        }
+        // if player_money < MIN_BET {
+        //     println!("You don't have enough money for the minimum bet (${}).", MIN_BET);
+        //     println!("Thanks for playing!");
+        //     break;
+        // }
 
         // get bet from user
-        let bet = get_player_bet(player_money);
+        // let bet = get_player_bet(bet);
 
         // check if user has money 
-        if bet == 0 {
-            break;
-        }
+        // if bet == 0 {
+        //     break;
+        // }
 
         //Sub bet from wallet
-        player_money -= bet;
+        // player_money -= bet;
         println!("You bet ${}. Spinning the wheel...", bet);
 
         //animation once bet is entered 
@@ -101,24 +105,46 @@ pub fn gameplay_wheel(){
         //result of play
         let result_segment = &WHEEL[rng.random_range(0..WHEEL.len())];
         // calculate winnings if hit multiplier run math
-        let winnings = (bet as f32 * result_segment.multiplier) as u32;
+        let winnings = bet * result_segment.multiplier as f64;
 
         //let user know of win or lose and update wallet
         clearscreen::clear().expect("Failed to clear screen");
         println!("The wheel slows down... and lands on:");
         println!("\n      *** {} ***", result_segment.display);
 
-        if winnings == 0 {
+        if winnings == 0.0 {
             println!("\nOh no! You lost your bet.");
         } else {
             println!("\nCongratulations! You won ${}", winnings);
-            player_money += winnings;
         }
 
-        println!("Your new wallet balance: ${}", player_money);
+        // Show options to user
+        let menu_options = vec!["Spin Again", "Change Bet", "Exit"];
+        let user_input = menu_generator("═══ 🎰 Play Again? 🎰 ═══", &menu_options);
+
+        match user_input.trim() {
+            "Spin Again" => {
+                logger::info(&format!("User ID: {} continuing with same bet", user.id));
+                continue;
+            }
+            "Change Bet" => {
+                logger::info(&format!("User ID: {} changing bet", user.id));
+                return true;
+            }
+            "Exit" => {
+                logger::info(&format!("User ID: {} exiting slots game", user.id));
+                return false;
+            }
+            _ => {
+                logger::info(&format!("User ID: {} made invalid selection, continuing game", user.id));
+                println!("Playing again..."); 
+                continue;
+            }
+        }
+
     }
 
-    println!("You leave the casino with ${}. Goodbye!", player_money);
+    // println!("You leave the casino with ${}. Goodbye!", player_money);
 }
 
 //promt uer for bet 

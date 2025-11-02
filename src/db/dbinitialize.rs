@@ -71,7 +71,8 @@ fn add_games(conn: &Connection) -> Result<(),rusqlite::Error> {
         "Insert Or Ignore Into games (name, played, win, loss, active) 
         Values ('normal', 0, 0, 0, true),
                 ('multi', 0, 0, 0, true),
-                ('holding', 0, 0, 0, true)",[]
+                ('holding', 0, 0, 0, true),
+                ('wheel of fortune', 0, 0, 0, true)", []
     )?;
 
     Ok(())

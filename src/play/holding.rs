@@ -1,10 +1,10 @@
 use rand::{rng, Rng};
 use colored::*;
-use std::io::{self};
+use std::io::{self, Write};
 use rusqlite::Connection;
 
 use crate::logger::logger;
-use crate::interfaces::menus::menu_generator;
+use crate::interfaces::menus::{menu_generator, menu_generator_multi};
 
 use crate::interfaces::user::User;
 
@@ -14,48 +14,62 @@ pub fn hold_game(conn: &Connection, user: &User, bet: f64) -> bool {
         
         let symbols = ["🍒", "🍋", "🍊", "💎", "🔔", "⭐"];
         let mut rng = rng();
-        let mut reels = ["", "", "", "", ""];
-        let mut held = [false; 5];
+        let mut reels = [
+                                    symbols[rng.random_range(0..symbols.len())],
+                                    symbols[rng.random_range(0..symbols.len())],
+                                    symbols[rng.random_range(0..symbols.len())],
+                                    symbols[rng.random_range(0..symbols.len())],
+                                    symbols[rng.random_range(0..symbols.len())]
+                                    ];
+        let mut held = [false; 5];    
 
-        // First spin
-        for i in 0..5 {
-            reels[i] = symbols[rng.random_range(0..symbols.len())];
-        }
-
+        // First result
         println!("\n{}", "🎰 First Spin 🎰".bright_yellow().bold());
-        println!("{:?}", reels);
-        println!("\nEnter up to 2 reel numbers to hold (1-5), separated by spaces (e.g. '2 4'): ");
+        // Animate
+        for _ in 0..30 {
+            print!("\r{} | {} | {} | {} | {}", 
+                symbols[rng.random_range(0..symbols.len())],
+                symbols[rng.random_range(0..symbols.len())],
+                symbols[rng.random_range(0..symbols.len())],
+                symbols[rng.random_range(0..symbols.len())],
+                symbols[rng.random_range(0..symbols.len())]
+            );
+            io::stdout().flush().ok();
+            std::thread::sleep(std::time::Duration::from_millis(50));
+        }
+        print!("\r{} | {} | {} | {} | {}", reels[0], reels[1], reels[2], reels[3], reels[4]);
+        logger::info(&format!("User ID: {} slot result: {} | {} | {} | {} | {}", user.id, reels[0], reels[1], reels[2], reels[3], reels[4]));
+        
+        
+        let menu_options = vec!["1", "2", "3", "4", "5"];
+        let user_input = menu_generator_multi("Select up to 2 slots to hold", &menu_options);
+        
+        // let mut input = String::new();
+        // io::stdin().read_line(&mut input).unwrap();
 
-        let mut input = String::new();
-        io::stdin().read_line(&mut input).unwrap();
-
-        for num in input.split_whitespace() {
-            if let Ok(n) = num.parse::<usize>() {
-                if n >= 1 && n <= 5 {
-                    held[n - 1] = true;
-                }
-            }
+        for num in user_input {
+            // println!("selected index {}", num);
+            held[num] = true;
         }
 
         let held_count = held.iter().filter(|&&h| h).count();
-        if held_count > 2 {
-            println!("⚠️ You can only hold up to 2 reels. Only the first 2 will be held.");
-        }
-
-        // // Player places bet
-        // println!("\nEnter your bet amount: ");
-        // let mut bet_input = String::new();
-        // io::stdin().read_line(&mut bet_input).unwrap();
-        // let base_bet: f64 = bet_input.trim().parse().unwrap_or(1.0);
+        // if held_count > 2 {
+        //     println!("⚠️ You can only hold up to 2 reels. Only the first 2 will be held.");
+        // }
 
         // Adjust bet for fairness (each held reel = +25%)
         let multiplier = 1.0 + 0.25 * held_count as f64;
         let final_bet = (bet * multiplier).round();
-        println!(
-            "Held {} reel(s) → Adjusted Bet: ${:.2} (x{:.2})",
-            held_count, final_bet, multiplier
-        );
+        // println!(
+        //     "Held {} reel(s) → Adjusted Bet: ${:.2} (x{:.2})",
+        //     held_count, final_bet, multiplier
+        // );
 
+
+        // Show first spin again
+        // println!("\n{}", "🎰 First Spin 🎰".bright_yellow().bold());
+        // print!("\r{} | {} | {} | {} | {}", reels[0], reels[1], reels[2], reels[3], reels[4]);
+        
         // Second spin
         for i in 0..5 {
             if !held[i] {
@@ -64,7 +78,23 @@ pub fn hold_game(conn: &Connection, user: &User, bet: f64) -> bool {
         }
 
         println!("\n{}", "🎰 Second Spin 🎰".bright_cyan().bold());
-        println!("{:?}", reels);
+        // Check if user holds then animate if so
+        if held.iter().any(|&h| h) {
+            
+            for _ in 0..30 {
+                print!("\r{} | {} | {} | {} | {}", 
+                    if held[0] { reels[0] } else { symbols[rng.random_range(0..symbols.len())] },
+                    if held[1] { reels[1] } else { symbols[rng.random_range(0..symbols.len())] },
+                    if held[2] { reels[2] } else { symbols[rng.random_range(0..symbols.len())] },
+                    if held[3] { reels[3] } else { symbols[rng.random_range(0..symbols.len())] },
+                    if held[4] { reels[4] } else { symbols[rng.random_range(0..symbols.len())] }
+                );
+                io::stdout().flush().ok();
+                std::thread::sleep(std::time::Duration::from_millis(50));
+            }
+        }
+        // Show second spin
+        println!("\r{} | {} | {} | {} | {}", reels[0], reels[1], reels[2], reels[3], reels[4]);
 
         // Simple win check (3+ of a kind)
         let mut win_map = std::collections::HashMap::new();
@@ -109,31 +139,4 @@ pub fn hold_game(conn: &Connection, user: &User, bet: f64) -> bool {
             }
         }
     }
-
-
-    // Store results in DB
-    // conn.execute(
-    //     "CREATE TABLE IF NOT EXISTS spins_hold (
-    //         id INTEGER PRIMARY KEY,
-    //         user_id INTEGER,
-    //         reels TEXT,
-    //         held TEXT,
-    //         bet REAL,
-    //         payout REAL,
-    //         ts DATETIME DEFAULT CURRENT_TIMESTAMP
-    //     )",
-    //     [],
-    // ).unwrap();
-
-    // conn.execute(
-    //     "INSERT INTO spins_hold (user_id, reels, held, bet, payout)
-    //     VALUES (?1, ?2, ?3, ?4, ?5)",
-    //     (
-    //         user_id,
-    //         format!("{:?}", reels),
-    //         format!("{:?}", held),
-    //         final_bet,
-    //         payout,
-    //     ),
-    // ).unwrap();
 }

@@ -172,6 +172,28 @@ fn play_menu(conn: &Connection, user: &User) -> rusqlite::Result<()>{
                     }
                 }
             }
+            "wheel of fortune" => {
+                loop{
+                    // Get the bet amount
+                    let bet = bet();
+                    if bet != 0.0 {
+                        logger::transaction(&format!("User ID: {} placed bet of ${:.2} on holding slots", user.id, bet));
+
+                        // Check if user has sufficient funds
+                        if !dbqueries::check_funds(conn, user, bet) {
+                            logger::warning(&format!("User ID: {} attempted to bet ${:.2} with insufficient funds", user.id, bet));
+                            println!("{}", "Insufficient funds for this bet".red());
+                            break;
+                        }
+                        if !play::wheelOfFortune::gameplay_wheel(conn, user, bet) {
+                            break;
+                        }
+                    } else {
+                        logger::info(&format!("User ID: {} cancelled betting", user.id));
+                        break;
+                    }
+                }
+            }
             "Back" => {
                 logger::info(&format!("User ID: {} selected holding game (not implemented)", user.id));
                 break;
