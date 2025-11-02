@@ -50,14 +50,22 @@ pub fn multi_win(conn: &Connection, user: &User, bet: f64) -> bool{
         //show to user for win or lose
         if win_results.win_descriptions.is_empty() {
             println!("\n--- No win this time. Try again! ---");
+            let _ = dbqueries::add_loss(conn, "normal");
+            let _ = dbqueries::add_user_loss(conn, user, "normal");
+
         } else {
             // check for Double Jackpot condition first
             if win_results.has_horizontal_win && win_results.has_four_corner_win {
                 println!("\n💥💥💥 DOUBLE JACKPOT! 💥💥💥");
                 println!("    > You hit a Horizontal AND Four Corners win!");
+                let _ = dbqueries::add_win(conn, "normal");
+                let _ = dbqueries::add_user_win(conn, user, "normal", bet * 4 as f64);
             } else {
                 // print single row or diganol win
                 println!("\n🎉 *** JACKPOT! *** 🎉");
+                let _ = dbqueries::add_win(conn, "multi");
+                let _ = dbqueries::add_user_win(conn, user, "multi", bet * 2 as f64);
+
             }
 
             //print wins if they won

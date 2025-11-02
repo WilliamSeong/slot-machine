@@ -7,6 +7,7 @@ use crate::logger::logger;
 use crate::interfaces::menus::{menu_generator, menu_generator_multi};
 
 use crate::interfaces::user::User;
+use crate::db::dbqueries;
 
 /// Hold 5x3 slot game - allows up to 2 reels to be held for next spin
 pub fn hold_game(conn: &Connection, user: &User, bet: f64) -> bool {
@@ -111,8 +112,14 @@ pub fn hold_game(conn: &Connection, user: &User, bet: f64) -> bool {
 
         if payout > 0.0 {
             println!("{}", format!("🎉 You won ${:.2}!", payout).green().bold());
+            let _ = dbqueries::add_win(conn, "holding");
+            let _ = dbqueries::add_user_win(conn, user, "normal", payout);
+
         } else {
             println!("{}", "❌ No win this time!".red().bold());
+            let _ = dbqueries::add_loss(conn, "holding");
+            let _ = dbqueries::add_user_loss(conn, user, "holding");
+
         }
 
         // Show options to user

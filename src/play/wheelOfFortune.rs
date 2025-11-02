@@ -205,7 +205,7 @@ fn run_spin_animation(rng: &mut impl Rng) {
         let frame_art = ANIMATION_FRAMES[i % ANIMATION_FRAMES.len()];
 
         //the wheel segments flying past
-       
+
         let random_segment = &WHEEL[rng.random_range(0..WHEEL.len())];
         println!("Spinning the Wheel!");
         println!("{}", frame_art);
