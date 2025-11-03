@@ -63,8 +63,17 @@ fn run_commissioner_test(conn: &Connection, user: &User) {
     logger::security(&format!("Commissioner (User ID: {}) initiated fairness test", user.id));
     
     // Select game to test
-    let game_options = vec!["normal", "multi", "holding", "Cancel"];
-    let game_choice = menu_generator("Select Game to Test", &game_options);
+    // Show options to technician
+    // query all games
+    let games_data = dbqueries::get_games(conn).unwrap();
+    let mut all_games: Vec<&str> = games_data
+        .iter()
+        .map(|(name, _)| name.as_str())
+        .collect();
+    // add exit
+    all_games.push("Cancel");
+    // let game_options = vec!["normal", "multi", "holding", "Cancel"];
+    let game_choice = menu_generator("Select Game to Test", &all_games);
     
     if game_choice == "Cancel" {
         return;

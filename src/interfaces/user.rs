@@ -38,16 +38,6 @@ pub fn user_menu(conn: &Connection, user: &User) -> rusqlite::Result<()> {
         let menu_options = vec!["Play", "Account", "Logout"];
         let user_input = menu_generator("═══ 🎰 777 🎰 ═══", &menu_options);
 
-        // println!("\n{}", "═══ 🎰 777 🎰 ═══".bright_magenta().bold());
-        // println!("{}. {}", "1".yellow(), "Play".white());
-        // println!("{}. {}", "2".yellow(), "Account".white());
-        // println!("{}. {}", "3".yellow(), "Logout".red());
-        // print!("{} ", "Choose:".green().bold());
-        // io::stdout().flush().ok();
-
-        // let mut choice = String::new();
-        // io::stdin().read_line(&mut choice).ok();
-
         match user_input.trim() {
             "Play" => {
                 logger::info(&format!("User ID: {} selected Play option", user.id));
@@ -235,7 +225,7 @@ fn user_account(conn: &Connection, user: &User) {
                 println!();
 
                 // Show options to user
-                let menu_options = vec!["Deposit", "Withdraw", "Statistics", "Settings", "Exit"];
+                let menu_options = vec!["Deposit", "Withdraw", "Statistics", "Exit"];
                 let user_input = menu_generator("═══ 🎰 User Options 🎰 ═══", &menu_options);
 
                 match user_input.trim() {
@@ -264,9 +254,6 @@ fn user_account(conn: &Connection, user: &User) {
                     "Statistics" => {
                         logger::info(&format!("User ID: {} accessed statistics", user.id));
                         user_statistics(conn, user);
-                    }
-                    "Settings" => {
-                        logger::info(&format!("User ID: {} accessed settings (not implemented)", user.id));
                     }
                     "Exit" => {
                         logger::info(&format!("User ID: {} exited account menu", user.id));
@@ -309,23 +296,40 @@ fn deposit(conn: &Connection, user: &User) -> rusqlite::Result<bool>{
                 return Ok(false);
             }
             
-            // Amount is valid, process deposit
-            logger::transaction(&format!("User ID: {} depositing ${:.2}", user.id, amount));
-            
-            match dbqueries::change_balance(conn, user, amount) {
-                Ok(_) => {
-                    println!("\n{}", "✅ Deposit successful!".green().bold());
-                    println!("{} ${:.2}", "Deposited:".bright_white().bold(), amount);
-                    if let Ok(balance) = user.get_balance(conn) {
-                        println!("{} ${:.2}", "New Balance:".bright_white().bold(), balance);
+            // Get confirmation from User
+            let menu_options = vec!["Confirm", "Cancel"];
+            let confirmation_message = format!("Confirm deposit of {}", amount);
+            let user_input = menu_generator(confirmation_message.as_str(), &menu_options);
+
+            match user_input.trim() {
+                "Confirm" => {
+                    // Amount is valid, process deposit
+                    logger::transaction(&format!("User ID: {} depositing ${:.2}", user.id, amount));
+
+                    match dbqueries::change_balance(conn, user, amount) {
+                        Ok(_) => {
+                            println!("\n{}", "✅ Deposit successful!".green().bold());
+                            println!("{} ${:.2}", "Deposited:".bright_white().bold(), amount);
+                            if let Ok(balance) = user.get_balance(conn) {
+                                println!("{} ${:.2}", "New Balance:".bright_white().bold(), balance);
+                            }
+                            println!();
+                            Ok(true)
+                        }
+                        Err(e) => {
+                            println!("{}", "❌ Deposit failed!".red().bold());
+                            logger::error(&format!("Deposit failed for User ID: {}: {}", user.id, e));
+                            Ok(false)
+                        }
                     }
-                    println!();
-                    Ok(true)
                 }
-                Err(e) => {
-                    println!("{}", "❌ Deposit failed!".red().bold());
-                    logger::error(&format!("Deposit failed for User ID: {}: {}", user.id, e));
-                    Ok(false)
+                "Cancel" => {
+                    logger::transaction(&format!("User ID: {} Cancel deposit of ${:.2}", user.id, amount));
+                    return Ok(false);
+                }
+                _ => {
+                    logger::transaction(&format!("User ID: {} Deposit confirmation failed", user.id));
+                    return Ok(false);
                 }
             }
         }
@@ -382,24 +386,41 @@ fn withdraw(conn: &Connection, user: &User) -> rusqlite::Result<bool>{
                                         user.id, amount, current_balance));
                 return Ok(false);
             }
-            
-            // Amount is valid process withdrawal
-            logger::transaction(&format!("User ID: {} withdrawing ${:.2}", user.id, amount));
-            
-            match dbqueries::change_balance(conn, user, -amount) {
-                Ok(_) => {
-                    println!("\n{}", "✅ Withdrawal successful!".green().bold());
-                    println!("{} ${:.2}", "Withdrawn:".bright_white().bold(), amount);
-                    if let Ok(balance) = user.get_balance(conn) {
-                        println!("{} ${:.2}", "New Balance:".bright_white().bold(), balance);
+
+            // Get confirmation from User
+            let menu_options = vec!["Confirm", "Cancel"];
+            let confirmation_message = format!("Confirm withdrawal of {}", amount);
+            let user_input = menu_generator(confirmation_message.as_str(), &menu_options);
+
+            match user_input.trim() {
+                "Confirm" => {
+                    // Amount is valid process withdrawal
+                    logger::transaction(&format!("User ID: {} withdrawing ${:.2}", user.id, amount));
+                    
+                    match dbqueries::change_balance(conn, user, -amount) {
+                        Ok(_) => {
+                            println!("\n{}", "✅ Withdrawal successful!".green().bold());
+                            println!("{} ${:.2}", "Withdrawn:".bright_white().bold(), amount);
+                            if let Ok(balance) = user.get_balance(conn) {
+                                println!("{} ${:.2}", "New Balance:".bright_white().bold(), balance);
+                            }
+                            println!();
+                            Ok(true)
+                        }
+                        Err(e) => {
+                            println!("{}", "❌ Withdrawal failed!".red().bold());
+                            logger::error(&format!("Withdrawal failed for User ID: {}: {}", user.id, e));
+                            Ok(false)
+                        }
                     }
-                    println!();
-                    Ok(true)
                 }
-                Err(e) => {
-                    println!("{}", "❌ Withdrawal failed!".red().bold());
-                    logger::error(&format!("Withdrawal failed for User ID: {}: {}", user.id, e));
-                    Ok(false)
+                "Cancel" => {
+                    logger::transaction(&format!("User ID: {} Cancel withdrawal of ${:.2}", user.id, amount));
+                    return Ok(false);
+                }
+                _ => {
+                    logger::transaction(&format!("User ID: {} Withdrawal confirmation failed", user.id));
+                    return Ok(false);
                 }
             }
         }
