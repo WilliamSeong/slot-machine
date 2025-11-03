@@ -1,5 +1,4 @@
 use rusqlite::{Connection, Result};
-use colored::*;
 
 // Initialize all database tables for the casino application
 pub fn initialize_dbs(conn: &Connection) -> Result<(), rusqlite::Error> {
@@ -89,6 +88,7 @@ fn add_technician_commissioner(conn: &Connection) -> Result<(),rusqlite::Error> 
     use std::env;
     
     const ENV_FILE: &str = ".env";
+    let mut credentials_generated = false;
     
     // Load or generate technician credentials
     let tech_username = env::var("CASINO_TECH_USERNAME")
@@ -98,8 +98,13 @@ fn add_technician_commissioner(conn: &Connection) -> Result<(),rusqlite::Error> 
         Ok(pwd) => pwd,
         Err(_) => {
             let pwd = generate_secure_password();
+            if !credentials_generated {
+                println!("  → Generating secure admin credentials...");
+                credentials_generated = true;
+            }
             save_to_env_file(ENV_FILE, "CASINO_TECH_USERNAME", &tech_username);
             save_to_env_file(ENV_FILE, "CASINO_TECH_PASSWORD", &pwd);
+            println!("     • Technician credentials saved");
             pwd
         }
     };
@@ -112,8 +117,12 @@ fn add_technician_commissioner(conn: &Connection) -> Result<(),rusqlite::Error> 
         Ok(pwd) => pwd,
         Err(_) => {
             let pwd = generate_secure_password();
+            if !credentials_generated {
+                println!("  → Generating secure admin credentials...");
+            }
             save_to_env_file(ENV_FILE, "CASINO_COMM_USERNAME", &comm_username);
             save_to_env_file(ENV_FILE, "CASINO_COMM_PASSWORD", &pwd);
+            println!("     • Commissioner credentials saved");
             pwd
         }
     };
@@ -156,7 +165,7 @@ fn save_to_env_file(file_path: &str, key: &str, value: &str) {
     use std::io::Write;
     
     let path = Path::new(file_path);
-    let entry = format!("{}={}\n", key, value);
+    let is_new_file = !path.exists();
     
     // Read existing content if file exists
     let existing_content = if path.exists() {
@@ -170,14 +179,37 @@ fn save_to_env_file(file_path: &str, key: &str, value: &str) {
         return; // Don't overwrite existing entries
     }
     
-    // Append new entry
+    // Open file for appending (creates if doesn't exist)
     match fs::OpenOptions::new()
         .create(true)
         .append(true)
         .open(path)
     {
         Ok(mut file) => {
-            if let Err(e) = file.write_all(entry.as_bytes()) {
+            // Add header if this is a new file and we're writing the first entry
+            if is_new_file && key == "CASINO_TECH_USERNAME" {
+                let header = format!(
+                    "# Casino System Configuration\n\
+                     # Generated on: {}\n\
+                     # \n\
+                     # ⚠️  SECURITY WARNING: Keep these credentials secure!\n\
+                     # This file contains administrator passwords.\n\
+                     # \n\n",
+                    chrono::Local::now().format("%Y-%m-%d %H:%M:%S")
+                );
+                let _ = file.write_all(header.as_bytes());
+            }
+            
+            // Write the key-value pair with a comment
+            let comment = match key {
+                "CASINO_TECH_USERNAME" => "# Technician Account\n",
+                "CASINO_TECH_PASSWORD" => "",
+                "CASINO_COMM_USERNAME" => "\n# Commissioner Account\n",
+                "CASINO_COMM_PASSWORD" => "",
+                _ => "",
+            };
+            
+            if let Err(e) = write!(file, "{}{}\n", comment, format!("{}={}", key, value)) {
                 eprintln!("Failed to write to {}: {}", file_path, e);
             }
         }
@@ -220,31 +252,74 @@ fn add_games(conn: &Connection) -> Result<(),rusqlite::Error> {
 }
 
 // Populate default symbol probabilities for all games.
+// Each game has different probability distributions for varied gameplay
 fn add_default_symbols(conn: &Connection) -> Result<(),rusqlite::Error> {
-    // Get all game IDs
+    // Get all game IDs with names
     let mut stmt = conn.prepare("Select id, name From games")?;
     let games: Vec<(i32, String)> = stmt.query_map([], |row| {
         Ok((row.get(0)?, row.get(1)?))
     })?.collect::<Result<Vec<_>, _>>()?;
 
-    // Default symbols with weights and payout multipliers
-    // NOT FAIR
-    let default_symbols = [
-        ("🍒", 20, 2.0),   // Cherry: 20% chance, 2x payout
-        ("🍋", 20, 2.0),   // Lemon: 20% chance, 2x payout
-        ("🍊", 15, 3.0),   // Orange: 15% chance, 3x payout
-        ("🍇", 10, 5.0),   // Grape: 10% chance, 5x payout
-        ("💎", 5, 10.0),  // Diamond: 5% chance, 10x payout
-        ("7️⃣", 1, 20.0),   // Seven: 1% chance, 20x payout
-    ];
+    // Define different symbol distributions for each game type
+    for (game_id, game_name) in games {
+        let symbols: Vec<(&str, i32, f64)> = match game_name.as_str() {
+            "normal" => {
+                // NORMAL SLOTS - Balanced gameplay
+                // Medium variance, good mix of common and rare symbols
+                vec![
+                    ("🍒", 25, 2.0),   // Cherry: 25% - Common, low payout
+                    ("🍋", 20, 2.5),   // Lemon: 20% - Common, low payout
+                    ("🍊", 18, 3.0),   // Orange: 18% - Medium frequency
+                    ("🍇", 12, 4.0),   // Grape: 12% - Less common
+                    ("💎", 8, 8.0),    // Diamond: 8% - Rare, good payout
+                    ("7️⃣", 2, 15.0),   // Seven: 2% - Very rare, high payout
+                ]
+            },
+            "multi" => {
+                // MULTI-WIN SLOTS - Higher variance
+                // More opportunities to win but need matching patterns
+                // Lower individual symbol payouts since multiple wins possible
+                vec![
+                    ("🍒", 22, 1.8),   // Cherry: 22% - Most common
+                    ("🍋", 20, 2.0),   // Lemon: 20% - Common
+                    ("🍊", 15, 2.5),   // Orange: 15% - Medium
+                    ("🍇", 10, 4.0),   // Grape: 10% - Less common
+                    ("💎", 6, 7.0),    // Diamond: 6% - Rare
+                    ("7️⃣", 3, 12.0),   // Seven: 3% - Very rare
+                ]
+            },
+            "holding" => {
+                // HOLDING SLOTS - Lower variance
+                // More frequent wins but smaller payouts (player pays to hold reels)
+                // Balanced for the hold mechanic which costs extra
+                vec![
+                    ("🍒", 28, 2.2),   // Cherry: 28% - Very common
+                    ("🍋", 24, 2.5),   // Lemon: 24% - Very common
+                    ("🍊", 20, 3.0),   // Orange: 20% - Common
+                    ("🍇", 15, 4.5),   // Grape: 15% - Medium
+                    ("💎", 10, 6.0),   // Diamond: 10% - Less rare
+                    ("7️⃣", 3, 10.0),   // Seven: 3% - Rare
+                ]
+            },
+            _ => {
+                // Fallback for any other games - use balanced settings
+                vec![
+                    ("🍒", 25, 2.0),
+                    ("🍋", 20, 2.5),
+                    ("🍊", 18, 3.0),
+                    ("🍇", 12, 4.0),
+                    ("💎", 8, 8.0),
+                    ("7️⃣", 2, 15.0),
+                ]
+            }
+        };
 
-    // Add symbols for each game - Use proper types with rusqlite::params!
-    for (game_id, _game_name) in games {
-        for (symbol, weight, multiplier) in &default_symbols {
+        // Insert symbols for this specific game
+        for (symbol, weight, multiplier) in symbols {
             conn.execute(
                 "Insert Or Ignore Into symbol_probabilities (game_id, symbol, weight, payout_multiplier)
                 Values (?1, ?2, ?3, ?4)",
-                rusqlite::params![game_id, symbol, *weight as i32, multiplier]
+                rusqlite::params![game_id, symbol, weight, multiplier]
             )?;
         }
     }
