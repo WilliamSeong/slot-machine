@@ -88,7 +88,6 @@ fn add_technician_commissioner(conn: &Connection) -> Result<(),rusqlite::Error> 
     use std::env;
     
     const ENV_FILE: &str = ".env";
-    let mut credentials_generated = false;
     
     // Load or generate technician credentials
     let tech_username = env::var("CASINO_TECH_USERNAME")
@@ -98,13 +97,8 @@ fn add_technician_commissioner(conn: &Connection) -> Result<(),rusqlite::Error> 
         Ok(pwd) => pwd,
         Err(_) => {
             let pwd = generate_secure_password();
-            if !credentials_generated {
-                println!("  → Generating secure admin credentials...");
-                credentials_generated = true;
-            }
             save_to_env_file(ENV_FILE, "CASINO_TECH_USERNAME", &tech_username);
             save_to_env_file(ENV_FILE, "CASINO_TECH_PASSWORD", &pwd);
-            println!("     • Technician credentials saved");
             pwd
         }
     };
@@ -117,12 +111,8 @@ fn add_technician_commissioner(conn: &Connection) -> Result<(),rusqlite::Error> 
         Ok(pwd) => pwd,
         Err(_) => {
             let pwd = generate_secure_password();
-            if !credentials_generated {
-                println!("  → Generating secure admin credentials...");
-            }
             save_to_env_file(ENV_FILE, "CASINO_COMM_USERNAME", &comm_username);
             save_to_env_file(ENV_FILE, "CASINO_COMM_PASSWORD", &pwd);
-            println!("     • Commissioner credentials saved");
             pwd
         }
     };

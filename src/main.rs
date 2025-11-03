@@ -22,75 +22,22 @@ fn initialize_system() -> bool {
     let env_exists = Path::new(".env").exists();
     let db_exists = Path::new("casino.db").exists();
     let log_exists = Path::new("casino_logs.log").exists();
-    
-    // Display status of each file
-    print!("Checking configuration file (.env)... ");
-    if env_exists {
-        println!("{}", "✓ FOUND".green());
-    } else {
-        println!("{}", "✗ MISSING".red());
-    }
-    
-    print!("Checking log file (casino_logs.log)... ");
-    if log_exists {
-        println!("{}", "✓ FOUND".green());
-    } else {
-        println!("{}", "✗ MISSING".red());
-    }
-    
-    print!("Checking database file (casino.db)... ");
-    if db_exists {
-        println!("{}", "✓ FOUND".green());
-    } else {
-        println!("{}", "✗ MISSING".red());
-    }
-    
-    println!();
-    
-    // If ANY file is missing, reinitialize ALL from scratch
     let all_files_exist = env_exists && db_exists && log_exists;
     
+    // If ANY file is missing, reinitialize ALL from scratch
     if !all_files_exist {
-        println!("{}", "⚠️  INCOMPLETE SYSTEM DETECTED ⚠️".yellow().bold());
-        println!("One or more critical files are missing.");
-        println!("Reinitializing entire system from scratch...");
-        println!();
+        println!("{}", "⚠️  Incomplete system detected - reinitializing...".yellow());
         
-        // Delete existing files to ensure clean state
+        // Delete existing files silently to ensure clean state
         if env_exists {
-            print!("  → Removing existing .env file... ");
-            if let Err(e) = std::fs::remove_file(".env") {
-                println!("{}", format!("Failed: {}", e).red());
-            } else {
-                println!("{}", "✓".green());
-            }
+            let _ = std::fs::remove_file(".env");
         }
-        
         if db_exists {
-            print!("  → Removing existing database file... ");
-            if let Err(e) = std::fs::remove_file("casino.db") {
-                println!("{}", format!("Failed: {}", e).red());
-            } else {
-                println!("{}", "✓".green());
-            }
+            let _ = std::fs::remove_file("casino.db");
         }
-        
         if log_exists {
-            print!("  → Removing existing log file... ");
-            if let Err(e) = std::fs::remove_file("casino_logs.log") {
-                println!("{}", format!("Failed: {}", e).red());
-            } else {
-                println!("{}", "✓".green());
-            }
+            let _ = std::fs::remove_file("casino_logs.log");
         }
-        
-        println!();
-        println!("{}", "Creating fresh system files...".bright_cyan().bold());
-        println!();
-    } else {
-        println!("{}", "✓ All system files present".green().bold());
-        println!("Continuing with existing configuration...");
-        println!();
     }
     
     // Load .env file (will be created if needed during admin account setup)
@@ -106,12 +53,8 @@ fn initialize_system() -> bool {
     }
     
     // Initialize encryption system
-    print!("Initializing encryption system... ");
     cryptography::crypto::initialize_encryption_key();
     logger::logger::info("Database encryption initialized");
-    println!("{}", "✓ DONE".green());
-    
-    println!();
     
     // Return whether this is a fresh initialization
     !all_files_exist
@@ -128,48 +71,25 @@ fn main() -> Result<()> {
     // Connect to database (creates if doesn't exist)
     let conn = Connection::open("casino.db")?;
     logger::logger::info("Database connection established");
-    
-    if is_fresh_init {
-        println!("  → Database created");
-    } else {
-        println!("Database connection established");
-    }
 
     // Allows casino.db to utilize foreign_keys
     conn.execute("PRAGMA foreign_keys = ON", [])?;
     logger::logger::info("Foreign keys enabled");
 
     // Initializes db with all the tables (users, games, user_statistics) and adds records if needed
-    if is_fresh_init {
-        print!("  → Initializing database schema... ");
-    } else {
-        print!("Initializing database tables and default data... ");
-    }
-    
     db::dbinitialize::initialize_dbs(&conn)?;
     logger::logger::info("Database tables initialized");
-    println!("{}", "✓ DONE".green());
     
-    println!();
-    println!("{}", "═══════════════════════════════════════════════".bright_cyan().bold());
-    println!("{}", "   ✓ System Ready!".bright_green().bold());
-    println!("{}", "═══════════════════════════════════════════════".bright_cyan().bold());
+    println!("{}", "✓ System Ready!".bright_green().bold());
     println!();
     
     // If fresh initialization, inform user about credentials
     if is_fresh_init {
-        // Check if .env has admin credentials
         if std::env::var("CASINO_TECH_PASSWORD").is_ok() || std::env::var("CASINO_COMM_PASSWORD").is_ok() {
-            println!("{}", "🔐 IMPORTANT: NEW SYSTEM INITIALIZED 🔐".yellow().bold());
+            println!("{}", "⚠️  NEW CREDENTIALS GENERATED".yellow().bold());
+            println!("Check '.env' file for admin passwords");
             println!();
-            println!("  ✓ Fresh database created");
-            println!("  ✓ New admin credentials generated");
-            println!("  ✓ Log file initialized");
-            println!();
-            println!("{}", "Admin credentials saved to '.env' file".bright_yellow());
-            println!("Please check '.env' for technician and commissioner passwords");
-            println!();
-            std::thread::sleep(std::time::Duration::from_secs(4));
+            std::thread::sleep(std::time::Duration::from_secs(3));
         }
     }
     
