@@ -1,5 +1,3 @@
-use rand_chacha::ChaCha20Rng;
-use rand::{SeedableRng, Rng};
 use colored::*;
 use std::io;
 use std::io::Write;
@@ -54,71 +52,248 @@ pub fn commissioner_menu(conn: &Connection, user: &User) -> rusqlite::Result<()>
 
 /// Automated fairness test for X rounds - REQUIRES COMMISSIONER ROLE
 fn run_commissioner_test(conn: &Connection, user: &User) {
+    use crate::db::dbqueries;
+    use crate::cryptography::rng::CasinoRng;
+    
     // SECURITY: Double-check authorization
     if authorization::require_commissioner(conn, user).is_err() {
         return;
     }
     
     logger::security(&format!("Commissioner (User ID: {}) initiated fairness test", user.id));
+    
+    // Select game to test
+    let game_options = vec!["normal", "multi", "holding", "Cancel"];
+    let game_choice = menu_generator("Select Game to Test", &game_options);
+    
+    if game_choice == "Cancel" {
+        return;
+    }
+    
+    let game_name = game_choice;
+    
+    // Load symbol probabilities from database
+    let symbol_probs = match dbqueries::get_symbol_probabilities(conn, game_name) {
+        Ok(probs) => probs,
+        Err(e) => {
+            logger::error(&format!("Failed to load symbol probabilities: {}", e));
+            println!("{}", "Error loading game configuration".red());
+            return;
+        }
+    };
+    
+    println!("\n{}", format!("═══ Testing {} Game ═══", game_name.to_uppercase()).bright_cyan().bold());
     println!("\nEnter number of rounds to test:");
     io::stdout().flush().unwrap();
     let mut input = String::new();
     io::stdin().read_line(&mut input).unwrap();
     let rounds: u32 = input.trim().parse().unwrap_or(100);
 
-    println!("Enter RNG seed (any number): ");
-    io::stdout().flush().unwrap();
-    let mut seed_input = String::new();
-    io::stdin().read_line(&mut seed_input).unwrap();
-    let seed: u64 = seed_input.trim().parse().unwrap_or(20251027);
+    println!("\nRunning {} rounds for {} game...", rounds, game_name);
 
-    println!("\nRunning {} rounds with seed {} ...", rounds, seed);
+    // Convert to weighted format for RNG
+    let weighted_symbols: Vec<(&str, usize)> = symbol_probs.iter()
+        .map(|(sym, weight, _)| (sym.as_str(), *weight))
+        .collect();
 
-    let mut rng = ChaCha20Rng::seed_from_u64(seed);
-    let symbols = ["🍒", "🍋", "🍊", "💎", "7️⃣", "⭐"];
+    let mut rng = CasinoRng::new();
 
     let mut wins = 0;
     let mut partials = 0;
     let mut losses = 0;
-    let mut total_bet = 0;
-    let mut total_payout = 0;
+    let mut total_bet = 0.0;
+    let mut total_payout = 0.0;
 
-    for _ in 0..rounds {
-        let slot1 = symbols[rng.gen_range(0..symbols.len())];
-        let slot2 = symbols[rng.gen_range(0..symbols.len())];
-        let slot3 = symbols[rng.gen_range(0..symbols.len())];
+    // Run game-specific simulation
+    match game_name {
+        "normal" => {
+            // Normal slots: 3 symbols, match 3 or 2
+            for _ in 0..rounds {
+                let slot1 = rng.weighted_choice(&weighted_symbols).unwrap();
+                let slot2 = rng.weighted_choice(&weighted_symbols).unwrap();
+                let slot3 = rng.weighted_choice(&weighted_symbols).unwrap();
 
-        let bet = 1;
-        total_bet += bet;
+                let bet = 1.0;
+                total_bet += bet;
 
-        if slot1 == slot2 && slot2 == slot3 {
-            wins += 1;
-            total_payout += 3 * bet;
-        } else if slot1 == slot2 || slot2 == slot3 || slot1 == slot3 {
-            partials += 1;
-            total_payout += 2 * bet;
-        } else {
-            losses += 1;
+                if slot1 == slot2 && slot2 == slot3 {
+                    let payout_multiplier = symbol_probs.iter()
+                        .find(|(sym, _, _)| sym.as_str() == *slot1)
+                        .map(|(_, _, mult)| mult)
+                        .unwrap_or(&3.0);
+                    wins += 1;
+                    total_payout += payout_multiplier * bet;
+                } else if slot1 == slot2 || slot2 == slot3 || slot1 == slot3 {
+                    let matching_symbol = if slot1 == slot2 { slot1 } else if slot2 == slot3 { slot2 } else { slot1 };
+                    let base_multiplier = symbol_probs.iter()
+                        .find(|(sym, _, _)| sym.as_str() == *matching_symbol)
+                        .map(|(_, _, mult)| mult)
+                        .unwrap_or(&3.0);
+                    let payout_multiplier = base_multiplier * 0.5;
+                    partials += 1;
+                    total_payout += payout_multiplier * bet;
+                } else {
+                    losses += 1;
+                }
+            }
+        },
+        "multi" => {
+            // Multi-win: 5x5 grid, match rows/columns/diagonals
+            let base_multiplier: f64 = symbol_probs.iter()
+                .map(|(_, _, mult)| mult)
+                .sum::<f64>() / symbol_probs.len() as f64;
+
+            for _ in 0..rounds {
+                let bet = 1.0;
+                total_bet += bet;
+
+                // Generate 5x5 grid
+                let mut grid = [[' '; 5]; 5];
+                for i in 0..5 {
+                    for j in 0..5 {
+                        let symbol = rng.weighted_choice(&weighted_symbols).unwrap();
+                        grid[i][j] = symbol.chars().next().unwrap();
+                    }
+                }
+
+                // Check for wins (simplified: check rows, columns, diagonals)
+                let mut has_horizontal_win = false;
+                let mut has_four_corner_win = false;
+                let mut line_wins = 0;
+
+                // Check rows
+                for (_row_idx, row) in grid.iter().enumerate() {
+                    if row.iter().all(|&s| s == row[0]) {
+                        line_wins += 1;
+                        has_horizontal_win = true; // Any row counts as horizontal
+                    }
+                }
+
+                // Check columns
+                for col in 0..5 {
+                    if (0..5).all(|row| grid[row][col] == grid[0][col]) {
+                        line_wins += 1;
+                    }
+                }
+
+                // Check diagonals
+                if (0..5).all(|i| grid[i][i] == grid[0][0]) {
+                    line_wins += 1;
+                }
+                if (0..5).all(|i| grid[i][4-i] == grid[0][4]) {
+                    line_wins += 1;
+                }
+
+                // Check four corners
+                if grid[0][0] == grid[0][4] && grid[0][0] == grid[4][0] && grid[0][0] == grid[4][4] {
+                    has_four_corner_win = true;
+                }
+
+                if line_wins > 0 {
+                    wins += 1;
+                    if has_horizontal_win && has_four_corner_win {
+                        total_payout += base_multiplier * 2.0 * bet; // Double jackpot
+                    } else {
+                        total_payout += base_multiplier * bet;
+                    }
+                } else {
+                    losses += 1;
+                }
+            }
+        },
+        "holding" => {
+            // Holding: 5 symbols, match 3/4/5 of a kind
+            for _ in 0..rounds {
+                let bet = 1.0;
+                total_bet += bet;
+
+                // Generate 5 symbols
+                let reels: Vec<&str> = (0..5)
+                    .map(|_| *rng.weighted_choice(&weighted_symbols).unwrap())
+                    .collect();
+
+                // Count occurrences
+                let mut counts = std::collections::HashMap::new();
+                for &symbol in &reels {
+                    *counts.entry(symbol).or_insert(0) += 1;
+                }
+
+                let max_count = counts.values().copied().max().unwrap_or(0);
+                
+                if max_count >= 3 {
+                    let winning_symbol = counts.iter()
+                        .max_by_key(|(_, &count)| count)
+                        .map(|(sym, _)| *sym)
+                        .unwrap();
+
+                    let base_multiplier = symbol_probs.iter()
+                        .find(|(sym, _, _)| sym.as_str() == winning_symbol)
+                        .map(|(_, _, mult)| *mult)
+                        .unwrap_or(2.0);
+
+                    let payout = match max_count {
+                        5 => base_multiplier * 5.0 * bet,
+                        4 => base_multiplier * 2.5 * bet,
+                        3 => base_multiplier * bet,
+                        _ => 0.0,
+                    };
+
+                    wins += 1;
+                    total_payout += payout;
+                } else {
+                    losses += 1;
+                }
+            }
+        },
+        _ => {
+            println!("{}", "Unknown game type!".red());
+            return;
         }
     }
 
-    let rtp = (total_payout as f64 / total_bet as f64) * 100.0;
+    let rtp = (total_payout / total_bet) * 100.0;
 
     println!("\n{}", "🎰 Test Results 🎰".bright_yellow().bold());
+    println!("Game: {}", game_name);
     println!("Total rounds: {}", rounds);
-    println!("Wins (3 match): {}", wins);
-    println!("Two-symbol matches: {}", partials);
-    println!("Losses: {}", losses);
-    println!("Total Bet: ${}", total_bet);
-    println!("Total Payout: ${}", total_payout);
+    
+    match game_name {
+        "normal" => {
+            println!("Wins (3 match): {}", wins);
+            println!("Two-symbol matches: {}", partials);
+            println!("Losses: {}", losses);
+        },
+        "multi" => {
+            println!("Wins (any line match): {}", wins);
+            println!("Losses: {}", losses);
+        },
+        "holding" => {
+            println!("Wins (3+ of a kind): {}", wins);
+            println!("Losses: {}", losses);
+        },
+        _ => {}
+    }
+    
+    println!("Total Bet: ${:.2}", total_bet);
+    println!("Total Payout: ${:.2}", total_payout);
     println!("RTP (Return To Player): {:.2}%", rtp);
-    println!("RNG Seed Used: {}", seed);
+    
+    // Display symbol distribution
+    println!("\n{}", "Symbol Probabilities:".bright_cyan());
+    let total_weight: usize = symbol_probs.iter().map(|(_, w, _)| w).sum();
+    for (symbol, weight, payout) in &symbol_probs {
+        let probability = (*weight as f64 / total_weight as f64) * 100.0;
+        println!("  {} - {:.1}% chance, {:.1}x payout", symbol, probability, payout);
+    }
 
     // Store test summary in DB
+    // Drop old table if it exists (to update schema)
+    conn.execute("DROP TABLE IF EXISTS commissioner_log", []).ok();
+    
     conn.execute(
         "CREATE TABLE IF NOT EXISTS commissioner_log (
             id INTEGER PRIMARY KEY,
-            seed INTEGER,
+            game_name TEXT,
             rounds INTEGER,
             wins INTEGER,
             partials INTEGER,
@@ -130,12 +305,15 @@ fn run_commissioner_test(conn: &Connection, user: &User) {
     ).unwrap();
 
     conn.execute(
-        "INSERT INTO commissioner_log (seed, rounds, wins, partials, losses, rtp)
+        "INSERT INTO commissioner_log (game_name, rounds, wins, partials, losses, rtp)
          VALUES (?1, ?2, ?3, ?4, ?5, ?6)",
-        (seed, rounds, wins, partials, losses, rtp),
+        (game_name, rounds, wins, partials, losses, rtp),
     ).unwrap();
 
-    println!("{}", " Test results stored in commissioner_log table.".green().bold());
+    println!("\n{}", "✓ Test results stored in commissioner_log table.".green().bold());
+    
+    println!("\nPress Enter to continue...");
+    io::stdin().read_line(&mut String::new()).ok();
 }
 
 // // ---------------------------------------------------------------------------
@@ -279,7 +457,7 @@ fn view_game_probabilities(conn: &Connection, user: &User) {
     logger::info(&format!("Commissioner (User ID: {}) viewing game probabilities", user.id));
     use crate::db::dbqueries;
     
-    let games = vec!["normal", "multi", "holding", "wheel of fortune"];
+    let games = vec!["normal", "multi", "holding"];
     
     for game in games {
         println!("\n{}", format!("═══ {} ═══", game.to_uppercase()).bright_cyan());
@@ -321,7 +499,7 @@ fn adjust_symbol_weights(conn: &Connection, user: &User) {
     use crate::db::dbqueries;
     
     // Select game using menu_generator
-    let game_options = vec!["normal", "multi", "holding", "wheel of fortune", "Cancel"];
+    let game_options = vec!["normal", "multi", "holding", "Cancel"];
     let game_choice = menu_generator("Select Game to Adjust Weights", &game_options);
     
     if game_choice == "Cancel" {
@@ -397,7 +575,7 @@ fn adjust_symbol_payouts(conn: &Connection, user: &User) {
     use crate::db::dbqueries;
     
     // Select game using menu_generator
-    let game_options = vec!["normal", "multi", "holding", "wheel of fortune", "Cancel"];
+    let game_options = vec!["normal", "multi", "holding", "Cancel"];
     let game_choice = menu_generator("Select Game to Adjust Payouts", &game_options);
     
     if game_choice == "Cancel" {

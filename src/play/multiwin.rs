@@ -10,6 +10,41 @@ use crate::cryptography::rng::CasinoRng;
 use colored::*;
 
 use crate::interfaces::menus::menu_generator;
+
+// Display payout table to user before playing
+fn display_payout_table(symbol_probs: &[(String, usize, f64)], bet: f64) {
+    // Calculate average multiplier
+    let base_multiplier: f64 = symbol_probs.iter()
+        .map(|(_, _, mult)| mult)
+        .sum::<f64>() / symbol_probs.len() as f64;
+    
+    let single_win = bet * base_multiplier;
+    let double_jackpot = bet * base_multiplier * 2.0;
+    
+    println!("\n{}", "╔════════════════════════════════════════════════╗".bright_cyan());
+    println!("{}", "║          💰 PAYOUT TABLE 💰                   ║".bright_cyan().bold());
+    println!("{}", "╠════════════════════════════════════════════════╣".bright_cyan());
+    println!("{}", "║  Match any ROW, COLUMN, or DIAGONAL:          ║".bright_cyan());
+    println!("║    Regular Win:     ${:<6.2} ({:.1}x)          ║", single_win, base_multiplier);
+    println!("{}", "╠════════════════════════════════════════════════╣".bright_cyan());
+    println!("{}", "║  Match ANY ROW + FOUR CORNERS:                 ║".bright_cyan());
+    println!("║    Double Jackpot:  ${:<6.2} ({:.1}x)          ║", double_jackpot, base_multiplier * 2.0);
+    println!("{}", "╠════════════════════════════════════════════════╣".bright_cyan());
+    println!("{}", "║  Symbols in play:                              ║".bright_cyan());
+    
+    // Calculate total weight for probability display
+    let total_weight: usize = symbol_probs.iter().map(|(_, w, _)| w).sum();
+    
+    for (symbol, weight, payout) in symbol_probs {
+        let probability = (*weight as f64 / total_weight as f64) * 100.0;
+        println!("║    {} - {:.1}x multiplier [{:.1}% chance]         ║", 
+            symbol, payout, probability);
+    }
+    
+    println!("{}", "╚════════════════════════════════════════════════╝".bright_cyan());
+    println!();
+}
+
 // CRITICAL: check grid size is used or not and adjust and fix it
 // CRITICAL: implement rng here
 const GRID_SIZE: usize = 5;
@@ -43,6 +78,9 @@ pub fn multi_win(conn: &Connection, user: &User, bet: f64) -> bool{
     println!("\n{}", "═══ 🎰 Welcome to 5x5 Multi-Win Slots! 🎰 ═══".bright_yellow().bold());
     println!("{}", "Win by matching any row, column, or diagonal!".bright_cyan());
     println!("{} ${:.2}\n", "Your bet:".bright_white().bold(), bet);
+    
+    // Display payout table to user
+    display_payout_table(&symbol_probs, bet);
 
     loop {
         // Check if player has the funds
@@ -91,9 +129,22 @@ pub fn multi_win(conn: &Connection, user: &User, bet: f64) -> bool{
             let _ = dbqueries::add_loss(conn, "multi");
             let _ = dbqueries::add_user_loss(conn, user, "multi");
         } else {
+            // ADDED BY SUCA
+            // Calculate base multiplier from database (average of all symbols)
+            let base_multiplier: f64 = symbol_probs.iter()
+                .map(|(_, _, mult)| mult)
+                .sum::<f64>() / symbol_probs.len() as f64;
+            //////////////////////////////////////////////////////////////
+            
             // check for Double Jackpot condition first
             if win_results.has_horizontal_win && win_results.has_four_corner_win {
-                let winnings = bet * 4.0;
+                // REMOVED BY SUCA
+                //let winnings = bet * 4.0;
+                //////////////////////////////////////////////////////////////
+                // ADDED BY SUCA INSTEAD
+                let payout_multiplier = base_multiplier * 2.0; // Double jackpot
+                let winnings = bet * payout_multiplier;
+                //////////////////////////////////////////////////////////////
                 
                 // DEPOSIT WINNINGS
                 let final_balance = dbqueries::transaction(conn, user, winnings);
@@ -102,13 +153,14 @@ pub fn multi_win(conn: &Connection, user: &User, bet: f64) -> bool{
                 println!("{}", "      💥 DOUBLE JACKPOT! 💥            ".green().bold());
                 println!("{}", "═══════════════════════════════════════".green().bold());
                 println!("\n{}  Horizontal + Four Corners!", "Result:".bright_white().bold());
-                println!("{} ${:.2} × 4x = ${:.2}", "Payout:".bright_white().bold(), bet, winnings);
+                println!("{} ${:.2} × {:.1}x = ${:.2}", "Payout:".bright_white().bold(), bet, payout_multiplier, winnings);
                 println!("{} ${:.2}", "Balance:".bright_white().bold(), final_balance);
                 println!();
                 let _ = dbqueries::add_win(conn, "multi");
                 let _ = dbqueries::add_user_win(conn, user, "multi", winnings);
             } else {
-                let winnings = bet * 2.0;
+                let payout_multiplier = base_multiplier;
+                let winnings = bet * payout_multiplier;
                 
                 // DEPOSIT WINNINGS
                 let final_balance = dbqueries::transaction(conn, user, winnings);
@@ -120,7 +172,7 @@ pub fn multi_win(conn: &Connection, user: &User, bet: f64) -> bool{
                 for win_line in &win_results.win_descriptions {
                     println!("  ✓ {}", win_line.bright_cyan());
                 }
-                println!("\n{} ${:.2} × 2x = ${:.2}", "Payout:".bright_white().bold(), bet, winnings);
+                println!("\n{} ${:.2} × {:.1}x = ${:.2}", "Payout:".bright_white().bold(), bet, payout_multiplier, winnings);
                 println!("{} ${:.2}", "Balance:".bright_white().bold(), final_balance);
                 println!();
                 let _ = dbqueries::add_win(conn, "multi");

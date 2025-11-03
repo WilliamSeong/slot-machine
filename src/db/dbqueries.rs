@@ -17,7 +17,7 @@ lazy_static::lazy_static! {
 
 // Transaction security limits
 const MAX_TRANSACTIONS_PER_MINUTE: usize = 10;
-const SUSPICIOUS_PATTERN_THRESHOLD: usize = 5; // Rapid identical transactions
+const SUSPICIOUS_PATTERN_THRESHOLD: usize = 50; // Rapid identical transactions
 
 /*  ---------------------------------------------------------------------------------------------------------------------------------- */
 // db queries for registering and signing in users
@@ -288,7 +288,7 @@ fn record_transaction(user_id: i32, _amount: f64) {
 }
 
 /// Basic fraud detection - detects suspicious patterns
-fn detect_fraud_patterns(user_id: i32, amount: f64) -> bool {
+fn detect_fraud_patterns(user_id: i32, _amount: f64) -> bool {
     let tracker = TRANSACTION_TRACKER.lock().unwrap();
     
     if let Some(transactions) = tracker.get(&user_id) {
@@ -300,11 +300,6 @@ fn detect_fraud_patterns(user_id: i32, amount: f64) -> bool {
             .count();
         
         if recent_similar >= SUSPICIOUS_PATTERN_THRESHOLD {
-            return true;
-        }
-        
-        // Check for rapid large withdrawals (potential account compromise)
-        if amount < 0.0 && amount.abs() > 1000.0 && recent_similar > 2 {
             return true;
         }
     }

@@ -8,6 +8,37 @@ use crate::cryptography::rng::CasinoRng;
 
 use crate::interfaces::user::User;
 use crate::db::dbqueries;
+
+// Display payout table to user before playing
+fn display_payout_table(symbol_probs: &[(String, usize, f64)], bet: f64) {
+    println!("\n{}", "╔════════════════════════════════════════════════╗".bright_cyan());
+    println!("{}", "║          💰 PAYOUT TABLE 💰                   ║".bright_cyan().bold());
+    println!("{}", "╠════════════════════════════════════════════════╣".bright_cyan());
+    println!("{}", "║  Match Types (Based on Symbol Multiplier):    ║".bright_cyan());
+    println!("{}", "╠════════════════════════════════════════════════╣".bright_cyan());
+    
+    // Calculate total weight for probability display
+    let total_weight: usize = symbol_probs.iter().map(|(_, w, _)| w).sum();
+    
+    for (symbol, weight, payout) in symbol_probs {
+        let probability = (*weight as f64 / total_weight as f64) * 100.0;
+        println!("║  {} Symbol (base {:.1}x) [{:.1}% chance]:       ║", 
+            symbol, payout, probability);
+        println!("║    • 5 of a kind: ${:<6.2} ({:.1}x)           ║", 
+            payout * 5.0 * bet, payout * 5.0);
+        println!("║    • 4 of a kind: ${:<6.2} ({:.1}x)           ║", 
+            payout * 2.5 * bet, payout * 2.5);
+        println!("║    • 3 of a kind: ${:<6.2} ({:.1}x)           ║", 
+            payout * bet, payout);
+    }
+    
+    println!("{}", "╠════════════════════════════════════════════════╣".bright_cyan());
+    println!("{}", "║  💡 Hold up to 2 reels for second spin!       ║".bright_cyan());
+    println!("{}", "║  ⚠️  Each held reel costs 50% of base bet     ║".bright_cyan());
+    println!("{}", "╚════════════════════════════════════════════════╝".bright_cyan());
+    println!();
+}
+
 /// Hold 5x3 slot game - allows up to 2 reels to be held for next spin
 pub fn hold_game(conn: &Connection, user: &User, bet: f64) -> bool {
     // Load symbol probabilities from database
@@ -20,11 +51,6 @@ pub fn hold_game(conn: &Connection, user: &User, bet: f64) -> bool {
         }
     };
     
-    // Extract symbols
-    let symbols: Vec<&str> = symbol_probs.iter()
-        .map(|(sym, _, _)| sym.as_str())
-        .collect();
-    
     // Convert to weighted format for RNG
     let weighted_symbols: Vec<(&str, usize)> = symbol_probs.iter()
         .map(|(sym, weight, _)| (sym.as_str(), *weight))
@@ -35,6 +61,9 @@ pub fn hold_game(conn: &Connection, user: &User, bet: f64) -> bool {
     println!("\n{}", "═══ 🎰 Welcome to Hold Slots! 🎰 ═══".bright_yellow().bold());
     println!("{}", "Hold up to 2 reels for a second spin!".bright_cyan());
     println!("{} ${:.2}\n", "Your bet:".bright_white().bold(), bet);
+    
+    // Display payout table to user
+    display_payout_table(&symbol_probs, bet);
     
     loop {
         // Check if player has the funds for base bet
@@ -156,11 +185,24 @@ pub fn hold_game(conn: &Connection, user: &User, bet: f64) -> bool {
         for &symbol in &reels {
             *win_map.entry(symbol).or_insert(0) += 1;
         }
-        let max_count = win_map.values().copied().max().unwrap_or(1);
+        
+        // Find the winning symbol to get its multiplier
+        let (winning_symbol, max_count) = win_map.iter()
+            .max_by_key(|(_, &count)| count)
+            .map(|(sym, &count)| (*sym, count))
+            .unwrap_or((&"", 1));
+        
+        // Get multiplier from database for winning symbol
+        let base_multiplier = symbol_probs.iter()
+            .find(|(sym, _, _)| sym.as_str() == winning_symbol)
+            .map(|(_, _, mult)| *mult)
+            .unwrap_or(2.0); // Fallback to 2.0 if not found
+        
+        // Calculate payout based on match count and symbol multiplier
         let payout = match max_count {
-            5 => 10.0 * final_bet,
-            4 => 5.0 * final_bet,
-            3 => 2.0 * final_bet,
+            5 => base_multiplier * 5.0 * final_bet, // 5 of a kind: 5x multiplier
+            4 => base_multiplier * 2.5 * final_bet, // 4 of a kind: 2.5x multiplier
+            3 => base_multiplier * final_bet,       // 3 of a kind: 1x multiplier
             _ => 0.0,
         };
 
@@ -168,11 +210,18 @@ pub fn hold_game(conn: &Connection, user: &User, bet: f64) -> bool {
             // WIN - deposit winnings (bets already deducted)
             let final_balance = dbqueries::transaction(conn, user, payout);
             
+            let multiplier_text = match max_count {
+                5 => format!("{:.1}x (5 of a kind)", base_multiplier * 5.0),
+                4 => format!("{:.1}x (4 of a kind)", base_multiplier * 2.5),
+                3 => format!("{:.1}x (3 of a kind)", base_multiplier),
+                _ => String::from("0x"),
+            };
+            
             println!("\n{}", "═══════════════════════════════════════".green().bold());
             println!("{}", "         🎉 YOU WIN! 🎉                ".green().bold());
             println!("{}", "═══════════════════════════════════════".green().bold());
-            println!("\n{} {} of a kind!", "Result:".bright_white().bold(), max_count);
-            println!("{} ${:.2}", "Payout:".bright_white().bold(), payout);
+            println!("\n{} {} {} symbols!", "Result:".bright_white().bold(), max_count, winning_symbol);
+            println!("{} ${:.2} × {} = ${:.2}", "Payout:".bright_white().bold(), final_bet, multiplier_text, payout);
             println!("{} ${:.2}", "Balance:".bright_white().bold(), final_balance);
             println!();
             let _ = dbqueries::add_win(conn, "holding");
