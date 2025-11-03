@@ -6,7 +6,7 @@ use argon2::{
     Argon2, Algorithm, Version, Params
 };
 use aes_gcm::{
-    aead::{Aead, KeyInit, generic_array::GenericArray},
+    aead::{Aead, KeyInit},
     Aes256Gcm
 };
 use base64::{Engine as _, engine::general_purpose};
@@ -114,7 +114,6 @@ pub fn encrypt_data(data: &str, key: &[u8]) -> Result<String, String> {
     // Generate unique nonce
     let mut nonce_bytes = [0u8; NONCE_SIZE];
     OsRng.fill_bytes(&mut nonce_bytes);
-    let nonce = GenericArray::from_slice(&nonce_bytes);
     
     // Create cipher
     let cipher = match Aes256Gcm::new_from_slice(key) {
@@ -125,8 +124,8 @@ pub fn encrypt_data(data: &str, key: &[u8]) -> Result<String, String> {
         }
     };
     
-    // Encrypt
-    let ciphertext = match cipher.encrypt(nonce, data.as_bytes().as_ref()) {
+    // Encrypt (nonce_bytes.as_ref() gives us &[u8] which coerces to Nonce)
+    let ciphertext = match cipher.encrypt(nonce_bytes.as_ref().into(), data.as_bytes().as_ref()) {
         Ok(c) => c,
         Err(_) => {
             logger::error("Encryption operation failed");
@@ -161,7 +160,6 @@ pub fn decrypt_data(encrypted_data: &str, key: &[u8]) -> Result<String, String> 
     }
     
     // Extract nonce and ciphertext
-    let nonce = GenericArray::from_slice(&decoded[..NONCE_SIZE]);
     let ciphertext = &decoded[NONCE_SIZE..];
     
     // Create cipher
@@ -173,8 +171,8 @@ pub fn decrypt_data(encrypted_data: &str, key: &[u8]) -> Result<String, String> 
         }
     };
     
-    // Decrypt and verify
-    let plaintext = match cipher.decrypt(nonce, ciphertext.as_ref()) {
+    // Decrypt and verify (slice automatically coerces to Nonce)
+    let plaintext = match cipher.decrypt((&decoded[..NONCE_SIZE]).into(), ciphertext.as_ref()) {
         Ok(p) => p,
         Err(_) => {
             logger::error("Decryption or authentication failed");

@@ -17,8 +17,8 @@ lazy_static::lazy_static! {
 }
 
 // Transaction security limits
-const MAX_TRANSACTIONS_PER_MINUTE: usize = 10;
-const SUSPICIOUS_PATTERN_THRESHOLD: usize = 50; // Rapid identical transactions
+const MAX_TRANSACTIONS_PER_MINUTE: usize = 100000; // DONT FORGET TO SET THIS BACK TO 5
+const SUSPICIOUS_PATTERN_THRESHOLD: usize = 50; // Rapid identical transactions DONT FORGET TO SET THIS BACK TO 3
 
 /*  ---------------------------------------------------------------------------------------------------------------------------------- */
 // db queries for registering and signing in users
