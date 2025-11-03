@@ -176,13 +176,13 @@ fn add_default_symbols(conn: &Connection) -> Result<(),rusqlite::Error> {
         ("7️⃣", 1, 20.0),   // Seven: 1% chance, 20x payout
     ];
 
-    // Add symbols for each game
+    // Add symbols for each game - Use proper types with rusqlite::params!
     for (game_id, _game_name) in games {
         for (symbol, weight, multiplier) in &default_symbols {
             conn.execute(
                 "Insert Or Ignore Into symbol_probabilities (game_id, symbol, weight, payout_multiplier)
                 Values (?1, ?2, ?3, ?4)",
-                [&game_id.to_string(), &symbol.to_string(), &weight.to_string(), &multiplier.to_string()]
+                rusqlite::params![game_id, symbol, *weight as i32, multiplier]
             )?;
         }
     }

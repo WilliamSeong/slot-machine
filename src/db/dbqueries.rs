@@ -258,9 +258,15 @@ pub fn get_user(username: &str, password: &str, conn: &Connection) -> Option<Use
     }
 }
 
-// CRITICAL: check are they safe
-// add_played, add_win, add_loss record game statistics
+/// Record that a game was played
+/// SECURITY: Validates game name against whitelist
 pub fn add_played(conn: &Connection, game: &str) -> rusqlite::Result<()>{
+    use crate::validation::game_validation::validate_game_name;
+    
+    // SECURITY: Validate game name
+    validate_game_name(game)
+        .map_err(|e| rusqlite::Error::InvalidParameterName(e))?;
+    
     logger::info(&format!("Recording game played: {}", game));
     conn.execute(
         "Update games Set played = played + 1 Where name = ?1",
@@ -270,7 +276,15 @@ pub fn add_played(conn: &Connection, game: &str) -> rusqlite::Result<()>{
     Ok(())
 }
 
+/// Record a game win
+/// SECURITY: Validates game name against whitelist
 pub fn add_win(conn: &Connection, game: &str) -> rusqlite::Result<()> {
+    use crate::validation::game_validation::validate_game_name;
+    
+    // SECURITY: Validate game name
+    validate_game_name(game)
+        .map_err(|e| rusqlite::Error::InvalidParameterName(e))?;
+    
     logger::info(&format!("Recording game win: {}", game));
     add_played(conn, game)?;
     
@@ -282,7 +296,15 @@ pub fn add_win(conn: &Connection, game: &str) -> rusqlite::Result<()> {
     Ok(())
 }
 
+/// Record a game loss
+/// SECURITY: Validates game name against whitelist
 pub fn add_loss(conn: &Connection, game: &str) -> rusqlite::Result<()> {
+    use crate::validation::game_validation::validate_game_name;
+    
+    // SECURITY: Validate game name
+    validate_game_name(game)
+        .map_err(|e| rusqlite::Error::InvalidParameterName(e))?;
+    
     logger::info(&format!("Recording game loss: {}", game));
     add_played(conn, game)?;
     
@@ -294,10 +316,18 @@ pub fn add_loss(conn: &Connection, game: &str) -> rusqlite::Result<()> {
     Ok(())
 }
 
+/// Record a user's win in a specific game
+/// SECURITY: Validates game name against whitelist
 pub fn add_user_win(conn: &Connection, user: &User, game: &str, winnings: f64) -> rusqlite::Result<()> {
+    use crate::validation::game_validation::validate_game_name;
+    
+    // SECURITY: Validate game name
+    validate_game_name(game)
+        .map_err(|e| rusqlite::Error::InvalidParameterName(e))?;
+    
     logger::transaction(&format!("User ID: {} won {:.2} in game: {}", user.id, winnings, game));
     
-    // Query to get the game_id from the game name
+    // Query to get the game_id from the game name (validated)
     let game_id: i32 = conn.query_row(
         "Select id From games Where name = ?1",
         rusqlite::params![game],
@@ -328,10 +358,18 @@ pub fn add_user_win(conn: &Connection, user: &User, game: &str, winnings: f64) -
     Ok(())
 }
 
+/// Record a user's loss in a specific game
+/// SECURITY: Validates game name against whitelist
 pub fn add_user_loss(conn: &Connection, user: &User, game: &str) -> rusqlite::Result<()> {
+    use crate::validation::game_validation::validate_game_name;
+    
+    // SECURITY: Validate game name
+    validate_game_name(game)
+        .map_err(|e| rusqlite::Error::InvalidParameterName(e))?;
+    
     logger::info(&format!("User ID: {} lost in game: {}", user.id, game));
     
-    // Query to get the game_id from the game name
+    // Query to get the game_id from the game name (validated)
     let game_id: i32 = conn.query_row(
         "Select id From games Where name = ?1",
         rusqlite::params![game],
@@ -358,27 +396,34 @@ pub fn get_games(conn: &Connection) -> rusqlite::Result<Vec<(String, bool)>> {
     Ok(games)
 }
 
+/// Toggle game active status (enable/disable)
+/// SECURITY: Validates game name against whitelist
 pub fn toggle_game(conn: &Connection, name: &str) -> rusqlite::Result<()> {
+    use crate::validation::game_validation::validate_game_name;
+    
+    // SECURITY: Validate game name
+    validate_game_name(name)
+        .map_err(|e| rusqlite::Error::InvalidParameterName(e))?;
+    
     logger::security(&format!("Game status toggle attempt for: {}", name));
 
-    let mut stmt: rusqlite::Statement<'_> = conn.prepare(
+    // Use proper error handling instead of .unwrap()
+    let mut stmt = conn.prepare(
         "Update games Set active = Not active Where name = ?1"
-    ).unwrap();
+    )?;
 
-    let result = stmt.execute([name]);
-
-    match result {
+    match stmt.execute([name]) {
         Ok(_) => {
             logger::security(&format!("Game status successfully toggled for: {}", name));
             println!("{} toggled", name);
+            Ok(())
         }
         Err(e) => {
             logger::error(&format!("Failed to toggle game status for: {}. Error: {}", name, e));
             println!("Toggle failed");
+            Err(e)
         }
     }
-
-    Ok(())
 }
 
 pub fn get_game_statistics(conn: &Connection) -> rusqlite::Result<()>{
@@ -455,10 +500,19 @@ pub fn initialize_user_statistics(conn: &Connection, username: &str, password: &
 
 // ----------------------------------------------------------------------------------------------------------------------------------
 // Symbol probability management functions for commissioner control
+
+/// Get symbol probabilities for a specific game
+/// SECURITY: Validates game name against whitelist before database query
 pub fn get_symbol_probabilities(conn: &Connection, game_name: &str) -> rusqlite::Result<Vec<(String, usize, f64)>> {
+    use crate::validation::game_validation::validate_game_name;
+    
+    // SECURITY: Validate game name before database operation
+    validate_game_name(game_name)
+        .map_err(|e| rusqlite::Error::InvalidParameterName(e))?;
+    
     logger::info(&format!("Retrieving symbol probabilities for game: {}", game_name));
     
-    // Get game ID
+    // Get game ID (validated game name)
     let game_id: i32 = conn.query_row(
         "Select id From games Where name = ?1",
         [game_name],
@@ -480,43 +534,64 @@ pub fn get_symbol_probabilities(conn: &Connection, game_name: &str) -> rusqlite:
 
     Ok(symbols)
 }
-// CRITICAL: update this function dont use string conversation
-// Update the weight (probability) of a specific symbol in a game.
+/// Update the weight (probability) of a specific symbol in a game
+/// SECURITY: Validates all inputs against whitelists before database operations
 pub fn update_symbol_weight(conn: &Connection, game_name: &str, symbol: &str, new_weight: usize) -> rusqlite::Result<()> {
+    use crate::validation::game_validation::{validate_game_name, validate_symbol, validate_symbol_weight};
+    
+    // SECURITY: Validate all inputs before database operations
+    validate_game_name(game_name)
+        .map_err(|e| rusqlite::Error::InvalidParameterName(e))?;
+    validate_symbol(symbol)
+        .map_err(|e| rusqlite::Error::InvalidParameterName(e))?;
+    validate_symbol_weight(new_weight)
+        .map_err(|e| rusqlite::Error::InvalidParameterName(e))?;
+    
     logger::security(&format!("Updating symbol weight for game: {}, symbol: {}, new weight: {}", game_name, symbol, new_weight));
     
-    // Get game ID
+    // Get game ID (validated game name)
     let game_id: i32 = conn.query_row(
         "Select id From games Where name = ?1",
         [game_name],
         |row| row.get(0)
     )?;
 
-    // Update the weight
+    // Update the weight - Use proper types with rusqlite::params!
     conn.execute(
         "Update symbol_probabilities Set weight = ?1 Where game_id = ?2 And symbol = ?3",
-        [&new_weight.to_string(), &game_id.to_string(), symbol]
+        rusqlite::params![new_weight as i32, game_id, symbol]
     )?;
 
     logger::security(&format!("Symbol weight updated successfully for {} in {}", symbol, game_name));
     Ok(())
 }
 
-// Update the payout multiplier of a specific symbol in a game.
+/// Update the payout multiplier of a specific symbol in a game
+/// SECURITY: Validates all inputs against whitelists before database operations
 pub fn update_symbol_payout(conn: &Connection, game_name: &str, symbol: &str, new_multiplier: f64) -> rusqlite::Result<()> {
+    use crate::validation::game_validation::{validate_game_name, validate_symbol, validate_payout_multiplier};
+    
+    // SECURITY: Validate all inputs before database operations
+    validate_game_name(game_name)
+        .map_err(|e| rusqlite::Error::InvalidParameterName(e))?;
+    validate_symbol(symbol)
+        .map_err(|e| rusqlite::Error::InvalidParameterName(e))?;
+    validate_payout_multiplier(new_multiplier)
+        .map_err(|e| rusqlite::Error::InvalidParameterName(e))?;
+    
     logger::security(&format!("Updating payout multiplier for game: {}, symbol: {}, new multiplier: {}", game_name, symbol, new_multiplier));
     
-    // Get game ID
+    // Get game ID (validated game name)
     let game_id: i32 = conn.query_row(
         "Select id From games Where name = ?1",
         [game_name],
         |row| row.get(0)
     )?;
 
-    // Update the payout multiplier
+    // Update the payout multiplier - Use proper types with rusqlite::params!
     conn.execute(
         "Update symbol_probabilities Set payout_multiplier = ?1 Where game_id = ?2 And symbol = ?3",
-        [&new_multiplier.to_string(), &game_id.to_string(), symbol]
+        rusqlite::params![new_multiplier, game_id, symbol]
     )?;
 
     logger::security(&format!("Payout multiplier updated successfully for {} in {}", symbol, game_name));
