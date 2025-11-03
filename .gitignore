@@ -1,0 +1,4 @@
+/target
+casino.db
+casino_logs.log
+.env
