@@ -7,17 +7,21 @@ mod authentication;
 mod play;
 mod logger;
 mod cryptography;
-mod validation;
 
 // Main function, creates and connects to db, casino.db
 fn main() -> Result<()> {
 
     clearscreen::clear().expect("Failed clearscreen");
+    
+    // Load .env file if it exists (for initial setup)
+    // Fails silently if .env doesn't exist - that's OK
+    dotenvy::dotenv().ok();
+    
     // Initialize logger first thing
     logger::logger::info("Application is starting");
     
     // Initialize encryption key
-    db::encryption::initialize_encryption_key();
+    cryptography::crypto::initialize_encryption_key();
     logger::logger::info("Database encryption initialized");
     
     let conn = Connection::open("casino.db")?;

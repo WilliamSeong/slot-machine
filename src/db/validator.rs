@@ -2,18 +2,20 @@ use colored::*;
 
 // Validation result with error message
 pub type ValidationResult = Result<(), String>;
-// CRITICAL: instead of accepting string look internet find a way to do for floats
-// CRITICAL: instead of float look at integer.integer type like you did in blockchain 
 
-// Constants for validation limits
+// Constants for validation limits - Authentication
 const MIN_USERNAME_LENGTH: usize = 3;
 const MAX_USERNAME_LENGTH: usize = 30;
 const MIN_PASSWORD_LENGTH: usize = 3;
 const MAX_PASSWORD_LENGTH: usize = 128;
+
+// Constants for validation limits - Financial
 const MIN_DEPOSIT: f64 = 0.01;
 const MAX_DEPOSIT: f64 = 1_000_000.0;
 const MIN_WITHDRAWAL: f64 = 0.01;
 const MAX_WITHDRAWAL: f64 = 100_000.0;
+
+// ==================== Authentication Validation ====================
 
 // Validate username for registration and login.
 pub fn validate_username(username: &str) -> ValidationResult {
@@ -83,40 +85,8 @@ pub fn validate_password(password: &str) -> ValidationResult {
     Ok(())
 }
 
-/// Validate password strength for registration (more strict than login)
-pub fn validate_password_strength(password: &str) -> ValidationResult {
-    // First run basic validation
-    validate_password(password)?;
-    
-    // For production: Check minimum length of 8 for better security
-    const STRONG_PASSWORD_MIN_LENGTH: usize = 8;
-    if password.len() < STRONG_PASSWORD_MIN_LENGTH {
-        return Err(format!("❌ For security, password should be at least {} characters long!", STRONG_PASSWORD_MIN_LENGTH));
-    }
-    
-    // Check for at least one digit
-    if !password.chars().any(|c| c.is_numeric()) {
-        return Err("❌ Password should contain at least one number!".to_string());
-    }
-    
-    // Check for at least one letter
-    if !password.chars().any(|c| c.is_alphabetic()) {
-        return Err("❌ Password should contain at least one letter!".to_string());
-    }
-    // CRITICAL: there was a file that includes lot of passwrod put here
-    // Check for common weak passwords
-    let weak_passwords = ["password", "12345678", "qwerty", "abc123", "letmein", 
-                          "welcome", "monkey", "password1", "admin"];
-    let password_lower = password.to_lowercase();
-    for weak in weak_passwords.iter() {
-        if password_lower.contains(weak) {
-            return Err("❌ Password is too common! Please choose a stronger password.".to_string());
-        }
-    }
-    
-    Ok(())
-}
-// CRITICAL: copy paste from your stacking smart contract
+// ==================== Financial Validation ====================
+
 // Validate deposit amount.
 pub fn validate_deposit(amount: f64) -> ValidationResult {
     // Check if valid number
@@ -147,7 +117,7 @@ pub fn validate_deposit(amount: f64) -> ValidationResult {
     
     Ok(())
 }
-// CRITICAL: copy paste from your stacking smart contract
+
 // Validate withdrawal amount.
 pub fn validate_withdrawal(amount: f64, current_balance: f64) -> ValidationResult {
     // Check if valid number
@@ -185,6 +155,9 @@ pub fn validate_withdrawal(amount: f64, current_balance: f64) -> ValidationResul
     Ok(())
 }
 
+// ==================== Shared Utilities ====================
+
+// Display validation error in a formatted box
 pub fn display_validation_error(error: &str) {
     println!("\n{}", "╔═══════════════════════════════════════════╗".red());
     println!("{}", "║        ⚠️  VALIDATION ERROR ⚠️             ║".red().bold());
@@ -193,75 +166,4 @@ pub fn display_validation_error(error: &str) {
     println!("{}", "╚═══════════════════════════════════════════╝".red());
     println!();
 }
-// CRITICAL: copy paste from your stacking smart contract
-// #[cfg(test)]
-// mod tests {
-//     use super::*;
-
-//     #[test]
-//     fn test_valid_username() {
-//         assert!(validate_username("alice").is_ok());
-//         assert!(validate_username("bob123").is_ok());
-//         assert!(validate_username("user_name").is_ok());
-//     }
-
-//     #[test]
-//     fn test_invalid_username() {
-//         assert!(validate_username("").is_err());
-//         assert!(validate_username("ab").is_err()); // Too short
-//         assert!(validate_username("a' OR '1'='1").is_err()); // SQL injection
-//         assert!(validate_username("user;DROP TABLE").is_err()); // SQL injection
-//     }
-
-//     #[test]
-//     fn test_valid_password() {
-//         assert!(validate_password("pass123").is_ok());
-//         assert!(validate_password("my_secure_password").is_ok());
-//     }
-
-//     #[test]
-//     fn test_invalid_password() {
-//         assert!(validate_password("").is_err());
-//         assert!(validate_password("ab").is_err()); // Too short
-//     }
-
-//     #[test]
-//     fn test_valid_deposit() {
-//         assert!(validate_deposit(10.0).is_ok());
-//         assert!(validate_deposit(100.50).is_ok());
-//     }
-
-//     #[test]
-//     fn test_invalid_deposit() {
-//         assert!(validate_deposit(0.0).is_err());
-//         assert!(validate_deposit(-10.0).is_err());
-//         assert!(validate_deposit(2_000_000.0).is_err()); // Too large
-//     }
-
-//     #[test]
-//     fn test_valid_withdrawal() {
-//         assert!(validate_withdrawal(10.0, 100.0).is_ok());
-//         assert!(validate_withdrawal(50.0, 100.0).is_ok());
-//     }
-
-//     #[test]
-//     fn test_invalid_withdrawal() {
-//         assert!(validate_withdrawal(0.0, 100.0).is_err());
-//         assert!(validate_withdrawal(-10.0, 100.0).is_err());
-//         assert!(validate_withdrawal(150.0, 100.0).is_err()); // More than balance
-//     }
-
-//     #[test]
-//     fn test_valid_bet() {
-//         assert!(validate_bet(10.0, 100.0).is_ok());
-//         assert!(validate_bet(50.0, 100.0).is_ok());
-//     }
-
-//     #[test]
-//     fn test_invalid_bet() {
-//         assert!(validate_bet(0.0, 100.0).is_err());
-//         assert!(validate_bet(150.0, 100.0).is_err()); // More than balance
-//         assert!(validate_bet(15_000.0, 20_000.0).is_err()); // Exceeds max bet
-//     }
-// }
 

@@ -193,7 +193,6 @@ fn print_grid(grid: &Grid) {
     }
     println!("{}", border);
 }
-// CRITICAL: check logic here 
 //checks all win conditions
 fn check_wins(grid: &Grid) -> WinCheckResults {
     let mut wins = Vec::<String>::new(); 

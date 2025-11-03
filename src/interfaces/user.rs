@@ -4,7 +4,6 @@ use std::io::{self, Write};
 use crate::play;
 use crate::logger::logger;
 use crate::interfaces::menus::menu_generator;
-// CRITICAL: check english in prints
 // User struct to hold the id of the user
 pub struct User {
     pub id: i32,
@@ -286,11 +285,9 @@ fn user_account(conn: &Connection, user: &User) {
     }
 }
 
-// CRITICAL: fix this and add input validation
 // Function to let users deposit funds
 fn deposit(conn: &Connection, user: &User) -> rusqlite::Result<bool>{
-    // CRITICAL: check inside imports
-    use crate::validation::validators::{validate_deposit, display_validation_error};
+    use crate::db::validator::{validate_deposit, display_validation_error};
     
     println!("\n{}", "═══ 💵 Deposit Funds 💵 ═══".bright_cyan().bold());
     println!("{}", "Enter amount to deposit ($0.01 - $1,000,000)".bright_white());
@@ -342,8 +339,7 @@ fn deposit(conn: &Connection, user: &User) -> rusqlite::Result<bool>{
 
 // Function to let user withdraw funds
 fn withdraw(conn: &Connection, user: &User) -> rusqlite::Result<bool>{
-    // CRITICAL: check inside functions
-    use crate::validation::validators::{validate_withdrawal, display_validation_error};
+    use crate::db::validator::{validate_withdrawal, display_validation_error};
     
     println!("\n{}", "═══ 💰 Withdraw Funds 💰 ═══".bright_cyan().bold());
     
@@ -364,7 +360,6 @@ fn withdraw(conn: &Connection, user: &User) -> rusqlite::Result<bool>{
 
     let mut choice: String = String::new();
     io::stdin().read_line(&mut choice).ok();
-    // CRITICAL: add parse here
     // Parse the input
     let withdraw_amount: Result<f64, std::num::ParseFloatError> = choice.trim().parse();
     

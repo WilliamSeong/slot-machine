@@ -7,7 +7,6 @@ use colored::*;
 use std::io::{self, Write};
 
 use crate::interfaces::menus::menu_generator;
-// CRITICAL: dont forgetto put display functions
 // Display payout table to user before playing
 fn display_payout_table(symbol_probs: &[(String, usize, f64)], bet: f64) {
     println!("\n{}", "╔════════════════════════════════════════════════╗".bright_cyan());
@@ -67,7 +66,7 @@ pub fn normal_slots(conn: &Connection, bet: f64, user: &User) -> bool {
             .map(|(sym, weight, _)| (sym.as_str(), *weight))
             .collect();
 
-        // CHARGE BET FIRST before playing (critical for financial integrity)
+        // CHARGE BET FIRST before playing
         logger::transaction(&format!("User ID: {} placing bet of ${:.2} for normal slots", user.id, bet));
         let balance_after_bet = dbqueries::transaction(conn, user, -bet);
         
@@ -118,7 +117,7 @@ pub fn normal_slots(conn: &Connection, bet: f64, user: &User) -> bool {
             let winnings = payout_multiplier * bet;
             logger::transaction(&format!("User ID: {} won ${:.2} with three {}s in normal slots", user.id, winnings, slot1));
             
-            // DEPOSIT WINNINGS (bet already deducted above)
+            // DEPOSIT WINNINGS
             let final_balance = dbqueries::transaction(conn, user, winnings);
             
             println!("\n{}", "═══════════════════════════════════════".green().bold());
@@ -138,7 +137,6 @@ pub fn normal_slots(conn: &Connection, bet: f64, user: &User) -> bool {
                 .map(|(_, _, mult)| mult)
                 .unwrap_or(&3.0);
             let payout_multiplier = base_multiplier * 0.5; // Half payout for two symbols
-            // CRITICAL: payout implement here
             let winnings = payout_multiplier * bet;
             logger::transaction(&format!("User ID: {} won ${:.2} with two matching symbols in normal slots", user.id, winnings));
             

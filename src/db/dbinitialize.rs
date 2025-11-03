@@ -67,32 +67,41 @@ pub fn initialize_dbs(conn: &Connection) -> Result<(), rusqlite::Error> {
 }
 
 /// Create default administrator accounts with secure password setup
-/// SECURITY: Passwords come from environment variables or are generated securely
+/// SECURITY: Credentials loaded from environment or generated and saved to .env
 fn add_technician_commissioner(conn: &Connection) -> Result<(),rusqlite::Error> {
-    use crate::cryptography::crypto::hash_password;
-    use crate::db::encryption::encrypt_balance;
+    use crate::cryptography::crypto::{hash_password, encrypt_balance};
     use crate::logger::logger;
     use std::env;
-    // CRITICAL: HANDLE THIS IN FUTURE
-    // Try to get passwords from environment variables (recommended for production)
-    let tech_password = env::var("CASINO_TECH_PASSWORD")
-        .unwrap_or_else(|_| generate_secure_password());
     
-    let comm_password = env::var("CASINO_COMM_PASSWORD")
-        .unwrap_or_else(|_| generate_secure_password());
+    const ENV_FILE: &str = ".env";
     
-    // Log if generated passwords are being used (one-time setup)
-    if env::var("CASINO_TECH_PASSWORD").is_err() {
-        logger::security(&format!("🔐 DEFAULT TECHNICIAN PASSWORD: {}", tech_password));
-        logger::warning("Set CASINO_TECH_PASSWORD environment variable for production!");
-        println!("{}", format!("║  Technician Password: {:25} ║", tech_password).bright_yellow());
-    }
+    // Load or generate technician credentials
+    let tech_username = env::var("CASINO_TECH_USERNAME")
+        .unwrap_or_else(|_| "technician".to_string());
     
-    if env::var("CASINO_COMM_PASSWORD").is_err() {
-        logger::security(&format!("🔐 DEFAULT COMMISSIONER PASSWORD: {}", comm_password));
-        logger::warning("Set CASINO_COMM_PASSWORD environment variable for production!");
-        println!("{}", format!("║  Commissioner Password: {:24} ║", comm_password).bright_yellow());
-    }
+    let tech_password = match env::var("CASINO_TECH_PASSWORD") {
+        Ok(pwd) => pwd,
+        Err(_) => {
+            let pwd = generate_secure_password();
+            save_to_env_file(ENV_FILE, "CASINO_TECH_USERNAME", &tech_username);
+            save_to_env_file(ENV_FILE, "CASINO_TECH_PASSWORD", &pwd);
+            pwd
+        }
+    };
+    
+    // Load or generate commissioner credentials
+    let comm_username = env::var("CASINO_COMM_USERNAME")
+        .unwrap_or_else(|_| "commissioner".to_string());
+    
+    let comm_password = match env::var("CASINO_COMM_PASSWORD") {
+        Ok(pwd) => pwd,
+        Err(_) => {
+            let pwd = generate_secure_password();
+            save_to_env_file(ENV_FILE, "CASINO_COMM_USERNAME", &comm_username);
+            save_to_env_file(ENV_FILE, "CASINO_COMM_PASSWORD", &pwd);
+            pwd
+        }
+    };
     
     // Hash passwords securely with Argon2id
     let hashed_tech_password = hash_password(&tech_password)
@@ -108,21 +117,59 @@ fn add_technician_commissioner(conn: &Connection) -> Result<(),rusqlite::Error> 
     let encrypted_comm_balance = encrypt_balance(0.0)
         .map_err(|e| rusqlite::Error::InvalidParameterName(e))?;
     
-    // Create technician account with password change requirement
+    // Create technician account
     conn.execute(
         "Insert Or Ignore Into users (username, password, role, balance) 
-        Values ('technician', ?1, 'technician', ?2)",
-        [&hashed_tech_password, &encrypted_tech_balance]
+        Values (?1, ?2, 'technician', ?3)",
+        [&tech_username, &hashed_tech_password, &encrypted_tech_balance]
     )?;
 
-    // Create commissioner account with password change requirement
+    // Create commissioner account
     conn.execute(
         "Insert Or Ignore Into users (username, password, role, balance) 
-        Values ('commissioner', ?1, 'commissioner', ?2)",
-        [&hashed_comm_password, &encrypted_comm_balance]
+        Values (?1, ?2, 'commissioner', ?3)",
+        [&comm_username, &hashed_comm_password, &encrypted_comm_balance]
     )?;
 
     Ok(())
+}
+
+/// Save a key-value pair to .env file
+fn save_to_env_file(file_path: &str, key: &str, value: &str) {
+    use std::fs;
+    use std::path::Path;
+    use std::io::Write;
+    
+    let path = Path::new(file_path);
+    let entry = format!("{}={}\n", key, value);
+    
+    // Read existing content if file exists
+    let existing_content = if path.exists() {
+        fs::read_to_string(path).unwrap_or_default()
+    } else {
+        String::new()
+    };
+    
+    // Check if key already exists
+    if existing_content.contains(&format!("{}=", key)) {
+        return; // Don't overwrite existing entries
+    }
+    
+    // Append new entry
+    match fs::OpenOptions::new()
+        .create(true)
+        .append(true)
+        .open(path)
+    {
+        Ok(mut file) => {
+            if let Err(e) = file.write_all(entry.as_bytes()) {
+                eprintln!("Failed to write to {}: {}", file_path, e);
+            }
+        }
+        Err(e) => {
+            eprintln!("Failed to open {}: {}", file_path, e);
+        }
+    }
 }
 
 // MANDATORY: Generate a secure random password for default accounts

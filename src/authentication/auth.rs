@@ -75,8 +75,7 @@ pub fn login(conn: &Connection) -> rusqlite::Result<()> {
 
 // Function to handle a new user trying to register their account, returns a user struct
 pub fn register(conn: &Connection) -> Result<Option<User>> {
-    // CRITICAL: inside libraries, is it more secure research it and figure it oout 
-    use crate::validation::validators::{validate_username, validate_password, display_validation_error};
+    use crate::db::validator::{validate_username, validate_password, display_validation_error};
     use dialoguer::Password;
     
     println!("\n{}", "═══ 📝 User Registration 📝 ═══".bright_cyan().bold());
@@ -104,7 +103,6 @@ pub fn register(conn: &Connection) -> Result<Option<User>> {
         return Ok(None);
     }
     
-    // CRITICAL: solve this thing learn standarts and implement itgfh
     // Get password with secure input (shows asterisks)
     let password = match Password::new()
         .with_prompt("Password (min 3 chars)")
@@ -154,22 +152,28 @@ pub fn register(conn: &Connection) -> Result<Option<User>> {
     match dbqueries::insert_users(conn, username, &password)
     {
         Ok(_) => {
-            // Create user statistics functions
+            // Create user statistics (no password verification needed - user was just created)
             dbqueries::initialize_user_statistics(conn, username, &password)?;
             logger::security(&format!("Registration successful for username: {}", username));
             println!("{}", "✓ Registration successful!".green().bold());
             clearscreen::clear().expect("Failed clearscreen");
-            let user = dbqueries::get_user(&username, &password, conn);
-            if let Some(ref u) = user {
-                logger::security(&format!("New user created with ID: {}", u.id));
+            
+            // Get user ID directly (no password verification needed after registration)
+            match dbqueries::get_user_id_by_username(conn, username) {
+                Ok(id) => {
+                    logger::security(&format!("New user created with ID: {}", id));
+                    Ok(Some(User { id }))
+                }
+                Err(e) => {
+                    logger::error(&format!("Failed to retrieve user ID after registration: {}", e));
+                    Ok(None)
+                }
             }
-            Ok(user)
         }
         Err(e) => {
             logger::error(&format!("Registration failed for username: {}. Error: {}", username, e));
             
             // Check if error is due to duplicate username
-            // CRITICAL: check it this one is good bad from internet
             let error_msg = format!("{}", e);
             if error_msg.contains("UNIQUE constraint failed") || error_msg.contains("username") {
                 println!("\n{}", "╔═══════════════════════════════════════════╗".red());
@@ -190,12 +194,11 @@ pub fn register(conn: &Connection) -> Result<Option<User>> {
 
 // function to handle user signing in with existing account in users db, returns a user struct wrapped in a Option wrapped in a Result
 pub fn sign_in(conn: &Connection) -> Result<Option<User>> {
-    // CRITICAL: inside functions importiung again
-    use crate::validation::validators::{validate_username, validate_password, display_validation_error};
-    use crate::authentication::brute_force::{is_account_locked, get_lockout_remaining, record_failed_attempt, record_successful_login};
+    use crate::db::validator::{validate_username, validate_password, display_validation_error};
+    use crate::authentication::authorization::{is_account_locked, get_lockout_remaining, record_failed_attempt, record_successful_login, get_failed_attempts};
     use dialoguer::Password;
     
-    const MAX_FAILED_ATTEMPTS: u32 = 5; // Match brute_force.rs constant
+    const MAX_FAILED_ATTEMPTS: u32 = 5; 
     
     println!("\n{}", "═══ 🔐 User Login 🔐 ═══".bright_cyan().bold());
     
@@ -275,7 +278,7 @@ pub fn sign_in(conn: &Connection) -> Result<Option<User>> {
         Err(e) => {
             // BRUTE FORCE PROTECTION: Record failed attempt
             record_failed_attempt(username);
-            let failed_count = crate::authentication::brute_force::get_failed_attempts(username);
+            let failed_count = get_failed_attempts(username);
             
             logger::security(&format!("Failed login for username: {}. Error: {}. Failed attempts: {}", 
                                      username, e, failed_count));

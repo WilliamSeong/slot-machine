@@ -1,3 +1,3 @@
 pub mod dbqueries;
 pub mod dbinitialize;
-pub mod encryption;
+pub mod validator;

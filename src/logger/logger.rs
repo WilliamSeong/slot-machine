@@ -9,6 +9,7 @@ pub enum LogLevel {
     ERROR,
     SECURITY,
     TRANSACTION,
+    CRITICAL,
 }
 
 impl LogLevel {
@@ -19,6 +20,7 @@ impl LogLevel {
             LogLevel::ERROR => "ERROR",
             LogLevel::SECURITY => "SECURITY",
             LogLevel::TRANSACTION => "TRANSACTION",
+            LogLevel::CRITICAL => "CRITICAL",
         }
     }
 }
@@ -85,6 +87,12 @@ pub fn security(message: &str) {
 pub fn transaction(message: &str) {
     if let Ok(mut logger) = get_logger() {
         let _ = logger.log(LogLevel::TRANSACTION, message);
+    }
+}
+
+pub fn critical(message: &str) {
+    if let Ok(mut logger) = get_logger() {
+        let _ = logger.log(LogLevel::CRITICAL, message);
     }
 }
 

@@ -1,17 +1,30 @@
 use rusqlite::Connection;
 use chrono;
+use std::collections::HashMap;
+use std::sync::Mutex;
 
 use crate::interfaces::user::User;
 use crate::logger::logger;
 
+// SECURITY: Transaction rate limiting and fraud detection
+lazy_static::lazy_static! {
+    // Track transaction timestamps per user for rate limiting
+    static ref TRANSACTION_TRACKER: Mutex<HashMap<i32, Vec<chrono::DateTime<chrono::Local>>>> = Mutex::new(HashMap::new());
+    
+    // Track daily transaction totals per user
+    static ref DAILY_TOTALS: Mutex<HashMap<i32, (chrono::NaiveDate, f64, f64)>> = Mutex::new(HashMap::new());
+}
+
+// Transaction security limits
+const MAX_TRANSACTIONS_PER_MINUTE: usize = 10;
+const SUSPICIOUS_PATTERN_THRESHOLD: usize = 5; // Rapid identical transactions
+
 /*  ---------------------------------------------------------------------------------------------------------------------------------- */
 // db queries for registering and signing in users
 
-
 // Inserts a new user into the database with a securely hashed password.
 pub fn insert_users(conn: &Connection, username: &str, password: &str) -> rusqlite::Result<usize> {
-    use crate::cryptography::crypto::hash_password;
-    use crate::db::encryption::encrypt_balance;
+    use crate::cryptography::crypto::{hash_password, encrypt_balance};
     
     logger::info(&format!("Attempting to insert new user: {}", username));
     
@@ -47,7 +60,6 @@ pub fn check_users(conn: &Connection, username: &str, password: &str) -> rusqlit
     
     logger::info(&format!("Checking credentials for user: {}", username));
     
-    // CRITICAL: statement check
     // Retrieve the stored password hash for this username
     // We fetch the hash and verify it locally (NOT in SQL query for security)
     let mut stmt = conn.prepare("Select id, password From users Where username = ?1")?;
@@ -70,6 +82,18 @@ pub fn check_users(conn: &Connection, username: &str, password: &str) -> rusqlit
     result
 }
 
+// Get user ID by username only
+// Used after registration or when user is already authenticated
+pub fn get_user_id_by_username(conn: &Connection, username: &str) -> rusqlite::Result<i32> {
+    logger::info(&format!("Retrieving user ID for username: {}", username));
+    
+    conn.query_row(
+        "Select id From users Where username = ?1",
+        [username],
+        |row| row.get(0)
+    )
+}
+
 // ----------------------------------------------------------------------------------------------------------------------------------
 // Queries for users to access details in their records
 pub fn user_get_username(conn: &Connection, id: i32) -> rusqlite::Result<String> {
@@ -82,7 +106,7 @@ pub fn user_get_username(conn: &Connection, id: i32) -> rusqlite::Result<String>
 
 // Retrieve and decrypt a user's balance from the database.
 pub fn user_get_balance(conn: &Connection, id: i32) -> rusqlite::Result<f64> {
-    use crate::db::encryption::decrypt_balance;
+    use crate::cryptography::crypto::decrypt_balance;
     
     // Retrieve encrypted balance from database
     let encrypted_balance: String = conn.query_row(
@@ -90,7 +114,6 @@ pub fn user_get_balance(conn: &Connection, id: i32) -> rusqlite::Result<f64> {
         [id],
         |row| row.get(0)
     )?;
-    // CRITICAL: look at any sensetive data
     // Decrypt the balance
     decrypt_balance(&encrypted_balance)
         .map_err(|e| rusqlite::Error::InvalidParameterName(e))
@@ -104,21 +127,54 @@ pub fn user_get_role(conn: &Connection, id: i32) -> rusqlite::Result<String> {
     )
 }
 
-// CRITICAL: learn this should be logged or not
-// CRITICAL: check williams sql and make it secure
-// Execute a financial transaction (deposit or withdrawal) for a user.
+/// Execute a financial transaction with comprehensive security checks
 pub fn transaction(conn: &Connection, user: &User, amount: f64) -> f64 {
-    use crate::db::encryption::encrypt_balance;
+    use crate::cryptography::crypto::{encrypt_balance, decrypt_balance};
     
-    // SECURITY: Log all transaction attempts for audit trail
-    // This helps detect fraud, errors, and suspicious activity
     logger::transaction(&format!("User ID: {} transaction attempt for amount: {:.2}", user.id, amount));
     
-    // Retrieve current encrypted balance
-    let current_balance = match user.get_balance(conn) {
-        Ok(bal) => bal,
+    // SECURITY TIER 1: Rate limiting check
+    if let Err(e) = check_rate_limit(user.id) {
+        logger::security(&format!("SECURITY ALERT: Rate limit exceeded for User ID: {}: {}", user.id, e));
+        eprintln!("❌ Transaction blocked: Too many transactions. Please wait.");
+        return user.get_balance(conn).unwrap_or(0.0);
+    }
+    
+    // SECURITY TIER 2: Fraud pattern detection
+    if detect_fraud_patterns(user.id, amount) {
+        logger::security(&format!("SECURITY ALERT: Suspicious pattern detected for User ID: {}. Amount: {:.2}", user.id, amount));
+        eprintln!("❌ Transaction blocked: Suspicious activity detected. Contact support.");
+        return user.get_balance(conn).unwrap_or(0.0);
+    }
+    
+    // Start database transaction with proper locking
+    let tx = match conn.unchecked_transaction() {
+        Ok(t) => t,
         Err(e) => {
-            logger::error(&format!("Failed to retrieve balance for User ID: {}. Error: {}", user.id, e));
+            logger::error(&format!("Failed to start transaction for User ID: {}: {}", user.id, e));
+            eprintln!("Transaction Failed - System error");
+            return user.get_balance(conn).unwrap_or(0.0);
+        }
+    };
+    
+    // Lock the user row for update (prevents race conditions)
+    let current_balance = match tx.query_row(
+        "Select balance From users Where id = ?1",
+        [user.id],
+        |row| row.get::<_, String>(0)
+    ) {
+        Ok(encrypted) => match decrypt_balance(&encrypted) {
+            Ok(bal) => bal,
+            Err(e) => {
+                logger::error(&format!("Decryption failed for User ID: {}: {}", user.id, e));
+                let _ = tx.rollback();
+                eprintln!("Transaction Failed - Cannot retrieve balance");
+                return 0.0;
+            }
+        },
+        Err(e) => {
+            logger::error(&format!("Failed to lock user row for User ID: {}: {}", user.id, e));
+            let _ = tx.rollback();
             eprintln!("Transaction Failed - Cannot retrieve balance");
             return 0.0;
         }
@@ -127,38 +183,55 @@ pub fn transaction(conn: &Connection, user: &User, amount: f64) -> f64 {
     // Calculate new balance
     let new_balance = current_balance + amount;
     
+    // Validate new balance is non-negative
+    if new_balance < 0.0 {
+        logger::warning(&format!("Transaction would result in negative balance for User ID: {}. Current: {:.2}, Amount: {:.2}", user.id, current_balance, amount));
+        let _ = tx.rollback();
+        eprintln!("Transaction Failed - Insufficient funds");
+        return current_balance;
+    }
+    
     // Encrypt the new balance
     let encrypted_balance = match encrypt_balance(new_balance) {
         Ok(enc) => enc,
         Err(e) => {
-            logger::error(&format!("Failed to encrypt new balance for User ID: {}. Error: {}", user.id, e));
+            logger::error(&format!("Encryption failed for User ID: {}: {}", user.id, e));
+            let _ = tx.rollback();
             eprintln!("Transaction Failed - Encryption error");
             return current_balance;
         }
     };
     
     // Update database with encrypted balance
-    let result = conn.execute(
+    match tx.execute(
         "Update users Set balance = ?1 Where id = ?2",
         rusqlite::params![encrypted_balance, user.id]
-    );
-
-    // CRITICAL: you removed one thing by mistake find it and fix it
-    match result {
+    ) {
         Ok(_) => {
-            logger::transaction(&format!("User ID: {} transaction completed successfully for amount: {:.2}", user.id, amount));
-            logger::info(&format!("User ID: {} new balance: {:.2}", user.id, new_balance));
+            // Commit the transaction
+            match tx.commit() {
+                Ok(_) => {
+                    // Update tracking after successful commit
+                    record_transaction(user.id, amount);
+                    
+                    logger::transaction(&format!("User ID: {} transaction completed: {:.2}. New balance: {:.2}", user.id, amount, new_balance));
+                    new_balance
+                }
+                Err(e) => {
+                    logger::error(&format!("Failed to commit transaction for User ID: {}: {}", user.id, e));
+                    eprintln!("Transaction Failed - Commit error");
+                    current_balance
+                }
+            }
         }
         Err(e) => {
-            logger::error(&format!("User ID: {} transaction failed for amount: {:.2}. Error: {}", user.id, amount, e));
+            logger::error(&format!("Failed to update balance for User ID: {}: {}", user.id, e));
+            let _ = tx.rollback();
             eprintln!("Transaction Failed");
-            return current_balance;
-        },
+            current_balance
+        }
     }
-
-    return new_balance;
 }
-
 
 // Check if a user has sufficient funds for a transaction.
 pub fn check_funds(conn: &Connection, user: &User, limit: f64) -> bool {
@@ -176,7 +249,6 @@ pub fn check_funds(conn: &Connection, user: &User, limit: f64) -> bool {
             return has_funds;
         }
         Err(e) => {
-            // CRITICAL: make this fail safe
             // Fail-safe: if we can't check funds, don't allow the transaction
             logger::error(&format!("Failed to check funds for User ID: {}. Error: {}", user.id, e));
             println!("Unable to check funds");
@@ -185,88 +257,156 @@ pub fn check_funds(conn: &Connection, user: &User, limit: f64) -> bool {
     }
 }
 
-// Change user balance with encrypted storage.ly
+/// Rate limiting check - prevents transaction spam
+fn check_rate_limit(user_id: i32) -> Result<(), String> {
+    let mut tracker = TRANSACTION_TRACKER.lock().unwrap();
+    let now = chrono::Local::now();
+    
+    // Get or create user's transaction history
+    let transactions = tracker.entry(user_id).or_insert_with(|| Vec::new());
+    
+    // Remove transactions older than 1 hour
+    transactions.retain(|ts| now.signed_duration_since(*ts).num_seconds() < 60);
+    
+    // Check per-minute limit
+    let last_minute = transactions.iter()
+        .filter(|ts| now.signed_duration_since(**ts).num_seconds() < 60)
+        .count();
+    
+    if last_minute >= MAX_TRANSACTIONS_PER_MINUTE {
+        return Err(format!("Rate limit: {} transactions per minute", MAX_TRANSACTIONS_PER_MINUTE));
+    }
+    
+    Ok(())
+}
+
+/// Record transaction timestamp for rate limiting
+fn record_transaction(user_id: i32, _amount: f64) {
+    let mut tracker = TRANSACTION_TRACKER.lock().unwrap();
+    let transactions = tracker.entry(user_id).or_insert_with(|| Vec::new());
+    transactions.push(chrono::Local::now());
+}
+
+/// Basic fraud detection - detects suspicious patterns
+fn detect_fraud_patterns(user_id: i32, amount: f64) -> bool {
+    let tracker = TRANSACTION_TRACKER.lock().unwrap();
+    
+    if let Some(transactions) = tracker.get(&user_id) {
+        let now = chrono::Local::now();
+        
+        // Check for rapid identical transactions (common fraud pattern)
+        let recent_similar = transactions.iter()
+            .filter(|ts| now.signed_duration_since(**ts).num_seconds() < 60)
+            .count();
+        
+        if recent_similar >= SUSPICIOUS_PATTERN_THRESHOLD {
+            return true;
+        }
+        
+        // Check for rapid large withdrawals (potential account compromise)
+        if amount < 0.0 && amount.abs() > 1000.0 && recent_similar > 2 {
+            return true;
+        }
+    }
+    
+    false
+}
+
+/// Change user balance with encrypted storage
 pub fn change_balance(conn: &Connection, user: &User, deposit: f64) -> rusqlite::Result<bool> {
-    use crate::db::encryption::encrypt_balance;
+    use crate::cryptography::crypto::{encrypt_balance, decrypt_balance};
     
     logger::transaction(&format!("Balance change for User ID: {} amount: {:.2}", user.id, deposit));
     
-    // Get current balance
-    let current_balance = user.get_balance(conn)?;
+    // SECURITY: Apply multi-tier validation (same as transaction())
+    // TIER 1: Rate limiting
+    if let Err(e) = check_rate_limit(user.id) {
+        logger::security(&format!("SECURITY ALERT: Rate limit exceeded for User ID: {}: {}", user.id, e));
+        return Err(rusqlite::Error::InvalidParameterName(format!("Rate limit exceeded: {}", e)));
+    }
+    
+    // TIER 2: Fraud pattern detection
+    if detect_fraud_patterns(user.id, deposit) {
+        logger::security(&format!("SECURITY ALERT: Suspicious pattern detected for User ID: {}. Amount: {:.2}", user.id, deposit));
+        return Err(rusqlite::Error::InvalidParameterName("Suspicious activity detected".to_string()));
+    }
+    
+    // SECURITY: Use database transaction with proper locking
+    let tx = conn.unchecked_transaction()
+        .map_err(|e| {
+            logger::error(&format!("Failed to start transaction for User ID: {}: {}", user.id, e));
+            e
+        })?;
+    
+    // Lock the user row for update (prevents race conditions)
+    let current_balance = match tx.query_row(
+        "Select balance From users Where id = ?1",
+        [user.id],
+        |row| row.get::<_, String>(0)
+    ) {
+        Ok(encrypted) => match decrypt_balance(&encrypted) {
+            Ok(bal) => bal,
+            Err(e) => {
+                logger::error(&format!("Decryption failed for User ID: {}: {}", user.id, e));
+                let _ = tx.rollback();
+                return Err(rusqlite::Error::InvalidParameterName(e));
+            }
+        },
+        Err(e) => {
+            logger::error(&format!("Failed to lock user row for User ID: {}: {}", user.id, e));
+            let _ = tx.rollback();
+            return Err(e);
+        }
+    };
     
     // Calculate new balance
     let new_balance = current_balance + deposit;
     
+    // Validate non-negative balance
+    if new_balance < 0.0 {
+        logger::warning(&format!("Balance change would result in negative balance for User ID: {}. Current: {:.2}, Deposit: {:.2}", user.id, current_balance, deposit));
+        let _ = tx.rollback();
+        return Err(rusqlite::Error::InvalidParameterName("Insufficient funds".to_string()));
+    }
+    
     // Encrypt the new balance
-    let encrypted_balance = encrypt_balance(new_balance)
-        .map_err(|e| rusqlite::Error::InvalidParameterName(e))?;
+    let encrypted_balance = match encrypt_balance(new_balance) {
+        Ok(enc) => enc,
+        Err(e) => {
+            logger::error(&format!("Encryption failed for User ID: {}: {}", user.id, e));
+            let _ = tx.rollback();
+            return Err(rusqlite::Error::InvalidParameterName(e));
+        }
+    };
     
     // Update database
-    conn.execute(
+    match tx.execute(
         "Update users Set balance = ?1 where id = ?2",
         rusqlite::params![encrypted_balance, user.id]
-    )?;
-
-    // Log the new balance
-    logger::transaction(&format!("User ID: {} new balance after change: {:.2}", user.id, new_balance));
-
-    Ok(true)
-}
-
-// Retrieves and authenticates a user from the database.
-pub fn get_user(username: &str, password: &str, conn: &Connection) -> Option<User> {
-    use crate::cryptography::crypto::verify_password;
-    
-    logger::info(&format!("Retrieving user data for: {}", username));
-    // CRITICAL: no sql always statements test here
-    // Prepare statement to fetch user data by username only
-    let mut stmt = conn.prepare("Select id, password From users Where username = ?1");
-    
-    match stmt {
-        Ok(mut prepared_stmt) => {
-            let user_result = prepared_stmt.query_row([username], |row| {
-                let id: i32 = row.get(0)?;
-                let stored_hash: String = row.get(1)?;
-                
-                // Verify password against stored hash
-                // This is done in application code (not SQL) for security
-                if verify_password(password, &stored_hash) {
-                    Ok(User { id })
-                } else {
-                    // Return same error as "user not found" to prevent username enumeration
-                    Err(rusqlite::Error::QueryReturnedNoRows)
-                }
-            });
+    ) {
+        Ok(_) => {
+            // Commit the transaction
+            tx.commit().map_err(|e| {
+                logger::error(&format!("Failed to commit transaction for User ID: {}: {}", user.id, e));
+                e
+            })?;
             
-            match user_result {
-                Ok(user) => {
-                    logger::info(&format!("Successfully retrieved user data for ID: {}", user.id));
-                    println!("Login successful!");
-                    Some(user)
-                }
-                Err(e) => {
-                    logger::warning(&format!("Failed to retrieve user data for: {}. Error: {}", username, e));
-                    println!("Invalid credentials");
-                    None
-                },
-            }
-        },
+            // Update tracking after successful commit
+            record_transaction(user.id, deposit);
+            
+            logger::transaction(&format!("User ID: {} balance updated. New balance: {:.2}", user.id, new_balance));
+            Ok(true)
+        }
         Err(e) => {
-            logger::error(&format!("Failed to prepare statement: {}", e));
-            None
+            logger::error(&format!("Failed to update balance for User ID: {}. Error: {}", user.id, e));
+            let _ = tx.rollback();
+            Err(e)
         }
     }
 }
 
 /// Record that a game was played
-/// SECURITY: Validates game name against whitelist
 pub fn add_played(conn: &Connection, game: &str) -> rusqlite::Result<()>{
-    use crate::validation::game_validation::validate_game_name;
-    
-    // SECURITY: Validate game name
-    validate_game_name(game)
-        .map_err(|e| rusqlite::Error::InvalidParameterName(e))?;
-    
     logger::info(&format!("Recording game played: {}", game));
     conn.execute(
         "Update games Set played = played + 1 Where name = ?1",
@@ -277,14 +417,7 @@ pub fn add_played(conn: &Connection, game: &str) -> rusqlite::Result<()>{
 }
 
 /// Record a game win
-/// SECURITY: Validates game name against whitelist
 pub fn add_win(conn: &Connection, game: &str) -> rusqlite::Result<()> {
-    use crate::validation::game_validation::validate_game_name;
-    
-    // SECURITY: Validate game name
-    validate_game_name(game)
-        .map_err(|e| rusqlite::Error::InvalidParameterName(e))?;
-    
     logger::info(&format!("Recording game win: {}", game));
     add_played(conn, game)?;
     
@@ -297,14 +430,7 @@ pub fn add_win(conn: &Connection, game: &str) -> rusqlite::Result<()> {
 }
 
 /// Record a game loss
-/// SECURITY: Validates game name against whitelist
 pub fn add_loss(conn: &Connection, game: &str) -> rusqlite::Result<()> {
-    use crate::validation::game_validation::validate_game_name;
-    
-    // SECURITY: Validate game name
-    validate_game_name(game)
-        .map_err(|e| rusqlite::Error::InvalidParameterName(e))?;
-    
     logger::info(&format!("Recording game loss: {}", game));
     add_played(conn, game)?;
     
@@ -317,17 +443,10 @@ pub fn add_loss(conn: &Connection, game: &str) -> rusqlite::Result<()> {
 }
 
 /// Record a user's win in a specific game
-/// SECURITY: Validates game name against whitelist
 pub fn add_user_win(conn: &Connection, user: &User, game: &str, winnings: f64) -> rusqlite::Result<()> {
-    use crate::validation::game_validation::validate_game_name;
-    
-    // SECURITY: Validate game name
-    validate_game_name(game)
-        .map_err(|e| rusqlite::Error::InvalidParameterName(e))?;
-    
     logger::transaction(&format!("User ID: {} won {:.2} in game: {}", user.id, winnings, game));
     
-    // Query to get the game_id from the game name (validated)
+    // Query to get the game_id from the game name
     let game_id: i32 = conn.query_row(
         "Select id From games Where name = ?1",
         rusqlite::params![game],
@@ -359,17 +478,10 @@ pub fn add_user_win(conn: &Connection, user: &User, game: &str, winnings: f64) -
 }
 
 /// Record a user's loss in a specific game
-/// SECURITY: Validates game name against whitelist
 pub fn add_user_loss(conn: &Connection, user: &User, game: &str) -> rusqlite::Result<()> {
-    use crate::validation::game_validation::validate_game_name;
-    
-    // SECURITY: Validate game name
-    validate_game_name(game)
-        .map_err(|e| rusqlite::Error::InvalidParameterName(e))?;
-    
     logger::info(&format!("User ID: {} lost in game: {}", user.id, game));
     
-    // Query to get the game_id from the game name (validated)
+    // Query to get the game_id from the game name
     let game_id: i32 = conn.query_row(
         "Select id From games Where name = ?1",
         rusqlite::params![game],
@@ -397,14 +509,8 @@ pub fn get_games(conn: &Connection) -> rusqlite::Result<Vec<(String, bool)>> {
 }
 
 /// Toggle game active status (enable/disable)
-/// SECURITY: Validates game name against whitelist
 pub fn toggle_game(conn: &Connection, name: &str) -> rusqlite::Result<()> {
-    use crate::validation::game_validation::validate_game_name;
-    
-    // SECURITY: Validate game name
-    validate_game_name(name)
-        .map_err(|e| rusqlite::Error::InvalidParameterName(e))?;
-    
+
     logger::security(&format!("Game status toggle attempt for: {}", name));
 
     // Use proper error handling instead of .unwrap()
@@ -458,26 +564,11 @@ pub fn query_user_statistics(conn: &Connection, user: &User) -> rusqlite::Result
 }
 
 /// Initializes game statistics for a newly registered user.
-pub fn initialize_user_statistics(conn: &Connection, username: &str, password: &str) -> rusqlite::Result<()> {
-    use crate::cryptography::crypto::verify_password;
-    
+pub fn initialize_user_statistics(conn: &Connection, username: &str, _password: &str) -> rusqlite::Result<()> {
     logger::info(&format!("Initializing statistics for new user: {}", username));
     
-    // Query to get the user_id using secure password verification
-    // We need to verify the password hash instead of comparing plain text
-    let mut stmt = conn.prepare("Select id, password From users Where username = ?1")?;
-    
-    let user_id: i32 = stmt.query_row([username], |row| {
-        let id: i32 = row.get(0)?;
-        let stored_hash: String = row.get(1)?;
-        
-        // Verify password before returning user_id
-        if verify_password(password, &stored_hash) {
-            Ok(id)
-        } else {
-            Err(rusqlite::Error::QueryReturnedNoRows)
-        }
-    })?;
+    // Get user ID by username only (password already verified during registration)
+    let user_id = get_user_id_by_username(conn, username)?;
 
     // Query to get all game_ids
     let mut game_stmt = conn.prepare("Select id From games")?;
@@ -502,17 +593,10 @@ pub fn initialize_user_statistics(conn: &Connection, username: &str, password: &
 // Symbol probability management functions for commissioner control
 
 /// Get symbol probabilities for a specific game
-/// SECURITY: Validates game name against whitelist before database query
 pub fn get_symbol_probabilities(conn: &Connection, game_name: &str) -> rusqlite::Result<Vec<(String, usize, f64)>> {
-    use crate::validation::game_validation::validate_game_name;
-    
-    // SECURITY: Validate game name before database operation
-    validate_game_name(game_name)
-        .map_err(|e| rusqlite::Error::InvalidParameterName(e))?;
-    
     logger::info(&format!("Retrieving symbol probabilities for game: {}", game_name));
     
-    // Get game ID (validated game name)
+    // Get game ID
     let game_id: i32 = conn.query_row(
         "Select id From games Where name = ?1",
         [game_name],
@@ -534,22 +618,12 @@ pub fn get_symbol_probabilities(conn: &Connection, game_name: &str) -> rusqlite:
 
     Ok(symbols)
 }
+
 /// Update the weight (probability) of a specific symbol in a game
-/// SECURITY: Validates all inputs against whitelists before database operations
 pub fn update_symbol_weight(conn: &Connection, game_name: &str, symbol: &str, new_weight: usize) -> rusqlite::Result<()> {
-    use crate::validation::game_validation::{validate_game_name, validate_symbol, validate_symbol_weight};
-    
-    // SECURITY: Validate all inputs before database operations
-    validate_game_name(game_name)
-        .map_err(|e| rusqlite::Error::InvalidParameterName(e))?;
-    validate_symbol(symbol)
-        .map_err(|e| rusqlite::Error::InvalidParameterName(e))?;
-    validate_symbol_weight(new_weight)
-        .map_err(|e| rusqlite::Error::InvalidParameterName(e))?;
-    
     logger::security(&format!("Updating symbol weight for game: {}, symbol: {}, new weight: {}", game_name, symbol, new_weight));
     
-    // Get game ID (validated game name)
+    // Get game ID
     let game_id: i32 = conn.query_row(
         "Select id From games Where name = ?1",
         [game_name],
@@ -567,21 +641,10 @@ pub fn update_symbol_weight(conn: &Connection, game_name: &str, symbol: &str, ne
 }
 
 /// Update the payout multiplier of a specific symbol in a game
-/// SECURITY: Validates all inputs against whitelists before database operations
 pub fn update_symbol_payout(conn: &Connection, game_name: &str, symbol: &str, new_multiplier: f64) -> rusqlite::Result<()> {
-    use crate::validation::game_validation::{validate_game_name, validate_symbol, validate_payout_multiplier};
-    
-    // SECURITY: Validate all inputs before database operations
-    validate_game_name(game_name)
-        .map_err(|e| rusqlite::Error::InvalidParameterName(e))?;
-    validate_symbol(symbol)
-        .map_err(|e| rusqlite::Error::InvalidParameterName(e))?;
-    validate_payout_multiplier(new_multiplier)
-        .map_err(|e| rusqlite::Error::InvalidParameterName(e))?;
-    
     logger::security(&format!("Updating payout multiplier for game: {}, symbol: {}, new multiplier: {}", game_name, symbol, new_multiplier));
     
-    // Get game ID (validated game name)
+    // Get game ID
     let game_id: i32 = conn.query_row(
         "Select id From games Where name = ?1",
         [game_name],

@@ -8,7 +8,6 @@ use crate::cryptography::rng::CasinoRng;
 
 use crate::interfaces::user::User;
 use crate::db::dbqueries;
-// CRITICAL: recheck randomness and english
 /// Hold 5x3 slot game - allows up to 2 reels to be held for next spin
 pub fn hold_game(conn: &Connection, user: &User, bet: f64) -> bool {
     // Load symbol probabilities from database

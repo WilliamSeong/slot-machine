@@ -1,4 +1,4 @@
 /target
 casino.db
 casino_logs.log
-.encryption_key
+.env
