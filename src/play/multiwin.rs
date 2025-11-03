@@ -211,3 +211,162 @@ fn check_wins(grid: &Grid) -> WinCheckResults {
         has_four_corner_win: has_four_corner,
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use rand; // to use the rand crate 
+
+    // Helper function to create a grid from a 2D vector of chars.
+    fn grid_from_vec(vec: Vec<Vec<char>>) -> Grid {
+        let mut grid = [[' '; GRID_SIZE]; GRID_SIZE];
+        for (r_idx, row) in vec.iter().enumerate().take(GRID_SIZE) {
+            for (c_idx, &col) in row.iter().enumerate().take(GRID_SIZE) {
+                grid[r_idx][c_idx] = col;
+            }
+        }
+        grid
+    }
+
+    // check if slot is spinning
+
+    #[test]
+    fn test_spin_grid_dimensions() {
+        let mut rng = rand::rng();
+        let grid = spin(&mut rng);
+        assert_eq!(grid.len(), GRID_SIZE, "Grid should have {} rows", GRID_SIZE);
+        for row in grid {
+            assert_eq!(row.len(), GRID_SIZE, "Each row should have {} columns", GRID_SIZE);
+        }
+    }
+
+    #[test]
+    fn test_spin_grid_symbols() {
+        let mut rng = rand::rng();
+        let grid = spin(&mut rng);
+        let symbols_vec: Vec<char> = SYMBOLS.to_vec();
+
+        for row in grid {
+            for symbol in row {
+                assert!(
+                    symbols_vec.contains(&symbol),
+                    "Grid symbol '{}' is not in the SYMBOLS constant", symbol
+                );
+            }
+        }
+    }
+
+    // Test to check for wins
+
+    #[test]
+    fn test_check_wins_no_win() {
+        let grid = grid_from_vec(vec![
+            vec!['🍒', '🍊', '🍋', '🔔', '⭐'],
+            vec!['🍊', '🍋', '🔔', '⭐', '💎'],
+            vec!['🍋', '🔔', '⭐', '💎', '🍒'],
+            vec!['🔔', '⭐', '💎', '🍒', '🍊'],
+            vec!['⭐', '💎', '🍒', '🍊', '🍋'],
+        ]);
+        let results = check_wins(&grid);
+        assert!(results.win_descriptions.is_empty(), "Should be no wins");
+        assert!(!results.has_horizontal_win, "Should not have horizontal win");
+        assert!(!results.has_four_corner_win, "Should not have corner win");
+    }
+
+    #[test]
+    fn test_check_wins_row_win() {
+        let grid = grid_from_vec(vec![
+            vec!['🍒', '🍊', '🍋', '🔔', '⭐'],
+            vec!['💎', '💎', '💎', '💎', '💎'], // Winning row
+            vec!['🍋', '🔔', '⭐', '💎', '🍒'],
+            vec!['🔔', '⭐', '💎', '🍒', '🍊'],
+            vec!['⭐', '💎', '🍒', '🍊', '🍋'],
+        ]);
+        let results = check_wins(&grid);
+        assert_eq!(results.win_descriptions.len(), 1, "Should have 1 win");
+        assert!(results.has_horizontal_win, "Should have horizontal win flag set");
+        assert!(!results.has_four_corner_win, "Should not have corner win");
+        assert!(results.win_descriptions[0].contains("Row 2 win"));
+    }
+
+    #[test]
+    fn test_check_wins_col_win() {
+        let grid = grid_from_vec(vec![
+            vec!['🍒', '🍊', '🍋', '🔔', '⭐'],
+            vec!['🍊', '🍋', '🍋', '⭐', '💎'],
+            vec!['🍋', '🔔', '🍋', '💎', '🍒'],
+            vec!['🔔', '⭐', '🍋', '🍒', '🍊'],
+            vec!['⭐', '💎', '🍋', '🍊', '🍋'],
+        ]);
+        let results = check_wins(&grid);
+        assert_eq!(results.win_descriptions.len(), 1, "Should have 1 win");
+        assert!(!results.has_horizontal_win, "Should not have horizontal win");
+        assert!(!results.has_four_corner_win, "Should not have corner win");
+        assert!(results.win_descriptions[0].contains("Column 3 win"));
+    }
+
+    #[test]
+    fn test_check_wins_main_diag_win() {
+        let grid = grid_from_vec(vec![
+            vec!['⭐', '🍊', '🍋', '🔔', '🍒'],
+            vec!['🍊', '⭐', '🔔', '🍒', '💎'],
+            vec!['🍋', '🔔', '⭐', '💎', '🍒'],
+            vec!['🔔', '💎', '💎', '⭐', '🍊'],
+            vec!['💎', '💎', '🍒', '🍊', '⭐'],
+        ]);
+        let results = check_wins(&grid);
+        assert_eq!(results.win_descriptions.len(), 1, "Should have 1 win");
+        assert!(!results.has_horizontal_win, "Should not have horizontal win");
+        assert!(!results.has_four_corner_win, "Should not have corner win");
+        assert!(results.win_descriptions[0].contains("Main Diagonal win"));
+    }
+
+    #[test]
+    fn test_check_wins_anti_diag_win() {
+        let grid = grid_from_vec(vec![
+            vec!['🍒', '🍊', '🍋', '🔔', '🔔'],
+            vec!['🍊', '🍋', '🔔', '🔔', '💎'],
+            vec!['🍋', '🔔', '🔔', '💎', '🍒'],
+            vec!['🔔', '🔔', '💎', '🍒', '🍊'],
+            vec!['🔔', '💎', '🍒', '🍊', '🍋'],
+        ]);
+        let results = check_wins(&grid);
+        assert_eq!(results.win_descriptions.len(), 1, "Should have 1 win");
+        assert!(!results.has_horizontal_win, "Should not have horizontal win");
+        assert!(!results.has_four_corner_win, "Should not have corner win");
+        assert!(results.win_descriptions[0].contains("Anti-Diagonal win"));
+    }
+
+    #[test]
+    fn test_check_wins_four_corners_win() {
+        let grid = grid_from_vec(vec![
+            vec!['💎', '🍊', '🍋', '🔔', '💎'],
+            vec!['🍊', '🍋', '🔔', '⭐', '🍒'],
+            vec!['🍋', '🔔', '⭐', '💎', '🍒'],
+            vec!['🔔', '⭐', '💎', '🍒', '🍊'],
+            vec!['💎', '💎', '🍒', '🍊', '💎'],
+        ]);
+        let results = check_wins(&grid);
+        assert_eq!(results.win_descriptions.len(), 1, "Should have 1 win");
+        assert!(!results.has_horizontal_win, "Should not have horizontal win");
+        assert!(results.has_four_corner_win, "Should have corner win flag set");
+        assert!(results.win_descriptions[0].contains("Four Corners win"));
+    }
+
+    #[test]
+    fn test_check_wins_double_jackpot() {
+        let grid = grid_from_vec(vec![
+            vec!['💎', '🍊', '🍋', '🔔', '💎'], // Corner wins
+            vec!['🍒', '🍒', '🍒', '🍒', '🍒'], // Horizontal win
+            vec!['🍋', '🔔', '⭐', '💎', '🍒'],
+            vec!['🔔', '⭐', '💎', '🍒', '🍊'],
+            vec!['💎', '💎', '🍒', '🍊', '💎'], // Corner win 
+        ]);
+        let results = check_wins(&grid);
+        assert_eq!(results.win_descriptions.len(), 2, "Should have 2 wins");
+        assert!(results.has_horizontal_win, "Should have horizontal win flag set");
+        assert!(results.has_four_corner_win, "Should have corner win flag set");
+        assert!(results.win_descriptions.iter().any(|s| s.contains("Row 2 win")));
+        assert!(results.win_descriptions.iter().any(|s| s.contains("Four Corners win")));
+    }
+}
