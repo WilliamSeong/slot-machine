@@ -52,6 +52,7 @@ pub fn login(conn: &Connection) -> rusqlite::Result<()> {
                 "commissioner" => {
                     logger::info(&format!("User ID: {} logged in as commissioner", user.id));
                     // CRITICAL: why this function has one parameter loook at it
+                    // CRITICAL: missed access control in Commissioner Menu
                     interfaces::commisioner::commissioner_menu(conn); 
                 }, 
                 _ => {
