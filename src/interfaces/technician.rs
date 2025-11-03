@@ -18,30 +18,19 @@ pub fn technician_menu(conn: &Connection, user: &User) -> rusqlite::Result<()> {
     
     loop {
         // Show options to user
-        let menu_options = vec!["Games", "Statistics", "Security Logs", "Logout"];
+        let menu_options = vec!["Show Games", "Show Statistics", "Security Logs", "Logout"];
         let user_input = menu_generator("═══ 🎰 Tech Menu 🎰 ═══", &menu_options);
 
-        // println!("\n{}", "═══ 🎰 Tech Menu 🎰 ═══".bright_magenta().bold());
-        // println!("{}. {}", "1".yellow(), "Games".white());
-        // println!("{}. {}", "2".yellow(), "Statistics".white());
-        // println!("{}. {}", "3".yellow(), "Security Logs".bright_cyan());
-        // println!("{}. {}", "4".yellow(), "Logout".red());
-        // print!("{} ", "Choose:".green().bold());
-        // io::stdout().flush().ok();
-
-        // let mut choice: String = String::new();
-        // io::stdin().read_line(&mut choice).ok();
-
         match user_input.trim() {
-            "Games" => {
+            "Show Games" => {
                 logger::logger::info(&format!("Technician (User ID: {}) accessed games menu", user.id));
                 let _ = games_menu(conn, user);
             }
-            "Statistics" => {
+            "Show Statistics" => {
                 logger::logger::info(&format!("Technician (User ID: {}) accessed statistics", user.id));
                 technician_statistics(conn, user);
             }
-            "Security" => {
+            "Security Logs" => {
                 logger::logger::security(&format!("Technician (User ID: {}) accessed security logs", user.id));
                 logger::verification::log_verification_menu(conn, user)?;
             }
@@ -79,18 +68,16 @@ fn games_menu(conn: &Connection, user: &User) -> rusqlite::Result<()>{
                 println!("game: {} active: {}", name, active.to_string().red());
             }
         }
-        // Show options to user
-        let menu_options = vec!["normal", "multi", "holding", "exit"];
-        let user_input = menu_generator("═══ 🎰 Tech Games Control 🎰 ═══", &menu_options);
-
-        // println!("\n{}", "═══ 🎰 Tech Games Control 🎰 ═══".bright_magenta().bold());
-        // println!("Toggle game or type 'exit' to return");
-        // print!("{} ", "Choose:".green().bold());
-        // io::stdout().flush().ok();
-
-        // let mut choice: String = String::new();
-        // io::stdin().read_line(&mut choice).ok();
-        // let choice = choice.trim();
+        // Show options to technician
+        // query all games
+        let games_data = dbqueries::get_games(conn)?;
+        let mut all_games: Vec<&str> = games_data
+            .iter()
+            .map(|(name, _)| name.as_str())
+            .collect();
+        // add exit
+        all_games.push("exit");
+        let user_input = menu_generator("═══ 🎰 Technician Games Control 🎰 ═══", &all_games);
 
         match user_input {
             "exit" => {

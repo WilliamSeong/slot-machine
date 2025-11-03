@@ -276,7 +276,6 @@ fn check_rate_limit(user_id: i32) -> Result<(), String> {
     if last_minute >= MAX_TRANSACTIONS_PER_MINUTE {
         return Err(format!("Rate limit: {} transactions per minute", MAX_TRANSACTIONS_PER_MINUTE));
     }
-    
     Ok(())
 }
 
@@ -303,7 +302,6 @@ fn detect_fraud_patterns(user_id: i32, _amount: f64) -> bool {
             return true;
         }
     }
-    
     false
 }
 

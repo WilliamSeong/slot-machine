@@ -281,7 +281,7 @@ pub fn sign_in(conn: &Connection) -> Result<Option<User>> {
             let failed_count = get_failed_attempts(username);
             
             logger::security(&format!("Failed login for username: {}. Error: {}. Failed attempts: {}", 
-                                     username, e, failed_count));
+                                    username, e, failed_count));
             
             println!("\n{}", "╔═══════════════════════════════════════════╗".red());
             println!("{}", "║        ❌ Invalid Credentials!            ║".red().bold());

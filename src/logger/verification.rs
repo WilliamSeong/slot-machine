@@ -1,7 +1,7 @@
 use rusqlite::Connection;
 use colored::*;
 use std::io::{self, Write};
-// use chrono::Local;
+use crate::interfaces::menus::menu_generator;
 
 use crate::interfaces::user::User;
 use crate::logger::logger;
@@ -18,22 +18,15 @@ pub fn log_verification_menu(conn: &Connection, user: &User) -> rusqlite::Result
     logger::security(&format!("User ID: {} accessed log verification menu", user.id));
 
     loop {
-        println!("\n{}", "═══ 🔒 Log Verification Menu 🔒 ═══".bright_cyan().bold());
-        println!("{}. {}", "1".yellow(), "View Recent Security Events".white());
-        println!("{}. {}", "2".yellow(), "Check Login Attempts by Username".white());
-        println!("{}. {}", "3".yellow(), "View User Transactions".white());
-        println!("{}. {}", "4".yellow(), "Return to Main Menu".red());
-        print!("{} ", "Choose:".green().bold());
-        io::stdout().flush().ok();
+        // Show options to user
+        let menu_options = vec!["View Recent Security Events", "Check Login Attempts by Username", "View User Transactions", "Back"];
+        let user_input = menu_generator("═══ 🔒 Log Verification Menu 🔒 ═══", &menu_options);
         
-        let mut choice = String::new();
-        io::stdin().read_line(&mut choice).ok();
-        
-        match choice.trim() {
-            "1" => view_security_events(),
-            "2" => check_login_attempts(),
-            "3" => view_user_transactions(),
-            "4" => break,
+        match user_input.trim() {
+            "View Recent Security Events" => view_security_events(),
+            "Check Login Attempts by Username" => check_login_attempts(),
+            "View User Transactions" => view_user_transactions(),
+            "Back" => break,
             _ => println!("Invalid choice"),
         }
     }
