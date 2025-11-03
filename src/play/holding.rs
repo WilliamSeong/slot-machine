@@ -117,9 +117,6 @@ pub fn hold_game(conn: &Connection, user: &User, bet: f64) -> bool {
         let menu_options = vec!["1", "2", "3", "4", "5"];
         let user_input = menu_generator_multi("Select up to 2 slots to hold (space to select)", &menu_options);
         
-        // let mut input = String::new();
-        // io::stdin().read_line(&mut input).unwrap();
-
         for num in user_input {
             // println!("selected index {}", num);
             held[num] = true;
@@ -148,14 +145,12 @@ pub fn hold_game(conn: &Connection, user: &User, bet: f64) -> bool {
         let multiplier = 1.0 + 0.25 * held_count as f64;
         let final_bet = bet * multiplier;
 
-
-        // Show first spin again
-        // println!("\n{}", "🎰 First Spin 🎰".bright_yellow().bold());
-        // print!("\r{} | {} | {} | {} | {}", reels[0], reels[1], reels[2], reels[3], reels[4]);
-        
+        // Show result of second spin
         println!("\n{}", "🎰 Second Spin 🎰".bright_cyan().bold());
+        display_payout_table(&symbol_probs, bet);
+
         // Check if user holds then animate if so
-        if held.iter().any(|&h| h) {
+        if held_count > 0 {
             
             for _ in 0..30 {
                 print!("\r{} | {} | {} | {} | {}", 
@@ -168,16 +163,15 @@ pub fn hold_game(conn: &Connection, user: &User, bet: f64) -> bool {
                 io::stdout().flush().ok();
                 std::thread::sleep(std::time::Duration::from_millis(50));
             }
-        }
 
-        // Second spin - use cryptographic RNG for non-held reels
-        for i in 0..5 {
-            if !held[i] {
-                reels[i] = rng.weighted_choice(&weighted_symbols).unwrap();
+            // Second spin - use cryptographic RNG for non-held reels
+            for i in 0..5 {
+                if !held[i] {
+                    reels[i] = rng.weighted_choice(&weighted_symbols).unwrap();
+                }
             }
         }
-
-        // Show second spin
+        // Show final results
         println!("\r{} | {} | {} | {} | {}", reels[0], reels[1], reels[2], reels[3], reels[4]);
 
         // Simple win check (3+ of a kind)
