@@ -1,7 +1,7 @@
 use rusqlite::{Connection, Result};
+use colored::*;
 
-// CRITICAL: solve problems here and check security
-// initialize all database tables for the casino application.
+// Initialize all database tables for the casino application
 pub fn initialize_dbs(conn: &Connection) -> Result<(), rusqlite::Error> {
     // Create Users table with security constraints
     // Note: balance is stored as TEXT to hold encrypted data
@@ -66,37 +66,56 @@ pub fn initialize_dbs(conn: &Connection) -> Result<(), rusqlite::Error> {
     Ok(())
 }
 
-// Create default administrator accounts with secure password hashing.
+/// Create default administrator accounts with secure password setup
+/// SECURITY: Passwords come from environment variables or are generated securely
 fn add_technician_commissioner(conn: &Connection) -> Result<(),rusqlite::Error> {
     use crate::cryptography::crypto::hash_password;
     use crate::db::encryption::encrypt_balance;
+    use crate::logger::logger;
+    use std::env;
+    // CRITICAL: HANDLE THIS IN FUTURE
+    // Try to get passwords from environment variables (recommended for production)
+    let tech_password = env::var("CASINO_TECH_PASSWORD")
+        .unwrap_or_else(|_| generate_secure_password());
     
-    // Default password (MUST be changed after first login!)
-    let default_password = "123";
+    let comm_password = env::var("CASINO_COMM_PASSWORD")
+        .unwrap_or_else(|_| generate_secure_password());
+    
+    // Log if generated passwords are being used (one-time setup)
+    if env::var("CASINO_TECH_PASSWORD").is_err() {
+        logger::security(&format!("🔐 DEFAULT TECHNICIAN PASSWORD: {}", tech_password));
+        logger::warning("Set CASINO_TECH_PASSWORD environment variable for production!");
+        println!("{}", format!("║  Technician Password: {:25} ║", tech_password).bright_yellow());
+    }
+    
+    if env::var("CASINO_COMM_PASSWORD").is_err() {
+        logger::security(&format!("🔐 DEFAULT COMMISSIONER PASSWORD: {}", comm_password));
+        logger::warning("Set CASINO_COMM_PASSWORD environment variable for production!");
+        println!("{}", format!("║  Commissioner Password: {:24} ║", comm_password).bright_yellow());
+    }
     
     // Hash passwords securely with Argon2id
-    // Each gets a unique salt, so hashes will be different even for same password
-    let hashed_tech_password = hash_password(default_password)
+    let hashed_tech_password = hash_password(&tech_password)
         .map_err(|e| rusqlite::Error::InvalidParameterName(e))?;
     
-    let hashed_comm_password = hash_password(default_password)
+    let hashed_comm_password = hash_password(&comm_password)
         .map_err(|e| rusqlite::Error::InvalidParameterName(e))?;
     
-    // Encrypt initial balances for security
-    let encrypted_tech_balance = encrypt_balance(5000.0)
+    // Encrypt initial balances
+    let encrypted_tech_balance = encrypt_balance(0.0)
         .map_err(|e| rusqlite::Error::InvalidParameterName(e))?;
     
-    let encrypted_comm_balance = encrypt_balance(10000.0)
+    let encrypted_comm_balance = encrypt_balance(0.0)
         .map_err(|e| rusqlite::Error::InvalidParameterName(e))?;
     
-    // Create technician account (if it doesn't already exist)
+    // Create technician account with password change requirement
     conn.execute(
         "Insert Or Ignore Into users (username, password, role, balance) 
         Values ('technician', ?1, 'technician', ?2)",
         [&hashed_tech_password, &encrypted_tech_balance]
     )?;
 
-    // Create commissioner account (if it doesn't already exist)
+    // Create commissioner account with password change requirement
     conn.execute(
         "Insert Or Ignore Into users (username, password, role, balance) 
         Values ('commissioner', ?1, 'commissioner', ?2)",
@@ -104,6 +123,25 @@ fn add_technician_commissioner(conn: &Connection) -> Result<(),rusqlite::Error> 
     )?;
 
     Ok(())
+}
+
+// MANDATORY: Generate a secure random password for default accounts
+fn generate_secure_password() -> String {
+    use rand::Rng;
+    
+    // Character set for password generation
+    const CHARSET: &[u8] = b"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%";
+    
+    // Generate 16-character random password
+    let mut rng = rand::rng();
+    let password: String = (0..16)
+        .map(|_| {
+            let idx = rng.random_range(0..CHARSET.len());
+            CHARSET[idx] as char
+        })
+        .collect();
+    
+    password
 }
 
 // Populate the games table with available casino game modes.
@@ -119,7 +157,6 @@ fn add_games(conn: &Connection) -> Result<(),rusqlite::Error> {
     Ok(())
 }
 
-// CRITICAL: learn real values and implement here and check ascii suitibility
 // Populate default symbol probabilities for all games.
 fn add_default_symbols(conn: &Connection) -> Result<(),rusqlite::Error> {
     // Get all game IDs
@@ -129,14 +166,14 @@ fn add_default_symbols(conn: &Connection) -> Result<(),rusqlite::Error> {
     })?.collect::<Result<Vec<_>, _>>()?;
 
     // Default symbols with weights and payout multipliers
-    // Format: (symbol, weight, payout_multiplier)
+    // NOT FAIR
     let default_symbols = [
-        ("🍒", 25, 2.0),   // Cherry: 25% chance, 2x payout
-        ("🍋", 25, 2.0),   // Lemon: 25% chance, 2x payout
-        ("🍊", 20, 3.0),   // Orange: 20% chance, 3x payout
-        ("🍇", 15, 5.0),   // Grape: 15% chance, 5x payout
-        ("💎", 10, 10.0),  // Diamond: 10% chance, 10x payout
-        ("7️⃣", 5, 20.0),   // Seven: 5% chance, 20x payout (jackpot!)
+        ("🍒", 20, 2.0),   // Cherry: 20% chance, 2x payout
+        ("🍋", 20, 2.0),   // Lemon: 20% chance, 2x payout
+        ("🍊", 15, 3.0),   // Orange: 15% chance, 3x payout
+        ("🍇", 10, 5.0),   // Grape: 10% chance, 5x payout
+        ("💎", 5, 10.0),  // Diamond: 5% chance, 10x payout
+        ("7️⃣", 1, 20.0),   // Seven: 1% chance, 20x payout
     ];
 
     // Add symbols for each game

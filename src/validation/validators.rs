@@ -14,8 +14,6 @@ const MIN_DEPOSIT: f64 = 0.01;
 const MAX_DEPOSIT: f64 = 1_000_000.0;
 const MIN_WITHDRAWAL: f64 = 0.01;
 const MAX_WITHDRAWAL: f64 = 100_000.0;
-const MIN_BET: f64 = 0.01;
-const MAX_BET: f64 = 10_000.0;
 
 // Validate username for registration and login.
 pub fn validate_username(username: &str) -> ValidationResult {
@@ -80,6 +78,40 @@ pub fn validate_password(password: &str) -> ValidationResult {
     // Check maximum length (prevent DOS attacks)
     if password.len() > MAX_PASSWORD_LENGTH {
         return Err(format!("❌ Password cannot exceed {} characters!", MAX_PASSWORD_LENGTH));
+    }
+    
+    Ok(())
+}
+
+/// Validate password strength for registration (more strict than login)
+pub fn validate_password_strength(password: &str) -> ValidationResult {
+    // First run basic validation
+    validate_password(password)?;
+    
+    // For production: Check minimum length of 8 for better security
+    const STRONG_PASSWORD_MIN_LENGTH: usize = 8;
+    if password.len() < STRONG_PASSWORD_MIN_LENGTH {
+        return Err(format!("❌ For security, password should be at least {} characters long!", STRONG_PASSWORD_MIN_LENGTH));
+    }
+    
+    // Check for at least one digit
+    if !password.chars().any(|c| c.is_numeric()) {
+        return Err("❌ Password should contain at least one number!".to_string());
+    }
+    
+    // Check for at least one letter
+    if !password.chars().any(|c| c.is_alphabetic()) {
+        return Err("❌ Password should contain at least one letter!".to_string());
+    }
+    // CRITICAL: there was a file that includes lot of passwrod put here
+    // Check for common weak passwords
+    let weak_passwords = ["password", "12345678", "qwerty", "abc123", "letmein", 
+                          "welcome", "monkey", "password1", "admin"];
+    let password_lower = password.to_lowercase();
+    for weak in weak_passwords.iter() {
+        if password_lower.contains(weak) {
+            return Err("❌ Password is too common! Please choose a stronger password.".to_string());
+        }
     }
     
     Ok(())
@@ -152,42 +184,7 @@ pub fn validate_withdrawal(amount: f64, current_balance: f64) -> ValidationResul
     
     Ok(())
 }
-// CRITICAL: copy paste from your stacking smart contract
-// Validate bet amount.
-pub fn validate_bet(amount: f64, current_balance: f64) -> ValidationResult {
-    // Check if valid number
-    if amount.is_nan() || amount.is_infinite() {
-        return Err("❌ Invalid bet amount!".to_string());
-    }
-    
-    // Check if positive
-    if amount <= 0.0 {
-        return Err("❌ Bet amount must be greater than zero!".to_string());
-    }
-    
-    // Check minimum
-    if amount < MIN_BET {
-        return Err(format!("❌ Minimum bet is ${:.2}!", MIN_BET));
-    }
-    
-    // Check maximum (responsible gambling)
-    if amount > MAX_BET {
-        return Err(format!("❌ Maximum bet is ${:.2}!", MAX_BET));
-    }
-    
-    // Check if user has sufficient funds
-    if amount > current_balance {
-        return Err(format!("❌ Insufficient funds! You have ${:.2}, trying to bet ${:.2}", 
-                          current_balance, amount));
-    }
-    
-    Ok(())
-}
 
-/// Display a validation error to the user with proper formatting.
-/// 
-/// # Arguments
-/// * `error` - The error message to display
 pub fn display_validation_error(error: &str) {
     println!("\n{}", "╔═══════════════════════════════════════════╗".red());
     println!("{}", "║        ⚠️  VALIDATION ERROR ⚠️             ║".red().bold());

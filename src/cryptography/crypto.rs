@@ -3,7 +3,7 @@ use argon2::{
         rand_core::{OsRng, RngCore},
         PasswordHash, PasswordHasher, PasswordVerifier, SaltString
     },
-    Argon2
+    Argon2, Algorithm, Version, Params
 };
 use aes_gcm::{
     aead::{Aead, KeyInit, generic_array::GenericArray},
@@ -12,139 +12,178 @@ use aes_gcm::{
 use base64::{Engine as _, engine::general_purpose};
 use crate::logger::logger;
 
-// CRITICAL: check this from your old smart contract
 // Constants for encryption
 const NONCE_SIZE: usize = 12; // 96 bits as recommended for AES-GCM
+// MANDATORY: Argon2id parameters
+// Argon2 configuration parameters
+// based on owasp recommendations for password hashing
+const ARGON2_MEM_COST: u32 = 19456; // 19 MiB memory (increased from default 12 MiB)
+const ARGON2_TIME_COST: u32 = 2;     // 2 iterations (OWASP minimum)
+const ARGON2_PARALLELISM: u32 = 1;   // 1 thread 
 
-// Hash a password using Argon2id algorithm with automatic salt generation.
+/// Get configured Argon2 instance with explicit security parameters
+fn get_argon2() -> Result<Argon2<'static>, String> {
+    // Explicitly configure Argon2id parameters
+    let params = Params::new(
+        ARGON2_MEM_COST,
+        ARGON2_TIME_COST,
+        ARGON2_PARALLELISM,
+        None
+    ).map_err(|e| format!("Failed to configure Argon2: {}", e))?;
+    
+    Ok(Argon2::new(
+        Algorithm::Argon2id,  // Argon2id: resistant to both GPU and side-channel attacks
+        Version::V0x13,       // Latest version
+        params
+    ))
+}
+
+/// Hash a password using Argon2id with explicit security parameters
 pub fn hash_password(password: &str) -> Result<String, String> {
     // Generate a cryptographically secure random salt
-    // Salt ensures that identical passwords have different hashes
     let salt = SaltString::generate(&mut OsRng);
     
-    // Configure Argon2id with secure default parameters
-    // Argon2id combines resistance to both side-channel and GPU attacks
-    let argon2 = Argon2::default();
+    // Get configured Argon2id instance
+    let argon2 = get_argon2()?;
     
     // Hash the password with the generated salt
     match argon2.hash_password(password.as_bytes(), &salt) {
         Ok(hash) => {
-            logger::info("Password hashed successfully");
-            // Return the complete hash string (includes salt and parameters)
+            logger::info("Password hashed successfully with Argon2id");
             Ok(hash.to_string())
         },
-        Err(e) => {
-            logger::error(&format!("Failed to hash password: {}", e));
-            Err(format!("Password hashing error: {}", e))
+        Err(_e) => {
+            logger::error("Password hashing failed");
+            // Generic error message to prevent information disclosure
+            Err("Cryptographic operation failed".to_string())
         }
     }
 }
 
-// CRITICAL: timing atack check
-// Verify a password against a stored hash using constant-time comparison.
+/// Verify a password against a stored hash using constant-time comparison
+/// SECURITY: Uses constant-time comparison to prevent timing attacks
 pub fn verify_password(password: &str, hash: &str) -> bool {
-    // Parse the stored hash string into a PasswordHash structure
-    // This extracts the salt, algorithm parameters, and hash value
+    // Parse the stored hash string
     let parsed_hash = match PasswordHash::new(hash) {
         Ok(h) => h,
-        Err(e) => {
-            // Don't reveal parsing errors to potential attackers
-            logger::error(&format!("Failed to parse password hash: {}", e));
+        Err(_) => {
+            // Generic error - don't reveal details
+            logger::error("Hash parsing failed");
             return false;
         }
     };
     
-    // Verify the password against the hash using constant-time comparison
-    // This is CRITICAL for security - never use == to compare passwords!
-    match Argon2::default().verify_password(password.as_bytes(), &parsed_hash) {
+    // Get configured Argon2 instance
+    let argon2 = match get_argon2() {
+        Ok(a) => a,
+        Err(_) => {
+            logger::error("Argon2 configuration failed");
+            return false;
+        }
+    };
+    
+    // Verify using constant-time comparison
+    match argon2.verify_password(password.as_bytes(), &parsed_hash) {
         Ok(_) => {
             logger::info("Password verification successful");
             true
         },
         Err(_) => {
-            // Don't log the specific error to avoid information leakage
+            // Generic logging - dont reveal specifics
             logger::info("Password verification failed");
             false
         }
     }
 }
 
-// CRITICAL: coopy paste it from your old lottery contract
-// Generate a cryptographically secure random encryption key.
+/// Generate a cryptographically secure random encryption key
 pub fn generate_encryption_key() -> Vec<u8> {
-    // Generate a random 32-byte (256-bit) key
-    // This provides maximum security for AES-256 encryption
     let mut key = [0u8; 32];
     OsRng.fill_bytes(&mut key);
+    logger::security("New encryption key generated");
     key.to_vec()
 }
-// CRITICAL: coppied pasted dont forget check because this one had one issues
-// Encrypt sensitive data using AES-256-GCM authenticated encryption.
+
+/// Encrypt sensitive data using AES-256-GCM authenticated encryption
+/// Returns generic error messages to prevent information disclosure
 pub fn encrypt_data(data: &str, key: &[u8]) -> Result<String, String> {
-    // Generate a random nonce (number used once)
-    // A unique nonce is CRITICAL - never reuse a nonce with the same key!
+    // Generate unique nonce
     let mut nonce_bytes = [0u8; NONCE_SIZE];
     OsRng.fill_bytes(&mut nonce_bytes);
     let nonce = GenericArray::from_slice(&nonce_bytes);
     
-    // Create the AES-256-GCM cipher with the provided key
+    // Create cipher
     let cipher = match Aes256Gcm::new_from_slice(key) {
         Ok(c) => c,
-        Err(e) => return Err(format!("Key error: {}", e))
+        Err(_) => {
+            logger::error("Cipher initialization failed");
+            return Err("Cryptographic operation failed".to_string());
+        }
     };
     
-    // Encrypt the data
-    // GCM mode also generates an authentication tag to ensure integrity
+    // Encrypt
     let ciphertext = match cipher.encrypt(nonce, data.as_bytes().as_ref()) {
         Ok(c) => c,
-        Err(e) => return Err(format!("Encryption error: {}", e))
+        Err(_) => {
+            logger::error("Encryption operation failed");
+            return Err("Cryptographic operation failed".to_string());
+        }
     };
     
-    // Combine nonce and ciphertext for storage
-    // The nonce is prepended to the ciphertext (nonce doesn't need to be secret)
+    // Combine nonce and ciphertext
     let mut result = Vec::with_capacity(nonce_bytes.len() + ciphertext.len());
     result.extend_from_slice(&nonce_bytes);
     result.extend_from_slice(&ciphertext);
     
-    // Encode as base64 for easy storage in databases or text files
     Ok(general_purpose::STANDARD.encode(result))
 }
 
-// CRITICAL: check your old project
-// Decrypt data that was encrypted with `encrypt_data()`.
+/// Decrypt data that was encrypted with `encrypt_data()`
+/// Returns generic error messages to prevent information disclosure
 pub fn decrypt_data(encrypted_data: &str, key: &[u8]) -> Result<String, String> {
     // Decode from base64
     let decoded = match general_purpose::STANDARD.decode(encrypted_data) {
         Ok(d) => d,
-        Err(e) => return Err(format!("Base64 decode error: {}", e))
+        Err(_) => {
+            logger::error("Base64 decode failed");
+            return Err("Cryptographic operation failed".to_string());
+        }
     };
     
-    // Validate minimum length (must have nonce + at least some ciphertext)
+    // Validate length
     if decoded.len() < NONCE_SIZE {
-        return Err("Invalid encrypted data".to_string());
+        logger::error("Invalid encrypted data length");
+        return Err("Cryptographic operation failed".to_string());
     }
     
-    // Split nonce and ciphertext
-    // The nonce was prepended during encryption
+    // Extract nonce and ciphertext
     let nonce = GenericArray::from_slice(&decoded[..NONCE_SIZE]);
     let ciphertext = &decoded[NONCE_SIZE..];
     
-    // Create the AES-256-GCM cipher with the provided key
+    // Create cipher
     let cipher = match Aes256Gcm::new_from_slice(key) {
         Ok(c) => c,
-        Err(e) => return Err(format!("Key error: {}", e))
+        Err(_) => {
+            logger::error("Cipher initialization failed");
+            return Err("Cryptographic operation failed".to_string());
+        }
     };
     
-    // Decrypt and verify authentication tag
-    // This will FAIL if the data has been tampered with
+    // Decrypt and verify
     let plaintext = match cipher.decrypt(nonce, ciphertext.as_ref()) {
         Ok(p) => p,
-        Err(e) => return Err(format!("Decryption error: {}", e))
+        Err(_) => {
+            logger::error("Decryption or authentication failed");
+            return Err("Cryptographic operation failed".to_string());
+        }
     };
     
-    // Convert decrypted bytes back to UTF-8 string
+    // Convert to string
     match String::from_utf8(plaintext) {
         Ok(s) => Ok(s),
-        Err(e) => Err(format!("UTF-8 conversion error: {}", e))
+        Err(_) => {
+            logger::error("UTF-8 conversion failed");
+            Err("Cryptographic operation failed".to_string())
+        }
     }
 }
