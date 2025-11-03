@@ -547,6 +547,8 @@ pub fn get_game_statistics(conn: &Connection) -> rusqlite::Result<()>{
 
 // Get statistics for users for their win/loss/highest payout for each game
 pub fn query_user_statistics(conn: &Connection, user: &User) -> rusqlite::Result<()> {
+    use std::io;
+    
     logger::info(&format!("Retrieving statistics for User ID: {}", user.id));
     let mut stmt = conn.prepare("Select * From user_statistics Where user_id = ?1")?;
     let stats = stmt.query_map([user.id], |row| {
@@ -564,6 +566,7 @@ pub fn query_user_statistics(conn: &Connection, user: &User) -> rusqlite::Result
         let mut stmt = conn.prepare("Select name From games Where id = ?1")?;
         let game_name = stmt.query_row([game_id], |row| row.get::<_, String>(0))?;
         
+        // Calculate total played and win percentage
         let total_played = win + loss;
         let win_percentage = if total_played > 0 {
             (win as f64 / total_played as f64) * 100.0
