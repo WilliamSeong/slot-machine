@@ -6,6 +6,8 @@ mod db;
 mod authentication;
 mod play;
 mod logger;
+mod cryptography;
+mod validation;
 
 // Main function, creates and connects to db, casino.db
 fn main() -> Result<()> {
@@ -13,6 +15,11 @@ fn main() -> Result<()> {
     clearscreen::clear().expect("Failed clearscreen");
     // Initialize logger first thing
     logger::logger::info("Application is starting");
+    
+    // CRITICAL: handle this thing everytime initializing db connection
+    // but i am deleting database every time solve it DONT FORGET
+    db::encryption::initialize_encryption_key();
+    logger::logger::info("Database encryption initialized");
     
     let conn = Connection::open("casino.db")?;
     logger::logger::info("Database connection established");

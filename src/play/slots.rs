@@ -2,47 +2,101 @@ use rusqlite::{Connection};
 use crate::db::dbqueries;
 use crate::interfaces::user::User;
 use crate::logger::logger;
+use crate::cryptography::rng::CasinoRng;
 use colored::*;
-use rand_chacha::ChaCha20Rng;
-use rand::SeedableRng;
-use rand::RngCore;
 use std::io::{self, Write};
 
 use crate::interfaces::menus::menu_generator;
+// CRITICAL: dont forgetto put display functions
+// Display payout table to user before playing
+fn display_payout_table(symbol_probs: &[(String, usize, f64)], bet: f64) {
+    println!("\n{}", "╔════════════════════════════════════════════════╗".bright_cyan());
+    println!("{}", "║          💰 PAYOUT TABLE 💰                   ║".bright_cyan().bold());
+    println!("{}", "╠════════════════════════════════════════════════╣".bright_cyan());
+    println!("{}", "║  Three of a Kind Pays:                        ║".bright_cyan());
+    println!("{}", "╠════════════════════════════════════════════════╣".bright_cyan());
+    
+    // Calculate total weight for probability display
+    let total_weight: usize = symbol_probs.iter().map(|(_, w, _)| w).sum();
+    
+    for (symbol, weight, payout) in symbol_probs {
+        let probability = (*weight as f64 / total_weight as f64) * 100.0;
+        let winnings = payout * bet;
+        println!("║  {} {} {} = ${:<6.2} ({}x) [{:.1}% chance]  ║", 
+            symbol, symbol, symbol, 
+            winnings, 
+            payout,
+            probability
+        );
+    }
+    
+    println!("{}", "╠════════════════════════════════════════════════╣".bright_cyan());
+    println!("{}", "║  Two Matching Pays:                           ║".bright_cyan());
+    println!("{}", "║  Any two symbols = 50% of three-match payout  ║".bright_cyan());
+    println!("{}", "╚════════════════════════════════════════════════╝".bright_cyan());
+    println!();
+}
 
 // function to run the normal slots game, returns a bool to indiciate whether to change bet (true) or to exit the game (false)
 pub fn normal_slots(conn: &Connection, bet: f64, user: &User) -> bool {
     logger::info(&format!("User ID: {} started normal slots game with bet: ${:.2}", user.id, bet));
     
+    // Load symbol probabilities from database once (commissioner-configured)
+    let symbol_probs = match dbqueries::get_symbol_probabilities(conn, "normal") {
+        Ok(probs) => probs,
+        Err(e) => {
+            logger::error(&format!("Failed to load symbol probabilities: {}", e));
+            println!("Error loading game configuration");
+            return true;
+        }
+    };
+
+    // Display payout table to user
+    display_payout_table(&symbol_probs, bet);
+    
     loop {
         // Check if player has the funds
         if !dbqueries::check_funds(conn, user, bet as f64) {
             logger::warning(&format!("User ID: {} has insufficient funds for bet: ${:.2}", user.id, bet));
-            println!("Insufficient funds");
+            println!("{}", "Insufficient funds!".red().bold());
             return true;
         }
 
-        let symbols = ["🍒", "🍋", "🍊", "💎", "🔔", "⭐"];
-        let mut rng = ChaCha20Rng::from_seed(Default::default());
+        // Convert to weighted format for RNG
+        let weighted_symbols: Vec<(&str, usize)> = symbol_probs.iter()
+            .map(|(sym, weight, _)| (sym.as_str(), *weight))
+            .collect();
+
+        // CHARGE BET FIRST before playing (critical for financial integrity)
+        logger::transaction(&format!("User ID: {} placing bet of ${:.2} for normal slots", user.id, bet));
+        let balance_after_bet = dbqueries::transaction(conn, user, -bet);
+        
+        if balance_after_bet < 0.0 {
+            // This shouldn't happen due to check_funds, but safety check
+            println!("{}", "Transaction failed!".red().bold());
+            return true;
+        }
+        
+        println!("{}", format!("Bet placed: ${:.2}", bet).yellow());
+        println!("{}", format!("Balance: ${:.2}", balance_after_bet).bright_white());
+
+        // Create cryptographically secure RNG
+        let mut rng = CasinoRng::new();
 
         logger::info(&format!("User ID: {} spinning slots with bet: ${:.2}", user.id, bet));
         println!("\n{}", "🎰 SLOT MACHINE 🎰".bright_yellow().bold());
                 
-        // Spin the slots
-        let slot1 = symbols[rng.next_u32() as usize % symbols.len()];
-        let slot2 = symbols[rng.next_u32() as usize % symbols.len()];
-        let slot3 = symbols[rng.next_u32() as usize % symbols.len()];
-        // let slot1 = symbols[0];
-        // let slot2 = symbols[1];
-        // let slot3 = symbols[2];
+        // Spin the slots using cryptographically secure weighted random selection
+        let slot1 = rng.weighted_choice(&weighted_symbols).unwrap();
+        let slot2 = rng.weighted_choice(&weighted_symbols).unwrap();
+        let slot3 = rng.weighted_choice(&weighted_symbols).unwrap();
 
         // Animate
         for _ in 0..30 {
-            print!("\r{} | {} | {}", 
-                symbols[rng.next_u32() as usize % symbols.len()],
-                symbols[rng.next_u32() as usize % symbols.len()],
-                symbols[rng.next_u32() as usize % symbols.len()]
-            );
+            let anim1 = rng.weighted_choice(&weighted_symbols).unwrap();
+            let anim2 = rng.weighted_choice(&weighted_symbols).unwrap();
+            let anim3 = rng.weighted_choice(&weighted_symbols).unwrap();
+            print!("\r{} | {} | {}", anim1, anim2, anim3);
             io::stdout().flush().ok();
             std::thread::sleep(std::time::Duration::from_millis(50));
         }
@@ -53,33 +107,64 @@ pub fn normal_slots(conn: &Connection, bet: f64, user: &User) -> bool {
 
         std::thread::sleep(std::time::Duration::from_millis(500));
 
-        // Check win (adjustable probability via symbol frequency)
+        // Check win and calculate payout using database-configured multipliers
         if slot1 == slot2 && slot2 == slot3 {
-            // Jackpot win
-            let winnings = 3.0 * bet;
-            logger::transaction(&format!("User ID: {} won jackpot of ${:.2} in normal slots", user.id, winnings));
+            // Three of a kind! Get the payout multiplier for this symbol
+            let payout_multiplier = symbol_probs.iter()
+                .find(|(sym, _, _)| sym == slot1)
+                .map(|(_, _, mult)| mult)
+                .unwrap_or(&3.0);
             
-            println!("\n{}", "🎉 JACKPOT! YOU WIN! 🎉".green().bold());
-            println!("You win {}", winnings);
-            println!("Current balance is {}", dbqueries::transaction(conn, user, winnings));
+            let winnings = payout_multiplier * bet;
+            logger::transaction(&format!("User ID: {} won ${:.2} with three {}s in normal slots", user.id, winnings, slot1));
+            
+            // DEPOSIT WINNINGS (bet already deducted above)
+            let final_balance = dbqueries::transaction(conn, user, winnings);
+            
+            println!("\n{}", "═══════════════════════════════════════".green().bold());
+            println!("{}", "    🎉 JACKPOT! THREE OF A KIND! 🎉    ".green().bold());
+            println!("{}", "═══════════════════════════════════════".green().bold());
+            println!("\n{}  {} {} {}", "Result:".bright_white().bold(), slot1, slot1, slot1);
+            println!("{} ${:.2} × {:.1}x = ${:.2}", "Payout:".bright_white().bold(), bet, payout_multiplier, winnings);
+            println!("{} ${:.2}", "Balance:".bright_white().bold(), final_balance);
+            println!();
             let _ = dbqueries::add_win(conn, "normal");
             let _ = dbqueries::add_user_win(conn, user, "normal", winnings);
         } else if slot1 == slot2 || slot2 == slot3 || slot1 == slot3 {
-            // Two matching win
-            let winnings = 2.0 * bet;
+            // Two matching symbols - use half multiplier
+            let matching_symbol = if slot1 == slot2 { slot1 } else if slot2 == slot3 { slot2 } else { slot1 };
+            let base_multiplier = symbol_probs.iter()
+                .find(|(sym, _, _)| sym == matching_symbol)
+                .map(|(_, _, mult)| mult)
+                .unwrap_or(&3.0);
+            let payout_multiplier = base_multiplier * 0.5; // Half payout for two symbols
+            // CRITICAL: payout implement here
+            let winnings = payout_multiplier * bet;
             logger::transaction(&format!("User ID: {} won ${:.2} with two matching symbols in normal slots", user.id, winnings));
             
-            println!("\n{}", "Nice! Two matching!".green());
-            println!("Current balance is {}", dbqueries::transaction(conn, user, winnings));
+            // DEPOSIT WINNINGS
+            let final_balance = dbqueries::transaction(conn, user, winnings);
+            
+            println!("\n{}", "═══════════════════════════════════════".yellow().bold());
+            println!("{}", "      ✨ TWO MATCHING SYMBOLS! ✨       ".yellow().bold());
+            println!("{}", "═══════════════════════════════════════".yellow().bold());
+            println!("\n{}  Two {}s matched!", "Result:".bright_white().bold(), matching_symbol);
+            println!("{} ${:.2} × {:.1}x = ${:.2}", "Payout:".bright_white().bold(), bet, payout_multiplier, winnings);
+            println!("{} ${:.2}", "Balance:".bright_white().bold(), final_balance);
+            println!();
             let _ = dbqueries::add_win(conn, "normal");
             let _ = dbqueries::add_user_win(conn, user, "normal", winnings);
         } else {
-            // Loss
+            // Loss - bet already deducted, no winnings to add
             logger::transaction(&format!("User ID: {} lost ${:.2} in normal slots", user.id, bet));
             
-            println!("\n{}", "YOU LOSE!".red());
-            println!("You lose {}", &bet);
-            println!("Current balance is {}", dbqueries::transaction(conn, user, -(bet)));
+            println!("\n{}", "═══════════════════════════════════════".red());
+            println!("{}", "           ❌ NO MATCH ❌               ".red().bold());
+            println!("{}", "═══════════════════════════════════════".red());
+            println!("\n{}  No matching symbols", "Result:".bright_white().bold());
+            println!("{} ${:.2}", "Lost:".bright_white().bold(), bet);
+            println!("{} ${:.2}", "Balance:".bright_white().bold(), balance_after_bet);
+            println!();
             let _ = dbqueries::add_loss(conn, "normal");
             let _ = dbqueries::add_user_loss(conn, user, "normal");
         }

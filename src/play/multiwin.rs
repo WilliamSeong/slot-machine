@@ -1,4 +1,3 @@
-use rand::Rng;
 use std::io::{self, Write};
 use std::thread;
 use std::time::Duration;
@@ -7,11 +6,13 @@ use rusqlite::{Connection};
 use crate::interfaces::user::User;
 use crate::db::dbqueries;
 use crate::logger::logger;
+use crate::cryptography::rng::CasinoRng;
+use colored::*;
 
 use crate::interfaces::menus::menu_generator;
-
+// CRITICAL: check grid size is used or not and adjust and fix it
+// CRITICAL: implement rng here
 const GRID_SIZE: usize = 5;
-const SYMBOLS: [char; 6] = ['🍒', '🍊', '🍋', '🔔', '⭐', '💎'];
 
 type Grid = [[char; GRID_SIZE]; GRID_SIZE];
 
@@ -22,22 +23,52 @@ struct WinCheckResults {
 }
 
 pub fn multi_win(conn: &Connection, user: &User, bet: f64) -> bool{
-    let mut rng = rand::rng();
-    println!("--- 🎰 Welcome to the 5x5 Rust Slot Machine! 🎰 ---");
+    // Load symbol probabilities from database
+    let symbol_probs = match dbqueries::get_symbol_probabilities(conn, "multi") {
+        Ok(probs) => probs,
+        Err(e) => {
+            logger::error(&format!("Failed to load symbol probabilities: {}", e));
+            println!("{}", "Error loading game configuration".red());
+            return true;
+        }
+    };
+    
+    // Extract symbols for grid
+    let symbols: Vec<char> = symbol_probs.iter()
+        .map(|(sym, _, _)| sym.chars().next().unwrap())
+        .collect();
+    
+    let mut rng = CasinoRng::new();
+    
+    println!("\n{}", "═══ 🎰 Welcome to 5x5 Multi-Win Slots! 🎰 ═══".bright_yellow().bold());
+    println!("{}", "Win by matching any row, column, or diagonal!".bright_cyan());
+    println!("{} ${:.2}\n", "Your bet:".bright_white().bold(), bet);
 
     loop {
         // Check if player has the funds
         if !dbqueries::check_funds(conn, user, bet as f64) {
             logger::warning(&format!("User ID: {} has insufficient funds for bet: ${:.2}", user.id, bet));
-            println!("Insufficient funds");
+            println!("{}", "Insufficient funds!".red().bold());
             return true;
         }
 
-        //spinning animation
-        run_spin_animation(&mut rng);
+        // CHARGE BET FIRST before playing
+        logger::transaction(&format!("User ID: {} placing bet of ${:.2} for multi-win slots", user.id, bet));
+        let balance_after_bet = dbqueries::transaction(conn, user, -bet);
+        
+        if balance_after_bet < 0.0 {
+            println!("{}", "Transaction failed!".red().bold());
+            return true;
+        }
+        
+        println!("{}", format!("Bet placed: ${:.2}", bet).yellow());
+        println!("{}", format!("Balance: ${:.2}", balance_after_bet).bright_white());
 
+        //spinning animation
+        run_spin_animation(&mut rng, &symbols);
+        // CRITICAL: double check here  
         //grid after the animation
-        let grid = spin(&mut rng);
+        let grid = spin(&mut rng, &symbols);
 
         //final result
         clearscreen::clear().expect("Failed to clear screen");
@@ -49,30 +80,51 @@ pub fn multi_win(conn: &Connection, user: &User, bet: f64) -> bool{
 
         //show to user for win or lose
         if win_results.win_descriptions.is_empty() {
-            println!("\n--- No win this time. Try again! ---");
-            println!("Current balance is {}", dbqueries::transaction(conn, user, -(bet)));
+            // Loss - bet already deducted, no winnings
+            println!("\n{}", "═══════════════════════════════════════".red());
+            println!("{}", "           ❌ NO WIN ❌                 ".red().bold());
+            println!("{}", "═══════════════════════════════════════".red());
+            println!("\n{}  No matching lines found", "Result:".bright_white().bold());
+            println!("{} ${:.2}", "Lost:".bright_white().bold(), bet);
+            println!("{} ${:.2}", "Balance:".bright_white().bold(), balance_after_bet);
+            println!();
             let _ = dbqueries::add_loss(conn, "multi");
             let _ = dbqueries::add_user_loss(conn, user, "multi");
         } else {
             // check for Double Jackpot condition first
             if win_results.has_horizontal_win && win_results.has_four_corner_win {
-                println!("\n💥💥💥 DOUBLE JACKPOT! 💥💥💥");
-                println!("    > You hit a Horizontal AND Four Corners win!");
-                println!("Current balance is {}", dbqueries::transaction(conn, user, bet * 4 as f64));
+                let winnings = bet * 4.0;
+                
+                // DEPOSIT WINNINGS
+                let final_balance = dbqueries::transaction(conn, user, winnings);
+                
+                println!("\n{}", "═══════════════════════════════════════".green().bold());
+                println!("{}", "      💥 DOUBLE JACKPOT! 💥            ".green().bold());
+                println!("{}", "═══════════════════════════════════════".green().bold());
+                println!("\n{}  Horizontal + Four Corners!", "Result:".bright_white().bold());
+                println!("{} ${:.2} × 4x = ${:.2}", "Payout:".bright_white().bold(), bet, winnings);
+                println!("{} ${:.2}", "Balance:".bright_white().bold(), final_balance);
+                println!();
                 let _ = dbqueries::add_win(conn, "multi");
-                let _ = dbqueries::add_user_win(conn, user, "multi", bet * 4 as f64);
+                let _ = dbqueries::add_user_win(conn, user, "multi", winnings);
             } else {
-                // print single row or diganol win
-                println!("\n🎉 *** JACKPOT! *** 🎉");
-                println!("Current balance is {}", dbqueries::transaction(conn, user, bet * 2 as f64));
+                let winnings = bet * 2.0;
+                
+                // DEPOSIT WINNINGS
+                let final_balance = dbqueries::transaction(conn, user, winnings);
+                
+                println!("\n{}", "═══════════════════════════════════════".green().bold());
+                println!("{}", "         🎉 JACKPOT! 🎉                ".green().bold());
+                println!("{}", "═══════════════════════════════════════".green().bold());
+                println!();
+                for win_line in &win_results.win_descriptions {
+                    println!("  ✓ {}", win_line.bright_cyan());
+                }
+                println!("\n{} ${:.2} × 2x = ${:.2}", "Payout:".bright_white().bold(), bet, winnings);
+                println!("{} ${:.2}", "Balance:".bright_white().bold(), final_balance);
+                println!();
                 let _ = dbqueries::add_win(conn, "multi");
-                let _ = dbqueries::add_user_win(conn, user, "multi", bet * 2 as f64);
-
-            }
-
-            //print wins if they won
-            for win_line in win_results.win_descriptions {
-                println!("    > {}", win_line);
+                let _ = dbqueries::add_user_win(conn, user, "multi", winnings);
             }
         }
 
@@ -103,26 +155,26 @@ pub fn multi_win(conn: &Connection, user: &User, bet: f64) -> bool{
 }
 
  //spining animation
-fn run_spin_animation(rng: &mut impl Rng) {
+fn run_spin_animation(rng: &mut CasinoRng, symbols: &[char]) {
     let animation_frames = 12; 
     let spin_delay_ms = 70; 
 
     for _ in 0..animation_frames {
         clearscreen::clear().expect("Failed to clear screen");
-        let temp_grid = spin(rng);
+        let temp_grid = spin(rng, symbols);
         println!("Spinning...\n");
         print_grid(&temp_grid);
         thread::sleep(Duration::from_millis(spin_delay_ms));
     }
 }
-
+// CRITICAL:  using cryptographically secure RNG
 //creates 5 by 5 grid
-fn spin(rng: &mut impl Rng) -> Grid {
+fn spin(rng: &mut CasinoRng, symbols: &[char]) -> Grid {
     let mut grid = [[' '; GRID_SIZE]; GRID_SIZE];
     for r in 0..GRID_SIZE {
         for c in 0..GRID_SIZE {
-            let symbol_index = rng.random_range(0..SYMBOLS.len());
-            grid[r][c] = SYMBOLS[symbol_index];
+            let symbol_index = rng.gen_range(0, symbols.len());
+            grid[r][c] = symbols[symbol_index];
         }
     }
     grid
@@ -141,7 +193,7 @@ fn print_grid(grid: &Grid) {
     }
     println!("{}", border);
 }
-
+// CRITICAL: check logic here 
 //checks all win conditions
 fn check_wins(grid: &Grid) -> WinCheckResults {
     let mut wins = Vec::<String>::new(); 

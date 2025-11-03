@@ -1123,3 +1123,811 @@
 [2025-11-02 09:53:03] [INFO] Recording game win: wheel of fortune
 [2025-11-02 09:53:03] [INFO] Recording game played: wheel of fortune
 [2025-11-02 09:53:03] [TRANSACTION] User ID: 3 won 30.00 in game: wheel of fortune
+[2025-11-02 16:29:52] [INFO] Application is starting
+[2025-11-02 16:29:52] [INFO] Database connection established
+[2025-11-02 16:29:52] [INFO] Foreign keys enabled
+[2025-11-02 16:29:52] [INFO] Database is initialized
+[2025-11-02 16:29:52] [INFO] starting application login flow
+[2025-11-02 16:29:56] [INFO] User selected registration option
+[2025-11-02 16:29:59] [SECURITY] Registration attempt for username: hsk
+[2025-11-02 16:29:59] [INFO] Attempting to insert new user: hsk
+[2025-11-02 16:30:00] [INFO] Password hashed successfully
+[2025-11-02 16:30:00] [INFO] Initializing statistics for new user: hsk
+[2025-11-02 16:30:00] [INFO] Password verification successful
+[2025-11-02 16:30:00] [INFO] User statistics successfully registered for User ID: 3
+[2025-11-02 16:30:00] [SECURITY] Registration successful for username: hsk
+[2025-11-02 16:30:00] [INFO] Retrieving user data for: hsk
+[2025-11-02 16:30:00] [INFO] Password verification successful
+[2025-11-02 16:30:00] [INFO] Successfully retrieved user data for ID: 3
+[2025-11-02 16:30:00] [SECURITY] New user created with ID: 3
+[2025-11-02 16:30:00] [INFO] User ID: 3 logged in as regular user
+[2025-11-02 16:30:00] [INFO] User ID: 3 (hsk) accessed the main menu
+[2025-11-02 16:31:06] [INFO] User ID: 3 selected Account option
+[2025-11-02 16:31:06] [INFO] User ID: 3 accessed account information
+[2025-11-02 16:31:07] [INFO] User ID: 3 selected deposit option
+[2025-11-02 16:31:09] [TRANSACTION] User ID: 3 deposited $5.00
+[2025-11-02 16:31:09] [TRANSACTION] Balance change for User ID: 3 amount: 5.00
+[2025-11-02 16:31:09] [TRANSACTION] User ID: 3 new balance after change: 5.00
+[2025-11-02 16:31:13] [INFO] User ID: 3 accessed statistics
+[2025-11-02 16:31:13] [INFO] User ID: 3 viewed their game statistics
+[2025-11-02 16:31:13] [INFO] Retrieving statistics for User ID: 3
+[2025-11-02 16:31:16] [INFO] User ID: 3 accessed settings (not implemented)
+[2025-11-02 16:31:22] [INFO] User ID: 3 exited account menu
+[2025-11-02 16:31:24] [INFO] User ID: 3 selected Play option
+[2025-11-02 16:31:24] [INFO] User ID: 3 entered game selection menu
+[2025-11-02 16:31:24] [INFO] Retrieving list of games
+[2025-11-02 16:31:29] [TRANSACTION] User ID: 3 placed bet of $1.00 on normal slots
+[2025-11-02 16:31:29] [INFO] Checking funds for User ID: 3 against limit: 1.00
+[2025-11-02 16:31:29] [INFO] User ID: 3 started normal slots game with bet: $1.00
+[2025-11-02 16:31:29] [INFO] Checking funds for User ID: 3 against limit: 1.00
+[2025-11-02 16:31:29] [INFO] User ID: 3 spinning slots with bet: $1.00
+[2025-11-02 16:31:30] [INFO] User ID: 3 slot result: 🍒 | 🍒 | 🍒
+[2025-11-02 16:31:31] [TRANSACTION] User ID: 3 won jackpot of $3.00 in normal slots
+[2025-11-02 16:31:31] [TRANSACTION] User ID: 3 transaction attempt for amount: 3.00
+[2025-11-02 16:31:31] [TRANSACTION] User ID: 3 transaction completed successfully for amount: 3.00
+[2025-11-02 16:31:31] [INFO] User ID: 3 new balance: 8.00
+[2025-11-02 16:31:31] [INFO] Recording game win: normal
+[2025-11-02 16:31:31] [INFO] Recording game played: normal
+[2025-11-02 16:31:31] [TRANSACTION] User ID: 3 won 3.00 in game: normal
+[2025-11-02 16:31:31] [INFO] New highest payout for User ID: 3 in game normal: 3.00
+[2025-11-02 16:31:49] [INFO] User ID: 3 continuing with same bet
+[2025-11-02 16:31:49] [INFO] Checking funds for User ID: 3 against limit: 1.00
+[2025-11-02 16:31:49] [INFO] User ID: 3 spinning slots with bet: $1.00
+[2025-11-02 16:31:50] [INFO] User ID: 3 slot result: 🍒 | 🍒 | 🍒
+[2025-11-02 16:31:51] [TRANSACTION] User ID: 3 won jackpot of $3.00 in normal slots
+[2025-11-02 16:31:51] [TRANSACTION] User ID: 3 transaction attempt for amount: 3.00
+[2025-11-02 16:31:51] [TRANSACTION] User ID: 3 transaction completed successfully for amount: 3.00
+[2025-11-02 16:31:51] [INFO] User ID: 3 new balance: 11.00
+[2025-11-02 16:31:51] [INFO] Recording game win: normal
+[2025-11-02 16:31:51] [INFO] Recording game played: normal
+[2025-11-02 16:31:51] [TRANSACTION] User ID: 3 won 3.00 in game: normal
+[2025-11-02 16:32:07] [INFO] User ID: 3 changing bet
+[2025-11-02 16:32:08] [TRANSACTION] User ID: 3 placed bet of $1.00 on normal slots
+[2025-11-02 16:32:08] [INFO] Checking funds for User ID: 3 against limit: 1.00
+[2025-11-02 16:32:08] [INFO] User ID: 3 started normal slots game with bet: $1.00
+[2025-11-02 16:32:08] [INFO] Checking funds for User ID: 3 against limit: 1.00
+[2025-11-02 16:32:08] [INFO] User ID: 3 spinning slots with bet: $1.00
+[2025-11-02 16:32:09] [INFO] User ID: 3 slot result: 🍒 | 🍒 | 🍒
+[2025-11-02 16:32:10] [TRANSACTION] User ID: 3 won jackpot of $3.00 in normal slots
+[2025-11-02 16:32:10] [TRANSACTION] User ID: 3 transaction attempt for amount: 3.00
+[2025-11-02 16:32:10] [TRANSACTION] User ID: 3 transaction completed successfully for amount: 3.00
+[2025-11-02 16:32:10] [INFO] User ID: 3 new balance: 14.00
+[2025-11-02 16:32:10] [INFO] Recording game win: normal
+[2025-11-02 16:32:10] [INFO] Recording game played: normal
+[2025-11-02 16:32:10] [TRANSACTION] User ID: 3 won 3.00 in game: normal
+[2025-11-02 16:42:32] [INFO] User ID: 3 changing bet
+[2025-11-02 16:42:34] [TRANSACTION] User ID: 3 placed bet of $5.00 on normal slots
+[2025-11-02 16:42:34] [INFO] Checking funds for User ID: 3 against limit: 5.00
+[2025-11-02 16:42:34] [INFO] User ID: 3 started normal slots game with bet: $5.00
+[2025-11-02 16:42:34] [INFO] Checking funds for User ID: 3 against limit: 5.00
+[2025-11-02 16:42:34] [INFO] User ID: 3 spinning slots with bet: $5.00
+[2025-11-02 16:42:35] [INFO] User ID: 3 slot result: 🍒 | 🍒 | 🍒
+[2025-11-02 16:42:36] [TRANSACTION] User ID: 3 won jackpot of $15.00 in normal slots
+[2025-11-02 16:42:36] [TRANSACTION] User ID: 3 transaction attempt for amount: 15.00
+[2025-11-02 16:42:36] [TRANSACTION] User ID: 3 transaction completed successfully for amount: 15.00
+[2025-11-02 16:42:36] [INFO] User ID: 3 new balance: 29.00
+[2025-11-02 16:42:36] [INFO] Recording game win: normal
+[2025-11-02 16:42:36] [INFO] Recording game played: normal
+[2025-11-02 16:42:36] [TRANSACTION] User ID: 3 won 15.00 in game: normal
+[2025-11-02 16:42:36] [INFO] New highest payout for User ID: 3 in game normal: 15.00
+[2025-11-02 16:42:38] [INFO] User ID: 3 changing bet
+[2025-11-02 16:42:39] [TRANSACTION] User ID: 3 placed bet of $5.00 on normal slots
+[2025-11-02 16:42:39] [INFO] Checking funds for User ID: 3 against limit: 5.00
+[2025-11-02 16:42:39] [INFO] User ID: 3 started normal slots game with bet: $5.00
+[2025-11-02 16:42:39] [INFO] Checking funds for User ID: 3 against limit: 5.00
+[2025-11-02 16:42:39] [INFO] User ID: 3 spinning slots with bet: $5.00
+[2025-11-02 16:42:41] [INFO] User ID: 3 slot result: 🍒 | 🍒 | 🍒
+[2025-11-02 16:42:41] [TRANSACTION] User ID: 3 won jackpot of $15.00 in normal slots
+[2025-11-02 16:42:41] [TRANSACTION] User ID: 3 transaction attempt for amount: 15.00
+[2025-11-02 16:42:41] [TRANSACTION] User ID: 3 transaction completed successfully for amount: 15.00
+[2025-11-02 16:42:41] [INFO] User ID: 3 new balance: 44.00
+[2025-11-02 16:42:41] [INFO] Recording game win: normal
+[2025-11-02 16:42:41] [INFO] Recording game played: normal
+[2025-11-02 16:42:41] [TRANSACTION] User ID: 3 won 15.00 in game: normal
+[2025-11-02 16:42:43] [INFO] User ID: 3 exiting slots game
+[2025-11-02 16:42:43] [INFO] Retrieving list of games
+[2025-11-02 16:42:45] [TRANSACTION] User ID: 3 placed bet of $1.00 on holding slots
+[2025-11-02 16:42:45] [INFO] Checking funds for User ID: 3 against limit: 1.00
+[2025-11-02 16:42:47] [INFO] User ID: 3 slot result: ⭐ | 🍒 | 💎 | ⭐ | ⭐
+[2025-11-02 16:42:52] [TRANSACTION] User ID: 3 transaction attempt for amount: -1.00
+[2025-11-02 16:42:52] [TRANSACTION] User ID: 3 transaction completed successfully for amount: -1.00
+[2025-11-02 16:42:52] [INFO] User ID: 3 new balance: 43.00
+[2025-11-02 16:42:52] [INFO] Recording game loss: holding
+[2025-11-02 16:42:52] [INFO] Recording game played: holding
+[2025-11-02 16:42:52] [INFO] User ID: 3 lost in game: holding
+[2025-11-02 16:42:55] [INFO] User ID: 3 continuing with same bet
+[2025-11-02 16:42:57] [INFO] User ID: 3 slot result: 💎 | ⭐ | 🍊 | 🍋 | 🍒
+[2025-11-02 16:42:59] [TRANSACTION] User ID: 3 transaction attempt for amount: -1.00
+[2025-11-02 16:42:59] [TRANSACTION] User ID: 3 transaction completed successfully for amount: -1.00
+[2025-11-02 16:42:59] [INFO] User ID: 3 new balance: 42.00
+[2025-11-02 16:42:59] [INFO] Recording game loss: holding
+[2025-11-02 16:42:59] [INFO] Recording game played: holding
+[2025-11-02 16:42:59] [INFO] User ID: 3 lost in game: holding
+[2025-11-02 16:43:06] [INFO] User ID: 3 continuing with same bet
+[2025-11-02 16:43:07] [INFO] User ID: 3 slot result: 🔔 | 🍒 | 🍊 | 💎 | 💎
+[2025-11-02 16:43:09] [TRANSACTION] User ID: 3 transaction attempt for amount: -1.00
+[2025-11-02 16:43:09] [TRANSACTION] User ID: 3 transaction completed successfully for amount: -1.00
+[2025-11-02 16:43:09] [INFO] User ID: 3 new balance: 41.00
+[2025-11-02 16:43:09] [INFO] Recording game loss: holding
+[2025-11-02 16:43:09] [INFO] Recording game played: holding
+[2025-11-02 16:43:09] [INFO] User ID: 3 lost in game: holding
+[2025-11-02 16:43:13] [INFO] User ID: 3 exiting slots game
+[2025-11-02 16:43:13] [INFO] Retrieving list of games
+[2025-11-02 16:43:15] [TRANSACTION] User ID: 3 placed bet of $1.00 on holding slots
+[2025-11-02 16:43:15] [INFO] Checking funds for User ID: 3 against limit: 1.00
+[2025-11-02 16:43:17] [TRANSACTION] User ID: 3 transaction attempt for amount: 3.00
+[2025-11-02 16:43:17] [TRANSACTION] User ID: 3 transaction completed successfully for amount: 3.00
+[2025-11-02 16:43:17] [INFO] User ID: 3 new balance: 44.00
+[2025-11-02 16:43:17] [INFO] Recording game win: wheel of fortune
+[2025-11-02 16:43:17] [INFO] Recording game played: wheel of fortune
+[2025-11-02 16:43:17] [TRANSACTION] User ID: 3 won 3.00 in game: wheel of fortune
+[2025-11-02 16:43:17] [INFO] New highest payout for User ID: 3 in game wheel of fortune: 3.00
+[2025-11-02 16:43:20] [INFO] User ID: 3 continuing with same bet
+[2025-11-02 16:43:22] [TRANSACTION] User ID: 3 transaction attempt for amount: -1.00
+[2025-11-02 16:43:22] [TRANSACTION] User ID: 3 transaction completed successfully for amount: -1.00
+[2025-11-02 16:43:22] [INFO] User ID: 3 new balance: 43.00
+[2025-11-02 16:43:22] [INFO] Recording game loss: wheel of fortune
+[2025-11-02 16:43:22] [INFO] Recording game played: wheel of fortune
+[2025-11-02 16:43:22] [INFO] User ID: 3 lost in game: wheel of fortune
+[2025-11-02 16:43:27] [INFO] User ID: 3 continuing with same bet
+[2025-11-02 16:43:28] [TRANSACTION] User ID: 3 transaction attempt for amount: 3.00
+[2025-11-02 16:43:28] [TRANSACTION] User ID: 3 transaction completed successfully for amount: 3.00
+[2025-11-02 16:43:28] [INFO] User ID: 3 new balance: 46.00
+[2025-11-02 16:43:28] [INFO] Recording game win: wheel of fortune
+[2025-11-02 16:43:28] [INFO] Recording game played: wheel of fortune
+[2025-11-02 16:43:28] [TRANSACTION] User ID: 3 won 3.00 in game: wheel of fortune
+[2025-11-02 16:43:30] [INFO] User ID: 3 continuing with same bet
+[2025-11-02 16:43:31] [TRANSACTION] User ID: 3 transaction attempt for amount: 0.50
+[2025-11-02 16:43:31] [TRANSACTION] User ID: 3 transaction completed successfully for amount: 0.50
+[2025-11-02 16:43:31] [INFO] User ID: 3 new balance: 46.50
+[2025-11-02 16:43:31] [INFO] Recording game win: wheel of fortune
+[2025-11-02 16:43:31] [INFO] Recording game played: wheel of fortune
+[2025-11-02 16:43:31] [TRANSACTION] User ID: 3 won 0.50 in game: wheel of fortune
+[2025-11-02 16:43:40] [INFO] User ID: 3 exiting slots game
+[2025-11-02 16:43:40] [INFO] Retrieving list of games
+[2025-11-02 16:43:42] [INFO] User ID: 3 selected holding game (not implemented)
+[2025-11-02 16:43:43] [INFO] User ID: 3 logged out
+[2025-11-02 16:43:44] [INFO] User selected exit option
+[2025-11-02 16:43:44] [INFO] Application shutting down
+[2025-11-02 16:45:44] [INFO] Application is starting
+[2025-11-02 16:45:44] [INFO] Database connection established
+[2025-11-02 16:45:44] [INFO] Foreign keys enabled
+[2025-11-02 16:45:44] [INFO] Database is initialized
+[2025-11-02 16:45:44] [INFO] starting application login flow
+[2025-11-02 16:45:46] [INFO] User selected sign-in option
+[2025-11-02 16:46:21] [SECURITY] Login attempt for username: technician
+[2025-11-02 16:46:21] [INFO] Checking credentials for user: technician
+[2025-11-02 16:46:21] [ERROR] Failed to parse password hash: password hash string missing field
+[2025-11-02 16:46:21] [WARNING] Password verification failed for user: technician
+[2025-11-02 16:46:21] [SECURITY] Failed login for username: technician. Error: Query returned no rows
+[2025-11-02 16:46:27] [INFO] User selected registration option
+[2025-11-02 16:53:25] [INFO] Application is starting
+[2025-11-02 16:53:25] [INFO] Database connection established
+[2025-11-02 16:53:25] [INFO] Foreign keys enabled
+[2025-11-02 16:53:25] [INFO] Password hashed successfully
+[2025-11-02 16:53:25] [INFO] Password hashed successfully
+[2025-11-02 16:53:25] [INFO] Database is initialized
+[2025-11-02 16:53:25] [INFO] starting application login flow
+[2025-11-02 16:53:28] [INFO] User selected sign-in option
+[2025-11-02 16:53:45] [SECURITY] Login attempt for username: technician
+[2025-11-02 16:53:45] [INFO] Checking credentials for user: technician
+[2025-11-02 16:53:45] [ERROR] Failed to parse password hash: password hash string missing field
+[2025-11-02 16:53:45] [WARNING] Password verification failed for user: technician
+[2025-11-02 16:53:45] [SECURITY] Failed login for username: technician. Error: Query returned no rows
+[2025-11-02 16:53:50] [INFO] User selected sign-in option
+[2025-11-02 16:53:58] [SECURITY] Login attempt for username: technician
+[2025-11-02 16:53:58] [INFO] Checking credentials for user: technician
+[2025-11-02 16:53:58] [ERROR] Failed to parse password hash: password hash string missing field
+[2025-11-02 16:53:58] [WARNING] Password verification failed for user: technician
+[2025-11-02 16:53:58] [SECURITY] Failed login for username: technician. Error: Query returned no rows
+[2025-11-02 16:54:08] [INFO] User selected exit option
+[2025-11-02 16:54:08] [INFO] Application shutting down
+[2025-11-02 16:55:48] [INFO] Application is starting
+[2025-11-02 16:55:48] [INFO] Database connection established
+[2025-11-02 16:55:48] [INFO] Foreign keys enabled
+[2025-11-02 16:55:48] [INFO] Password hashed successfully
+[2025-11-02 16:55:49] [INFO] Password hashed successfully
+[2025-11-02 16:55:49] [INFO] Database is initialized
+[2025-11-02 16:55:49] [INFO] starting application login flow
+[2025-11-02 16:55:54] [INFO] User selected sign-in option
+[2025-11-02 16:56:03] [SECURITY] Login attempt for username: technician
+[2025-11-02 16:56:03] [INFO] Checking credentials for user: technician
+[2025-11-02 16:56:03] [ERROR] Failed to parse password hash: password hash string missing field
+[2025-11-02 16:56:03] [WARNING] Password verification failed for user: technician
+[2025-11-02 16:56:03] [SECURITY] Failed login for username: technician. Error: Query returned no rows
+[2025-11-02 16:56:05] [INFO] User selected exit option
+[2025-11-02 16:56:05] [INFO] Application shutting down
+[2025-11-02 16:57:13] [INFO] Application is starting
+[2025-11-02 16:57:13] [INFO] Database connection established
+[2025-11-02 16:57:13] [INFO] Foreign keys enabled
+[2025-11-02 16:57:13] [INFO] Password hashed successfully
+[2025-11-02 16:57:14] [INFO] Password hashed successfully
+[2025-11-02 16:57:14] [INFO] Database is initialized
+[2025-11-02 16:57:14] [INFO] starting application login flow
+[2025-11-02 16:57:29] [INFO] Application is starting
+[2025-11-02 16:57:29] [INFO] Database connection established
+[2025-11-02 16:57:29] [INFO] Foreign keys enabled
+[2025-11-02 16:57:29] [INFO] Password hashed successfully
+[2025-11-02 16:57:29] [INFO] Password hashed successfully
+[2025-11-02 16:57:29] [INFO] Database is initialized
+[2025-11-02 16:57:29] [INFO] starting application login flow
+[2025-11-02 16:57:31] [INFO] User selected sign-in option
+[2025-11-02 16:57:41] [SECURITY] Login attempt for username: technician
+[2025-11-02 16:57:41] [INFO] Checking credentials for user: technician
+[2025-11-02 16:57:41] [INFO] Password verification successful
+[2025-11-02 16:57:41] [INFO] Password verification successful for user: technician
+[2025-11-02 16:57:41] [SECURITY] Successful login for username: technician (User ID: 1)
+[2025-11-02 16:57:41] [INFO] User ID: 1 logged in as technician
+[2025-11-02 16:57:41] [SECURITY] Technician (User ID: 1) accessed technician menu
+[2025-11-02 16:57:43] [INFO] Technician (User ID: 1) accessed games menu
+[2025-11-02 16:57:43] [INFO] Retrieving list of games
+[2025-11-02 16:58:16] [SECURITY] Game status toggle attempt for: multi
+[2025-11-02 16:58:16] [SECURITY] Game status toggle attempt for: multi
+[2025-11-02 16:58:16] [SECURITY] Game status successfully toggled for: multi
+[2025-11-02 16:58:16] [INFO] Retrieving list of games
+[2025-11-02 16:58:18] [SECURITY] Game status toggle attempt for: multi
+[2025-11-02 16:58:18] [SECURITY] Game status toggle attempt for: multi
+[2025-11-02 16:58:18] [SECURITY] Game status successfully toggled for: multi
+[2025-11-02 16:58:18] [INFO] Retrieving list of games
+[2025-11-02 16:58:20] [SECURITY] Game status toggle attempt for: multi
+[2025-11-02 16:58:20] [SECURITY] Game status toggle attempt for: multi
+[2025-11-02 16:58:20] [SECURITY] Game status successfully toggled for: multi
+[2025-11-02 16:58:20] [INFO] Retrieving list of games
+[2025-11-02 16:58:22] [INFO] Technician (User ID: 1) accessed statistics
+[2025-11-02 16:58:22] [INFO] Retrieving game statistics
+[2025-11-02 16:58:27] [INFO] Technician (User ID: 1) accessed statistics
+[2025-11-02 16:58:27] [INFO] Retrieving game statistics
+[2025-11-02 16:58:29] [WARNING] Technician (User ID: 1) entered invalid menu choice
+[2025-11-02 16:58:32] [INFO] Technician (User ID: 1) logged out
+[2025-11-02 16:58:36] [INFO] User selected exit option
+[2025-11-02 16:58:36] [INFO] Application shutting down
+[2025-11-02 16:59:17] [INFO] Application is starting
+[2025-11-02 16:59:17] [INFO] Database connection established
+[2025-11-02 16:59:17] [INFO] Foreign keys enabled
+[2025-11-02 16:59:18] [INFO] Password hashed successfully
+[2025-11-02 16:59:18] [INFO] Password hashed successfully
+[2025-11-02 16:59:18] [INFO] Database is initialized
+[2025-11-02 16:59:18] [INFO] starting application login flow
+[2025-11-02 16:59:19] [INFO] User selected sign-in option
+[2025-11-02 16:59:24] [SECURITY] Login attempt for username: commissioner
+[2025-11-02 16:59:24] [INFO] Checking credentials for user: commissioner
+[2025-11-02 16:59:24] [INFO] Password verification successful
+[2025-11-02 16:59:24] [INFO] Password verification successful for user: commissioner
+[2025-11-02 16:59:24] [SECURITY] Successful login for username: commissioner (User ID: 2)
+[2025-11-02 16:59:24] [WARNING] User ID: 2 has unknown role
+[2025-11-02 16:59:54] [INFO] User selected sign-in option
+[2025-11-02 16:59:57] [SECURITY] Login attempt for username: commissioner
+[2025-11-02 16:59:57] [INFO] Checking credentials for user: commissioner
+[2025-11-02 16:59:57] [INFO] Password verification successful
+[2025-11-02 16:59:57] [INFO] Password verification successful for user: commissioner
+[2025-11-02 16:59:57] [SECURITY] Successful login for username: commissioner (User ID: 2)
+[2025-11-02 16:59:57] [WARNING] User ID: 2 has unknown role
+[2025-11-02 17:00:00] [INFO] User selected exit option
+[2025-11-02 17:00:00] [INFO] Application shutting down
+[2025-11-02 17:21:41] [INFO] Application is starting
+[2025-11-02 17:21:41] [INFO] Database connection established
+[2025-11-02 17:21:41] [INFO] Foreign keys enabled
+[2025-11-02 17:21:41] [INFO] Password hashed successfully
+[2025-11-02 17:21:41] [INFO] Password hashed successfully
+[2025-11-02 17:21:42] [INFO] Database is initialized
+[2025-11-02 17:21:42] [INFO] starting application login flow
+[2025-11-02 17:21:44] [INFO] User selected registration option
+[2025-11-02 17:21:49] [SECURITY] Registration attempt for username: hsk
+[2025-11-02 17:21:49] [INFO] Attempting to insert new user: hsk
+[2025-11-02 17:21:49] [INFO] Password hashed successfully
+[2025-11-02 17:21:49] [INFO] Initializing statistics for new user: hsk
+[2025-11-02 17:21:50] [INFO] Password verification successful
+[2025-11-02 17:21:50] [INFO] User statistics successfully registered for User ID: 3
+[2025-11-02 17:21:50] [SECURITY] Registration successful for username: hsk
+[2025-11-02 17:21:50] [INFO] Retrieving user data for: hsk
+[2025-11-02 17:21:50] [INFO] Password verification successful
+[2025-11-02 17:21:50] [INFO] Successfully retrieved user data for ID: 3
+[2025-11-02 17:21:50] [SECURITY] New user created with ID: 3
+[2025-11-02 17:21:50] [INFO] User ID: 3 logged in as regular user
+[2025-11-02 17:21:50] [INFO] User ID: 3 (hsk) accessed the main menu
+[2025-11-02 17:21:51] [INFO] User ID: 3 selected Play option
+[2025-11-02 17:21:51] [INFO] User ID: 3 entered game selection menu
+[2025-11-02 17:21:51] [INFO] Retrieving list of games
+[2025-11-02 17:21:53] [TRANSACTION] User ID: 3 placed bet of $1.00 on normal slots
+[2025-11-02 17:21:53] [INFO] Checking funds for User ID: 3 against limit: 1.00
+[2025-11-02 17:21:53] [WARNING] Insufficient funds for User ID: 3. Balance: 0.00, Required: 1.00
+[2025-11-02 17:21:53] [WARNING] User ID: 3 attempted to bet $1.00 with insufficient funds
+[2025-11-02 17:21:53] [INFO] Retrieving list of games
+[2025-11-02 17:21:55] [TRANSACTION] User ID: 3 placed bet of $1.00 on normal slots
+[2025-11-02 17:21:55] [INFO] Checking funds for User ID: 3 against limit: 1.00
+[2025-11-02 17:21:55] [WARNING] Insufficient funds for User ID: 3. Balance: 0.00, Required: 1.00
+[2025-11-02 17:21:55] [WARNING] User ID: 3 attempted to bet $1.00 with insufficient funds
+[2025-11-02 17:21:55] [INFO] Retrieving list of games
+[2025-11-02 17:21:58] [INFO] User ID: 3 selected holding game (not implemented)
+[2025-11-02 17:21:59] [INFO] User ID: 3 selected Account option
+[2025-11-02 17:21:59] [INFO] User ID: 3 accessed account information
+[2025-11-02 17:22:04] [INFO] User ID: 3 selected deposit option
+[2025-11-02 17:22:07] [TRANSACTION] User ID: 3 deposited $10000000000000000.00
+[2025-11-02 17:22:07] [TRANSACTION] Balance change for User ID: 3 amount: 10000000000000000.00
+[2025-11-02 17:22:07] [TRANSACTION] User ID: 3 new balance after change: 10000000000000000.00
+[2025-11-02 17:22:12] [INFO] User ID: 3 selected withdraw option
+[2025-11-02 17:22:13] [INFO] Checking funds for User ID: 3 against limit: 222222222.00
+[2025-11-02 17:22:13] [TRANSACTION] User ID: 3 withdrew $222222222.00
+[2025-11-02 17:22:13] [TRANSACTION] Balance change for User ID: 3 amount: -222222222.00
+[2025-11-02 17:22:14] [TRANSACTION] User ID: 3 new balance after change: 9999999777777778.00
+[2025-11-02 17:22:17] [INFO] User ID: 3 accessed statistics
+[2025-11-02 17:22:17] [INFO] User ID: 3 viewed their game statistics
+[2025-11-02 17:22:17] [INFO] Retrieving statistics for User ID: 3
+[2025-11-02 17:22:21] [INFO] User ID: 3 exited account menu
+[2025-11-02 17:22:22] [INFO] User ID: 3 selected Play option
+[2025-11-02 17:22:22] [INFO] User ID: 3 entered game selection menu
+[2025-11-02 17:22:22] [INFO] Retrieving list of games
+[2025-11-02 17:22:26] [TRANSACTION] User ID: 3 placed bet of $1.00 on holding slots
+[2025-11-02 17:22:26] [INFO] Checking funds for User ID: 3 against limit: 1.00
+[2025-11-02 17:22:27] [INFO] User ID: 3 slot result: 🍒 | 🍊 | 💎 | 🍊 | 🍋
+[2025-11-02 17:22:36] [TRANSACTION] User ID: 3 transaction attempt for amount: -1.00
+[2025-11-02 17:22:36] [TRANSACTION] User ID: 3 transaction completed successfully for amount: -1.00
+[2025-11-02 17:22:36] [INFO] User ID: 3 new balance: 9999999777777776.00
+[2025-11-02 17:22:36] [INFO] Recording game loss: holding
+[2025-11-02 17:22:36] [INFO] Recording game played: holding
+[2025-11-02 17:22:36] [INFO] User ID: 3 lost in game: holding
+[2025-11-02 17:22:51] [INFO] User ID: 3 continuing with same bet
+[2025-11-02 17:22:52] [INFO] User ID: 3 slot result: 🍒 | 🍋 | 🔔 | 🍊 | 🍊
+[2025-11-02 17:22:53] [TRANSACTION] User ID: 3 transaction attempt for amount: -1.00
+[2025-11-02 17:22:53] [TRANSACTION] User ID: 3 transaction completed successfully for amount: -1.00
+[2025-11-02 17:22:53] [INFO] User ID: 3 new balance: 9999999777777776.00
+[2025-11-02 17:22:53] [INFO] Recording game loss: holding
+[2025-11-02 17:22:53] [INFO] Recording game played: holding
+[2025-11-02 17:22:53] [INFO] User ID: 3 lost in game: holding
+[2025-11-02 17:22:58] [INFO] User ID: 3 exiting slots game
+[2025-11-02 17:22:58] [INFO] Retrieving list of games
+[2025-11-02 17:23:00] [TRANSACTION] User ID: 3 placed bet of $1.00 on multiwin slots
+[2025-11-02 17:23:00] [INFO] Checking funds for User ID: 3 against limit: 1.00
+[2025-11-02 17:23:00] [INFO] Checking funds for User ID: 3 against limit: 1.00
+[2025-11-02 17:23:01] [TRANSACTION] User ID: 3 transaction attempt for amount: -1.00
+[2025-11-02 17:23:01] [TRANSACTION] User ID: 3 transaction completed successfully for amount: -1.00
+[2025-11-02 17:23:01] [INFO] User ID: 3 new balance: 9999999777777776.00
+[2025-11-02 17:23:01] [INFO] Recording game loss: multi
+[2025-11-02 17:23:01] [INFO] Recording game played: multi
+[2025-11-02 17:23:01] [INFO] User ID: 3 lost in game: multi
+[2025-11-02 17:23:16] [INFO] User ID: 3 changing bet
+[2025-11-02 17:23:17] [TRANSACTION] User ID: 3 placed bet of $10.00 on multiwin slots
+[2025-11-02 17:23:17] [INFO] Checking funds for User ID: 3 against limit: 10.00
+[2025-11-02 17:23:17] [INFO] Checking funds for User ID: 3 against limit: 10.00
+[2025-11-02 17:23:18] [TRANSACTION] User ID: 3 transaction attempt for amount: -10.00
+[2025-11-02 17:23:18] [TRANSACTION] User ID: 3 transaction completed successfully for amount: -10.00
+[2025-11-02 17:23:18] [INFO] User ID: 3 new balance: 9999999777777766.00
+[2025-11-02 17:23:18] [INFO] Recording game loss: multi
+[2025-11-02 17:23:18] [INFO] Recording game played: multi
+[2025-11-02 17:23:18] [INFO] User ID: 3 lost in game: multi
+[2025-11-02 17:23:25] [INFO] User ID: 3 exiting slots game
+[2025-11-02 17:23:25] [INFO] Retrieving list of games
+[2025-11-02 17:23:27] [INFO] User ID: 3 selected holding game (not implemented)
+[2025-11-02 17:23:30] [INFO] User ID: 3 selected Play option
+[2025-11-02 17:23:30] [INFO] User ID: 3 entered game selection menu
+[2025-11-02 17:23:30] [INFO] Retrieving list of games
+[2025-11-02 17:23:32] [TRANSACTION] User ID: 3 placed bet of $1.00 on multiwin slots
+[2025-11-02 17:23:32] [INFO] Checking funds for User ID: 3 against limit: 1.00
+[2025-11-02 17:23:32] [INFO] Checking funds for User ID: 3 against limit: 1.00
+[2025-11-02 17:23:33] [TRANSACTION] User ID: 3 transaction attempt for amount: -1.00
+[2025-11-02 17:23:33] [TRANSACTION] User ID: 3 transaction completed successfully for amount: -1.00
+[2025-11-02 17:23:33] [INFO] User ID: 3 new balance: 9999999777777764.00
+[2025-11-02 17:23:33] [INFO] Recording game loss: multi
+[2025-11-02 17:23:33] [INFO] Recording game played: multi
+[2025-11-02 17:23:33] [INFO] User ID: 3 lost in game: multi
+[2025-11-02 17:23:35] [INFO] User ID: 3 exiting slots game
+[2025-11-02 17:23:35] [INFO] Retrieving list of games
+[2025-11-02 17:23:37] [TRANSACTION] User ID: 3 placed bet of $1.00 on holding slots
+[2025-11-02 17:23:37] [INFO] Checking funds for User ID: 3 against limit: 1.00
+[2025-11-02 17:23:38] [INFO] User ID: 3 slot result: ⭐ | 🍒 | 🔔 | 💎 | 🍒
+[2025-11-02 17:23:39] [TRANSACTION] User ID: 3 transaction attempt for amount: -1.00
+[2025-11-02 17:23:39] [TRANSACTION] User ID: 3 transaction completed successfully for amount: -1.00
+[2025-11-02 17:23:39] [INFO] User ID: 3 new balance: 9999999777777764.00
+[2025-11-02 17:23:39] [INFO] Recording game loss: holding
+[2025-11-02 17:23:39] [INFO] Recording game played: holding
+[2025-11-02 17:23:39] [INFO] User ID: 3 lost in game: holding
+[2025-11-02 17:23:40] [INFO] User ID: 3 continuing with same bet
+[2025-11-02 17:23:41] [INFO] User ID: 3 slot result: 🍒 | 🔔 | 🔔 | 🔔 | 🍒
+[2025-11-02 17:23:42] [TRANSACTION] User ID: 3 transaction attempt for amount: 2.00
+[2025-11-02 17:23:42] [TRANSACTION] User ID: 3 transaction completed successfully for amount: 2.00
+[2025-11-02 17:23:42] [INFO] User ID: 3 new balance: 9999999777777766.00
+[2025-11-02 17:23:42] [INFO] Recording game win: holding
+[2025-11-02 17:23:42] [INFO] Recording game played: holding
+[2025-11-02 17:23:42] [TRANSACTION] User ID: 3 won 2.00 in game: holding
+[2025-11-02 17:23:42] [INFO] New highest payout for User ID: 3 in game holding: 2.00
+[2025-11-02 17:23:43] [INFO] User ID: 3 continuing with same bet
+[2025-11-02 17:23:44] [INFO] User ID: 3 slot result: 🍒 | 🍒 | 💎 | 🍋 | 🍒
+[2025-11-02 17:23:50] [TRANSACTION] User ID: 3 transaction attempt for amount: 2.00
+[2025-11-02 17:23:50] [TRANSACTION] User ID: 3 transaction completed successfully for amount: 2.00
+[2025-11-02 17:23:50] [INFO] User ID: 3 new balance: 9999999777777768.00
+[2025-11-02 17:23:50] [INFO] Recording game win: holding
+[2025-11-02 17:23:50] [INFO] Recording game played: holding
+[2025-11-02 17:23:50] [TRANSACTION] User ID: 3 won 2.00 in game: holding
+[2025-11-02 17:23:52] [INFO] User ID: 3 exiting slots game
+[2025-11-02 17:23:52] [INFO] Retrieving list of games
+[2025-11-02 17:23:58] [TRANSACTION] User ID: 3 placed bet of $20.00 on holding slots
+[2025-11-02 17:23:58] [INFO] Checking funds for User ID: 3 against limit: 20.00
+[2025-11-02 17:24:00] [TRANSACTION] User ID: 3 transaction attempt for amount: 40.00
+[2025-11-02 17:24:00] [TRANSACTION] User ID: 3 transaction completed successfully for amount: 40.00
+[2025-11-02 17:24:00] [INFO] User ID: 3 new balance: 9999999777777808.00
+[2025-11-02 17:24:00] [INFO] Recording game win: wheel of fortune
+[2025-11-02 17:24:00] [INFO] Recording game played: wheel of fortune
+[2025-11-02 17:24:00] [TRANSACTION] User ID: 3 won 40.00 in game: wheel of fortune
+[2025-11-02 17:24:00] [INFO] New highest payout for User ID: 3 in game wheel of fortune: 40.00
+[2025-11-02 17:24:03] [INFO] User ID: 3 exiting slots game
+[2025-11-02 17:24:03] [INFO] Retrieving list of games
+[2025-11-02 17:24:04] [INFO] User ID: 3 selected holding game (not implemented)
+[2025-11-02 17:24:06] [INFO] User ID: 3 logged out
+[2025-11-02 17:24:08] [INFO] User selected sign-in option
+[2025-11-02 17:24:11] [SECURITY] Login attempt for username: technician
+[2025-11-02 17:24:11] [INFO] Checking credentials for user: technician
+[2025-11-02 17:24:12] [INFO] Password verification successful
+[2025-11-02 17:24:12] [INFO] Password verification successful for user: technician
+[2025-11-02 17:24:12] [SECURITY] Successful login for username: technician (User ID: 1)
+[2025-11-02 17:24:12] [INFO] User ID: 1 logged in as technician
+[2025-11-02 17:24:12] [SECURITY] Technician (User ID: 1) accessed technician menu
+[2025-11-02 17:24:13] [INFO] Technician (User ID: 1) accessed games menu
+[2025-11-02 17:24:13] [INFO] Retrieving list of games
+[2025-11-02 17:24:16] [INFO] Technician (User ID: 1) accessed statistics
+[2025-11-02 17:24:16] [INFO] Retrieving game statistics
+[2025-11-02 17:24:20] [WARNING] Technician (User ID: 1) entered invalid menu choice
+[2025-11-02 17:24:22] [WARNING] Technician (User ID: 1) entered invalid menu choice
+[2025-11-02 17:24:23] [INFO] Technician (User ID: 1) logged out
+[2025-11-02 17:24:27] [INFO] User selected sign-in option
+[2025-11-02 17:24:34] [SECURITY] Login attempt for username: commissioner
+[2025-11-02 17:24:34] [INFO] Checking credentials for user: commissioner
+[2025-11-02 17:24:34] [INFO] Password verification successful
+[2025-11-02 17:24:34] [INFO] Password verification successful for user: commissioner
+[2025-11-02 17:24:34] [SECURITY] Successful login for username: commissioner (User ID: 2)
+[2025-11-02 17:24:34] [INFO] User ID: 2 logged in as commissioner
+[2025-11-02 17:24:49] [INFO] Retrieving symbol probabilities for game: normal
+[2025-11-02 17:24:49] [INFO] Retrieving symbol probabilities for game: multi
+[2025-11-02 17:24:49] [INFO] Retrieving symbol probabilities for game: holding
+[2025-11-02 17:24:49] [INFO] Retrieving symbol probabilities for game: wheel of fortune
+[2025-11-02 17:25:31] [INFO] Retrieving symbol probabilities for game: normal
+[2025-11-02 17:25:36] [SECURITY] Updating symbol weight for game: normal, symbol: 🍋, new weight: 24
+[2025-11-02 17:25:36] [SECURITY] Symbol weight updated successfully for 🍋 in normal
+[2025-11-02 17:28:17] [INFO] User selected exit option
+[2025-11-02 17:28:17] [INFO] Application shutting down
+[2025-11-02 17:43:34] [INFO] Application is starting
+[2025-11-02 17:43:34] [INFO] Database connection established
+[2025-11-02 17:43:34] [INFO] Foreign keys enabled
+[2025-11-02 17:43:35] [INFO] Password hashed successfully
+[2025-11-02 17:43:35] [INFO] Password hashed successfully
+[2025-11-02 17:43:35] [INFO] Database is initialized
+[2025-11-02 17:43:35] [INFO] starting application login flow
+[2025-11-02 17:43:37] [INFO] User selected registration option
+[2025-11-02 17:43:43] [SECURITY] Registration attempt for username: hsk
+[2025-11-02 17:43:43] [INFO] Attempting to insert new user: hsk
+[2025-11-02 17:43:43] [INFO] Password hashed successfully
+[2025-11-02 17:43:43] [ERROR] Registration failed for username: hsk. Error: UNIQUE constraint failed: users.username
+[2025-11-02 17:43:50] [INFO] User selected sign-in option
+[2025-11-02 17:43:52] [SECURITY] Login attempt for username: hsk
+[2025-11-02 17:43:52] [INFO] Checking credentials for user: hsk
+[2025-11-02 17:43:53] [INFO] Password verification failed
+[2025-11-02 17:43:53] [WARNING] Password verification failed for user: hsk
+[2025-11-02 17:43:53] [SECURITY] Failed login for username: hsk. Error: Query returned no rows
+[2025-11-02 17:43:57] [INFO] User selected registration option
+[2025-11-02 17:43:59] [SECURITY] Registration attempt for username: hsk
+[2025-11-02 17:43:59] [INFO] Attempting to insert new user: hsk
+[2025-11-02 17:43:59] [INFO] Password hashed successfully
+[2025-11-02 17:43:59] [ERROR] Registration failed for username: hsk. Error: UNIQUE constraint failed: users.username
+[2025-11-02 17:44:02] [INFO] User selected sign-in option
+[2025-11-02 17:44:04] [SECURITY] Login attempt for username: hsk
+[2025-11-02 17:44:04] [INFO] Checking credentials for user: hsk
+[2025-11-02 17:44:05] [INFO] Password verification failed
+[2025-11-02 17:44:05] [WARNING] Password verification failed for user: hsk
+[2025-11-02 17:44:05] [SECURITY] Failed login for username: hsk. Error: Query returned no rows
+[2025-11-02 17:44:07] [INFO] User selected exit option
+[2025-11-02 17:44:07] [INFO] Application shutting down
+[2025-11-02 17:44:27] [INFO] Application is starting
+[2025-11-02 17:44:27] [INFO] Database connection established
+[2025-11-02 17:44:27] [INFO] Foreign keys enabled
+[2025-11-02 17:44:27] [INFO] Password hashed successfully
+[2025-11-02 17:44:27] [INFO] Password hashed successfully
+[2025-11-02 17:44:28] [INFO] Database is initialized
+[2025-11-02 17:44:28] [INFO] starting application login flow
+[2025-11-02 17:44:29] [INFO] User selected registration option
+[2025-11-02 17:44:31] [SECURITY] Registration attempt for username: hsk
+[2025-11-02 17:44:31] [INFO] Attempting to insert new user: hsk
+[2025-11-02 17:44:32] [INFO] Password hashed successfully
+[2025-11-02 17:44:32] [INFO] Initializing statistics for new user: hsk
+[2025-11-02 17:44:32] [INFO] Password verification successful
+[2025-11-02 17:44:32] [INFO] User statistics successfully registered for User ID: 3
+[2025-11-02 17:44:32] [SECURITY] Registration successful for username: hsk
+[2025-11-02 17:44:32] [INFO] Retrieving user data for: hsk
+[2025-11-02 17:44:32] [INFO] Password verification successful
+[2025-11-02 17:44:32] [INFO] Successfully retrieved user data for ID: 3
+[2025-11-02 17:44:32] [SECURITY] New user created with ID: 3
+[2025-11-02 17:44:32] [INFO] User ID: 3 logged in as regular user
+[2025-11-02 17:44:32] [INFO] User ID: 3 (hsk) accessed the main menu
+[2025-11-02 17:44:38] [INFO] User ID: 3 logged out
+[2025-11-02 17:44:39] [INFO] User selected sign-in option
+[2025-11-02 17:44:41] [SECURITY] Login attempt for username: hsk
+[2025-11-02 17:44:41] [INFO] Checking credentials for user: hsk
+[2025-11-02 17:44:42] [INFO] Password verification successful
+[2025-11-02 17:44:42] [INFO] Password verification successful for user: hsk
+[2025-11-02 17:44:42] [SECURITY] Successful login for username: hsk (User ID: 3)
+[2025-11-02 17:44:42] [INFO] User ID: 3 logged in as regular user
+[2025-11-02 17:44:42] [INFO] User ID: 3 (hsk) accessed the main menu
+[2025-11-02 17:44:43] [INFO] User ID: 3 selected Play option
+[2025-11-02 17:44:43] [INFO] User ID: 3 entered game selection menu
+[2025-11-02 17:44:43] [INFO] Retrieving list of games
+[2025-11-02 17:44:47] [TRANSACTION] User ID: 3 placed bet of $5.00 on holding slots
+[2025-11-02 17:44:47] [INFO] Checking funds for User ID: 3 against limit: 5.00
+[2025-11-02 17:44:47] [WARNING] Insufficient funds for User ID: 3. Balance: 0.00, Required: 5.00
+[2025-11-02 17:44:47] [WARNING] User ID: 3 attempted to bet $5.00 with insufficient funds
+[2025-11-02 17:44:47] [INFO] Retrieving list of games
+[2025-11-02 17:44:49] [INFO] User ID: 3 selected holding game (not implemented)
+[2025-11-02 17:44:50] [INFO] User ID: 3 selected Account option
+[2025-11-02 17:44:50] [INFO] User ID: 3 accessed account information
+[2025-11-02 17:44:52] [INFO] User ID: 3 accessed settings (not implemented)
+[2025-11-02 17:44:55] [INFO] User ID: 3 accessed statistics
+[2025-11-02 17:44:55] [INFO] User ID: 3 viewed their game statistics
+[2025-11-02 17:44:55] [INFO] Retrieving statistics for User ID: 3
+[2025-11-02 17:45:04] [INFO] User ID: 3 selected deposit option
+[2025-11-02 17:45:06] [TRANSACTION] User ID: 3 deposited $10.00
+[2025-11-02 17:45:06] [TRANSACTION] Balance change for User ID: 3 amount: 10.00
+[2025-11-02 17:45:06] [TRANSACTION] User ID: 3 new balance after change: 10.00
+[2025-11-02 17:45:13] [INFO] User ID: 3 exited account menu
+[2025-11-02 17:45:16] [INFO] User ID: 3 selected Play option
+[2025-11-02 17:45:16] [INFO] User ID: 3 entered game selection menu
+[2025-11-02 17:45:16] [INFO] Retrieving list of games
+[2025-11-02 17:45:18] [TRANSACTION] User ID: 3 placed bet of $1.00 on multiwin slots
+[2025-11-02 17:45:18] [INFO] Checking funds for User ID: 3 against limit: 1.00
+[2025-11-02 17:45:18] [INFO] Retrieving symbol probabilities for game: multi
+[2025-11-02 17:45:18] [INFO] Cryptographically secure RNG initialized
+[2025-11-02 17:45:18] [INFO] Checking funds for User ID: 3 against limit: 1.00
+[2025-11-02 17:45:19] [TRANSACTION] User ID: 3 transaction attempt for amount: -1.00
+[2025-11-02 17:45:19] [TRANSACTION] User ID: 3 transaction completed successfully for amount: -1.00
+[2025-11-02 17:45:19] [INFO] User ID: 3 new balance: 9.00
+[2025-11-02 17:45:19] [INFO] Recording game loss: multi
+[2025-11-02 17:45:19] [INFO] Recording game played: multi
+[2025-11-02 17:45:19] [INFO] User ID: 3 lost in game: multi
+[2025-11-02 17:45:23] [INFO] User ID: 3 continuing with same bet
+[2025-11-02 17:45:23] [INFO] Checking funds for User ID: 3 against limit: 1.00
+[2025-11-02 17:45:24] [TRANSACTION] User ID: 3 transaction attempt for amount: -1.00
+[2025-11-02 17:45:24] [TRANSACTION] User ID: 3 transaction completed successfully for amount: -1.00
+[2025-11-02 17:45:24] [INFO] User ID: 3 new balance: 8.00
+[2025-11-02 17:45:24] [INFO] Recording game loss: multi
+[2025-11-02 17:45:24] [INFO] Recording game played: multi
+[2025-11-02 17:45:24] [INFO] User ID: 3 lost in game: multi
+[2025-11-02 17:45:28] [INFO] User ID: 3 continuing with same bet
+[2025-11-02 17:45:28] [INFO] Checking funds for User ID: 3 against limit: 1.00
+[2025-11-02 17:45:28] [TRANSACTION] User ID: 3 transaction attempt for amount: -1.00
+[2025-11-02 17:45:28] [TRANSACTION] User ID: 3 transaction completed successfully for amount: -1.00
+[2025-11-02 17:45:28] [INFO] User ID: 3 new balance: 7.00
+[2025-11-02 17:45:28] [INFO] Recording game loss: multi
+[2025-11-02 17:45:28] [INFO] Recording game played: multi
+[2025-11-02 17:45:28] [INFO] User ID: 3 lost in game: multi
+[2025-11-02 17:45:29] [INFO] User ID: 3 continuing with same bet
+[2025-11-02 17:45:29] [INFO] Checking funds for User ID: 3 against limit: 1.00
+[2025-11-02 17:45:30] [TRANSACTION] User ID: 3 transaction attempt for amount: -1.00
+[2025-11-02 17:45:30] [TRANSACTION] User ID: 3 transaction completed successfully for amount: -1.00
+[2025-11-02 17:45:30] [INFO] User ID: 3 new balance: 6.00
+[2025-11-02 17:45:30] [INFO] Recording game loss: multi
+[2025-11-02 17:45:30] [INFO] Recording game played: multi
+[2025-11-02 17:45:30] [INFO] User ID: 3 lost in game: multi
+[2025-11-02 17:45:31] [INFO] User ID: 3 continuing with same bet
+[2025-11-02 17:45:31] [INFO] Checking funds for User ID: 3 against limit: 1.00
+[2025-11-02 17:45:32] [TRANSACTION] User ID: 3 transaction attempt for amount: -1.00
+[2025-11-02 17:45:32] [TRANSACTION] User ID: 3 transaction completed successfully for amount: -1.00
+[2025-11-02 17:45:32] [INFO] User ID: 3 new balance: 5.00
+[2025-11-02 17:45:32] [INFO] Recording game loss: multi
+[2025-11-02 17:45:32] [INFO] Recording game played: multi
+[2025-11-02 17:45:32] [INFO] User ID: 3 lost in game: multi
+[2025-11-02 17:45:34] [INFO] User ID: 3 continuing with same bet
+[2025-11-02 17:45:34] [INFO] Checking funds for User ID: 3 against limit: 1.00
+[2025-11-02 17:45:34] [TRANSACTION] User ID: 3 transaction attempt for amount: -1.00
+[2025-11-02 17:45:34] [TRANSACTION] User ID: 3 transaction completed successfully for amount: -1.00
+[2025-11-02 17:45:34] [INFO] User ID: 3 new balance: 4.00
+[2025-11-02 17:45:34] [INFO] Recording game loss: multi
+[2025-11-02 17:45:34] [INFO] Recording game played: multi
+[2025-11-02 17:45:34] [INFO] User ID: 3 lost in game: multi
+[2025-11-02 17:45:37] [INFO] User ID: 3 exiting slots game
+[2025-11-02 17:45:37] [INFO] Retrieving list of games
+[2025-11-02 17:45:39] [TRANSACTION] User ID: 3 placed bet of $1.00 on normal slots
+[2025-11-02 17:45:39] [INFO] Checking funds for User ID: 3 against limit: 1.00
+[2025-11-02 17:45:39] [INFO] User ID: 3 started normal slots game with bet: $1.00
+[2025-11-02 17:45:39] [INFO] Retrieving symbol probabilities for game: normal
+[2025-11-02 17:45:39] [INFO] Checking funds for User ID: 3 against limit: 1.00
+[2025-11-02 17:45:39] [INFO] Cryptographically secure RNG initialized
+[2025-11-02 17:45:39] [INFO] User ID: 3 spinning slots with bet: $1.00
+[2025-11-02 17:45:40] [INFO] User ID: 3 slot result: 💎 | 🍋 | 🍋
+[2025-11-02 17:45:41] [TRANSACTION] User ID: 3 won $1.00 with two matching symbols in normal slots
+[2025-11-02 17:45:41] [TRANSACTION] User ID: 3 transaction attempt for amount: 1.00
+[2025-11-02 17:45:41] [TRANSACTION] User ID: 3 transaction completed successfully for amount: 1.00
+[2025-11-02 17:45:41] [INFO] User ID: 3 new balance: 5.00
+[2025-11-02 17:45:41] [INFO] Recording game win: normal
+[2025-11-02 17:45:41] [INFO] Recording game played: normal
+[2025-11-02 17:45:41] [TRANSACTION] User ID: 3 won 1.00 in game: normal
+[2025-11-02 17:45:41] [INFO] New highest payout for User ID: 3 in game normal: 1.00
+[2025-11-02 17:45:49] [INFO] User ID: 3 continuing with same bet
+[2025-11-02 17:45:49] [INFO] Checking funds for User ID: 3 against limit: 1.00
+[2025-11-02 17:45:49] [INFO] Cryptographically secure RNG initialized
+[2025-11-02 17:45:49] [INFO] User ID: 3 spinning slots with bet: $1.00
+[2025-11-02 17:45:51] [INFO] User ID: 3 slot result: 🍇 | 🍒 | 🍒
+[2025-11-02 17:45:51] [TRANSACTION] User ID: 3 won $1.00 with two matching symbols in normal slots
+[2025-11-02 17:45:51] [TRANSACTION] User ID: 3 transaction attempt for amount: 1.00
+[2025-11-02 17:45:51] [TRANSACTION] User ID: 3 transaction completed successfully for amount: 1.00
+[2025-11-02 17:45:51] [INFO] User ID: 3 new balance: 6.00
+[2025-11-02 17:45:51] [INFO] Recording game win: normal
+[2025-11-02 17:45:51] [INFO] Recording game played: normal
+[2025-11-02 17:45:51] [TRANSACTION] User ID: 3 won 1.00 in game: normal
+[2025-11-02 17:45:54] [INFO] User ID: 3 continuing with same bet
+[2025-11-02 17:45:54] [INFO] Checking funds for User ID: 3 against limit: 1.00
+[2025-11-02 17:45:54] [INFO] Cryptographically secure RNG initialized
+[2025-11-02 17:45:54] [INFO] User ID: 3 spinning slots with bet: $1.00
+[2025-11-02 17:45:56] [INFO] User ID: 3 slot result: 7️⃣ | 7️⃣ | 🍇
+[2025-11-02 17:45:56] [TRANSACTION] User ID: 3 won $10.00 with two matching symbols in normal slots
+[2025-11-02 17:45:56] [TRANSACTION] User ID: 3 transaction attempt for amount: 10.00
+[2025-11-02 17:45:56] [TRANSACTION] User ID: 3 transaction completed successfully for amount: 10.00
+[2025-11-02 17:45:56] [INFO] User ID: 3 new balance: 16.00
+[2025-11-02 17:45:56] [INFO] Recording game win: normal
+[2025-11-02 17:45:56] [INFO] Recording game played: normal
+[2025-11-02 17:45:56] [TRANSACTION] User ID: 3 won 10.00 in game: normal
+[2025-11-02 17:45:56] [INFO] New highest payout for User ID: 3 in game normal: 10.00
+[2025-11-02 17:46:01] [INFO] User ID: 3 continuing with same bet
+[2025-11-02 17:46:01] [INFO] Checking funds for User ID: 3 against limit: 1.00
+[2025-11-02 17:46:01] [INFO] Cryptographically secure RNG initialized
+[2025-11-02 17:46:01] [INFO] User ID: 3 spinning slots with bet: $1.00
+[2025-11-02 17:46:02] [INFO] User ID: 3 slot result: 🍒 | 7️⃣ | 🍊
+[2025-11-02 17:46:03] [TRANSACTION] User ID: 3 lost $1.00 in normal slots
+[2025-11-02 17:46:03] [TRANSACTION] User ID: 3 transaction attempt for amount: -1.00
+[2025-11-02 17:46:03] [TRANSACTION] User ID: 3 transaction completed successfully for amount: -1.00
+[2025-11-02 17:46:03] [INFO] User ID: 3 new balance: 15.00
+[2025-11-02 17:46:03] [INFO] Recording game loss: normal
+[2025-11-02 17:46:03] [INFO] Recording game played: normal
+[2025-11-02 17:46:03] [INFO] User ID: 3 lost in game: normal
+[2025-11-02 17:46:04] [INFO] User ID: 3 continuing with same bet
+[2025-11-02 17:46:04] [INFO] Checking funds for User ID: 3 against limit: 1.00
+[2025-11-02 17:46:04] [INFO] Cryptographically secure RNG initialized
+[2025-11-02 17:46:04] [INFO] User ID: 3 spinning slots with bet: $1.00
+[2025-11-02 17:46:05] [INFO] User ID: 3 slot result: 🍋 | 🍊 | 🍋
+[2025-11-02 17:46:06] [TRANSACTION] User ID: 3 won $1.00 with two matching symbols in normal slots
+[2025-11-02 17:46:06] [TRANSACTION] User ID: 3 transaction attempt for amount: 1.00
+[2025-11-02 17:46:06] [TRANSACTION] User ID: 3 transaction completed successfully for amount: 1.00
+[2025-11-02 17:46:06] [INFO] User ID: 3 new balance: 16.00
+[2025-11-02 17:46:06] [INFO] Recording game win: normal
+[2025-11-02 17:46:06] [INFO] Recording game played: normal
+[2025-11-02 17:46:06] [TRANSACTION] User ID: 3 won 1.00 in game: normal
+[2025-11-02 17:46:07] [INFO] User ID: 3 continuing with same bet
+[2025-11-02 17:46:07] [INFO] Checking funds for User ID: 3 against limit: 1.00
+[2025-11-02 17:46:07] [INFO] Cryptographically secure RNG initialized
+[2025-11-02 17:46:07] [INFO] User ID: 3 spinning slots with bet: $1.00
+[2025-11-02 17:46:08] [INFO] User ID: 3 slot result: 🍋 | 🍒 | 7️⃣
+[2025-11-02 17:46:09] [TRANSACTION] User ID: 3 lost $1.00 in normal slots
+[2025-11-02 17:46:09] [TRANSACTION] User ID: 3 transaction attempt for amount: -1.00
+[2025-11-02 17:46:09] [TRANSACTION] User ID: 3 transaction completed successfully for amount: -1.00
+[2025-11-02 17:46:09] [INFO] User ID: 3 new balance: 15.00
+[2025-11-02 17:46:09] [INFO] Recording game loss: normal
+[2025-11-02 17:46:09] [INFO] Recording game played: normal
+[2025-11-02 17:46:09] [INFO] User ID: 3 lost in game: normal
+[2025-11-02 17:46:10] [INFO] User ID: 3 continuing with same bet
+[2025-11-02 17:46:10] [INFO] Checking funds for User ID: 3 against limit: 1.00
+[2025-11-02 17:46:10] [INFO] Cryptographically secure RNG initialized
+[2025-11-02 17:46:10] [INFO] User ID: 3 spinning slots with bet: $1.00
+[2025-11-02 17:46:12] [INFO] User ID: 3 slot result: 🍒 | 🍊 | 🍇
+[2025-11-02 17:46:12] [TRANSACTION] User ID: 3 lost $1.00 in normal slots
+[2025-11-02 17:46:12] [TRANSACTION] User ID: 3 transaction attempt for amount: -1.00
+[2025-11-02 17:46:12] [TRANSACTION] User ID: 3 transaction completed successfully for amount: -1.00
+[2025-11-02 17:46:12] [INFO] User ID: 3 new balance: 14.00
+[2025-11-02 17:46:12] [INFO] Recording game loss: normal
+[2025-11-02 17:46:12] [INFO] Recording game played: normal
+[2025-11-02 17:46:12] [INFO] User ID: 3 lost in game: normal
+[2025-11-02 17:46:13] [INFO] User ID: 3 continuing with same bet
+[2025-11-02 17:46:13] [INFO] Checking funds for User ID: 3 against limit: 1.00
+[2025-11-02 17:46:13] [INFO] Cryptographically secure RNG initialized
+[2025-11-02 17:46:13] [INFO] User ID: 3 spinning slots with bet: $1.00
+[2025-11-02 17:46:14] [INFO] User ID: 3 slot result: 🍋 | 🍒 | 🍋
+[2025-11-02 17:46:15] [TRANSACTION] User ID: 3 won $1.00 with two matching symbols in normal slots
+[2025-11-02 17:46:15] [TRANSACTION] User ID: 3 transaction attempt for amount: 1.00
+[2025-11-02 17:46:15] [TRANSACTION] User ID: 3 transaction completed successfully for amount: 1.00
+[2025-11-02 17:46:15] [INFO] User ID: 3 new balance: 15.00
+[2025-11-02 17:46:15] [INFO] Recording game win: normal
+[2025-11-02 17:46:15] [INFO] Recording game played: normal
+[2025-11-02 17:46:15] [TRANSACTION] User ID: 3 won 1.00 in game: normal
+[2025-11-02 17:46:25] [INFO] User ID: 3 continuing with same bet
+[2025-11-02 17:46:25] [INFO] Checking funds for User ID: 3 against limit: 1.00
+[2025-11-02 17:46:25] [INFO] Cryptographically secure RNG initialized
+[2025-11-02 17:46:25] [INFO] User ID: 3 spinning slots with bet: $1.00
+[2025-11-02 17:46:27] [INFO] User ID: 3 slot result: 🍒 | 🍇 | 🍊
+[2025-11-02 17:46:27] [TRANSACTION] User ID: 3 lost $1.00 in normal slots
+[2025-11-02 17:46:27] [TRANSACTION] User ID: 3 transaction attempt for amount: -1.00
+[2025-11-02 17:46:27] [TRANSACTION] User ID: 3 transaction completed successfully for amount: -1.00
+[2025-11-02 17:46:27] [INFO] User ID: 3 new balance: 14.00
+[2025-11-02 17:46:27] [INFO] Recording game loss: normal
+[2025-11-02 17:46:27] [INFO] Recording game played: normal
+[2025-11-02 17:46:27] [INFO] User ID: 3 lost in game: normal
+[2025-11-02 18:07:51] [INFO] Application is starting
+[2025-11-02 18:07:51] [SECURITY] Database encryption key initialized (TEMPORARY - will not persist across restarts)
+[2025-11-02 18:07:51] [WARNING] PRODUCTION WARNING: Use persistent key storage for production environments!
+[2025-11-02 18:07:51] [INFO] Database encryption initialized
+[2025-11-02 18:07:51] [INFO] Database connection established
+[2025-11-02 18:07:51] [INFO] Foreign keys enabled
+[2025-11-02 18:07:52] [INFO] Password hashed successfully
+[2025-11-02 18:07:52] [INFO] Password hashed successfully
+[2025-11-02 18:07:52] [INFO] Balance encrypted successfully
+[2025-11-02 18:07:52] [INFO] Balance encrypted successfully
+[2025-11-02 18:07:52] [INFO] Database is initialized
+[2025-11-02 18:07:52] [INFO] starting application login flow
+[2025-11-02 18:07:58] [INFO] User selected registration option
+[2025-11-02 18:08:02] [SECURITY] Registration attempt for username: hsk
+[2025-11-02 18:08:02] [INFO] Attempting to insert new user: hsk
+[2025-11-02 18:08:02] [INFO] Password hashed successfully
+[2025-11-02 18:08:02] [INFO] Balance encrypted successfully
+[2025-11-02 18:08:02] [INFO] Initializing statistics for new user: hsk
+[2025-11-02 18:08:03] [INFO] Password verification successful
+[2025-11-02 18:08:03] [INFO] User statistics successfully registered for User ID: 3
+[2025-11-02 18:08:03] [SECURITY] Registration successful for username: hsk
+[2025-11-02 18:08:03] [INFO] Retrieving user data for: hsk
+[2025-11-02 18:08:03] [INFO] Password verification successful
+[2025-11-02 18:08:03] [INFO] Successfully retrieved user data for ID: 3
+[2025-11-02 18:08:03] [SECURITY] New user created with ID: 3
+[2025-11-02 18:08:03] [INFO] User ID: 3 logged in as regular user
+[2025-11-02 18:08:03] [INFO] User ID: 3 (hsk) accessed the main menu
+[2025-11-02 18:08:46] [INFO] User ID: 3 selected Play option
+[2025-11-02 18:08:46] [INFO] User ID: 3 entered game selection menu
+[2025-11-02 18:08:46] [INFO] Retrieving list of games
+[2025-11-02 18:08:48] [TRANSACTION] User ID: 3 placed bet of $1.00 on holding slots
+[2025-11-02 18:08:48] [INFO] Checking funds for User ID: 3 against limit: 1.00
+[2025-11-02 18:08:48] [INFO] Balance decrypted successfully
+[2025-11-02 18:08:48] [WARNING] Insufficient funds for User ID: 3. Balance: 0.00, Required: 1.00
+[2025-11-02 18:08:48] [WARNING] User ID: 3 attempted to bet $1.00 with insufficient funds
+[2025-11-02 18:08:48] [INFO] Retrieving list of games
+[2025-11-02 18:08:51] [INFO] User ID: 3 selected holding game (not implemented)
+[2025-11-02 18:08:52] [INFO] User ID: 3 selected Account option
+[2025-11-02 18:08:52] [INFO] User ID: 3 accessed account information
+[2025-11-02 18:08:52] [INFO] Balance decrypted successfully
+[2025-11-02 18:08:53] [INFO] User ID: 3 selected deposit option
+[2025-11-02 18:08:55] [TRANSACTION] User ID: 3 depositing $12.00
+[2025-11-02 18:08:55] [TRANSACTION] Balance change for User ID: 3 amount: 12.00
+[2025-11-02 18:08:55] [INFO] Balance decrypted successfully
+[2025-11-02 18:08:55] [INFO] Balance encrypted successfully
+[2025-11-02 18:08:55] [TRANSACTION] User ID: 3 new balance after change: 12.00
+[2025-11-02 18:08:55] [INFO] Balance decrypted successfully
+[2025-11-02 18:08:55] [INFO] Balance decrypted successfully
+[2025-11-02 18:08:58] [INFO] User ID: 3 selected withdraw option
+[2025-11-02 18:08:58] [INFO] Balance decrypted successfully
+[2025-11-02 18:09:00] [INFO] Balance decrypted successfully
+[2025-11-02 18:09:00] [TRANSACTION] User ID: 3 withdrawing $1.00
+[2025-11-02 18:09:00] [TRANSACTION] Balance change for User ID: 3 amount: -1.00
+[2025-11-02 18:09:00] [INFO] Balance decrypted successfully
+[2025-11-02 18:09:00] [INFO] Balance encrypted successfully
+[2025-11-02 18:09:00] [TRANSACTION] User ID: 3 new balance after change: 11.00
+[2025-11-02 18:09:00] [INFO] Balance decrypted successfully
+[2025-11-02 18:09:00] [INFO] Balance decrypted successfully
+[2025-11-02 18:09:07] [INFO] User ID: 3 accessed statistics
+[2025-11-02 18:09:07] [INFO] User ID: 3 viewed their game statistics
+[2025-11-02 18:09:07] [INFO] Retrieving statistics for User ID: 3
+[2025-11-02 18:09:07] [INFO] Balance decrypted successfully
+[2025-11-02 18:09:15] [INFO] User ID: 3 accessed settings (not implemented)
+[2025-11-02 18:09:15] [INFO] Balance decrypted successfully
+[2025-11-02 18:09:17] [INFO] User ID: 3 accessed settings (not implemented)
+[2025-11-02 18:09:17] [INFO] Balance decrypted successfully
+[2025-11-02 18:09:18] [INFO] User ID: 3 exited account menu
+[2025-11-02 18:09:30] [INFO] User ID: 3 selected Play option
+[2025-11-02 18:09:30] [INFO] User ID: 3 entered game selection menu
+[2025-11-02 18:09:30] [INFO] Retrieving list of games
+[2025-11-02 18:09:32] [INFO] User ID: 3 selected holding game (not implemented)
+[2025-11-02 18:09:33] [INFO] User ID: 3 logged out
+[2025-11-02 18:09:35] [INFO] User selected sign-in option
+[2025-11-02 18:09:37] [SECURITY] Login attempt for username: hsk
+[2025-11-02 18:09:37] [INFO] Checking credentials for user: hsk
+[2025-11-02 18:09:37] [INFO] Password verification successful
+[2025-11-02 18:09:37] [INFO] Password verification successful for user: hsk
+[2025-11-02 18:09:37] [SECURITY] Successful login for username: hsk (User ID: 3)
+[2025-11-02 18:09:37] [INFO] User ID: 3 logged in as regular user
+[2025-11-02 18:09:37] [INFO] User ID: 3 (hsk) accessed the main menu
+[2025-11-02 18:09:39] [INFO] User ID: 3 logged out
+[2025-11-02 18:09:41] [INFO] User selected exit option
+[2025-11-02 18:09:41] [INFO] Application shutting down
+[2025-11-02 19:08:17] [INFO] Application is starting
+[2025-11-02 19:08:17] [SECURITY] Database encryption key initialized (TEMPORARY - will not persist across restarts)
+[2025-11-02 19:08:17] [WARNING] PRODUCTION WARNING: Use persistent key storage for production environments!
+[2025-11-02 19:08:17] [INFO] Database encryption initialized
+[2025-11-02 19:08:17] [INFO] Database connection established
+[2025-11-02 19:08:17] [INFO] Foreign keys enabled
+[2025-11-02 19:08:17] [INFO] Password hashed successfully
+[2025-11-02 19:08:18] [INFO] Password hashed successfully
+[2025-11-02 19:08:18] [INFO] Balance encrypted successfully
+[2025-11-02 19:08:18] [INFO] Balance encrypted successfully
+[2025-11-02 19:08:18] [INFO] Database is initialized
+[2025-11-02 19:08:18] [INFO] starting application login flow
+[2025-11-02 19:08:21] [INFO] User selected exit option
+[2025-11-02 19:08:21] [INFO] Application shutting down
