@@ -6,11 +6,15 @@ use std::io::Write;
 use rusqlite::Connection;
 use super::*;
 
+// CRITICAL: dont forget work on this
 pub fn commissioner_menu(conn: &Connection) {
     loop {
-        println!("\n{}", "═══ 🧮 Commissioner Testing Mode 🧮 ═══".bright_blue().bold());
+        println!("\n{}", "═══ 🧮 Commissioner Control Panel 🧮 ═══".bright_blue().bold());
         println!("{}. Run fairness test", "1".yellow());
-        println!("{}. Back", "2".yellow());
+        println!("{}. View game probabilities", "2".yellow());
+        println!("{}. Adjust symbol weights", "3".yellow());
+        println!("{}. Adjust symbol payouts", "4".yellow());
+        println!("{}. Back", "5".yellow());
         print!("{} ", "Choose:".green());
         io::stdout().flush().ok();
 
@@ -19,7 +23,10 @@ pub fn commissioner_menu(conn: &Connection) {
 
         match choice.trim() {
             "1" => run_commissioner_test(conn),
-            "2" => break,
+            "2" => view_game_probabilities(conn),
+            "3" => adjust_symbol_weights(conn),
+            "4" => adjust_symbol_payouts(conn),
+            "5" => break,
             _ => println!("Invalid input"),
         }
     }
@@ -105,7 +112,7 @@ fn run_commissioner_test(conn: &Connection) {
     println!("{}", " Test results stored in commissioner_log table.".green().bold());
 }
 
-
+// CRITICAL: i dont know why but dont touch
 // ---------------------------------------------------------------------------
 // 🧪 Commissioner Boundary and Fairness Tests
 // ---------------------------------------------------------------------------
@@ -237,4 +244,186 @@ mod tests {
         assert!(result.is_ok(), "Database insert failed");
     }
 }
+// CRITICAL: manuel test this and check suitibality be sure this prints may not be visible on partners pc
+// View probabilities for all games
+fn view_game_probabilities(conn: &Connection) {
+    use crate::db::dbqueries;
+    
+    let games = vec!["normal", "multi", "holding", "wheel of fortune"];
+    
+    for game in games {
+        println!("\n{}", format!("â•â•â• {} â•â•â•", game.to_uppercase()).bright_cyan());
+        
+        match dbqueries::get_symbol_probabilities(conn, game) {
+            Ok(symbols) => {
+                if symbols.is_empty() {
+                    println!("No symbols configured for this game");
+                    continue;
+                }
+                
+                let total_weight: usize = symbols.iter().map(|(_, w, _)| w).sum();
+                
+                println!("{:<10} {:<10} {:<15} {:<10}", "Symbol", "Weight", "Probability", "Payout");
+                println!("{}", "-".repeat(50));
+                
+                for (symbol, weight, payout) in symbols {
+                    let probability = (weight as f64 / total_weight as f64) * 100.0;
+                    println!("{:<10} {:<10} {:<14.2}% {:<10.1}x",
+                        symbol, weight, probability, payout);
+                }
+            }
+            Err(e) => println!("Error retrieving probabilities: {}", e),
+        }
+    }
+    
+    println!("\nPress Enter to continue...");
+    io::stdin().read_line(&mut String::new()).ok();
+}
 
+// Adjust symbol weights (probabilities) for a game
+fn adjust_symbol_weights(conn: &Connection) {
+    use crate::db::dbqueries;
+    
+    println!("\n{}", "Select Game:".bright_cyan());
+    println!("1. normal");
+    println!("2. multi");
+    println!("3. holding");
+    println!("4. wheel of fortune");
+    print!("Choice: ");
+    io::stdout().flush().ok();
+    
+    let mut choice = String::new();
+    io::stdin().read_line(&mut choice).ok();
+    
+    let game_name = match choice.trim() {
+        "1" => "normal",
+        "2" => "multi",
+        "3" => "holding",
+        "4" => "wheel of fortune",
+        _ => {
+            println!("{}", "Invalid choice!".red());
+            return;
+        }
+    };
+    
+    match dbqueries::get_symbol_probabilities(conn, game_name) {
+        Ok(symbols) => {
+            println!("\n{}", format!("Current symbols for {}:", game_name).bright_cyan());
+            for (i, (symbol, weight, _)) in symbols.iter().enumerate() {
+                println!("{}. {} (weight: {})", i + 1, symbol, weight);
+            }
+            
+            print!("\nSelect symbol number: ");
+            io::stdout().flush().ok();
+            let mut sym_choice = String::new();
+            io::stdin().read_line(&mut sym_choice).ok();
+            
+            let sym_idx: usize = match sym_choice.trim().parse::<usize>() {
+                Ok(n) if n > 0 && n <= symbols.len() => n - 1,
+                _ => {
+                    println!("{}", "Invalid symbol!".red());
+                    return;
+                }
+            };
+            
+            let (symbol, old_weight, _) = &symbols[sym_idx];
+            
+            println!("\nCurrent weight for {}: {}", symbol, old_weight);
+            print!("Enter new weight (1-100): ");
+            io::stdout().flush().ok();
+            let mut weight_input = String::new();
+            io::stdin().read_line(&mut weight_input).ok();
+            
+            let new_weight: usize = match weight_input.trim().parse() {
+                Ok(w) if w > 0 && w <= 100 => w,
+                _ => {
+                    println!("{}", "Invalid weight! Must be 1-100".red());
+                    return;
+                }
+            };
+            
+            match dbqueries::update_symbol_weight(conn, game_name, symbol, new_weight) {
+                Ok(_) => println!("{}", format!("âœ“ Weight updated for {} to {}", symbol, new_weight).green()),
+                Err(e) => println!("{}", format!("Error updating weight: {}", e).red()),
+            }
+        }
+        Err(e) => println!("{}", format!("Error loading symbols: {}", e).red()),
+    }
+    
+    println!("\nPress Enter to continue...");
+    io::stdin().read_line(&mut String::new()).ok();
+}
+
+// Adjust symbol payout multipliers for a game
+fn adjust_symbol_payouts(conn: &Connection) {
+    use crate::db::dbqueries;
+    
+    println!("\n{}", "Select Game:".bright_cyan());
+    println!("1. normal");
+    println!("2. multi");
+    println!("3. holding");
+    println!("4. wheel of fortune");
+    print!("Choice: ");
+    io::stdout().flush().ok();
+    
+    let mut choice = String::new();
+    io::stdin().read_line(&mut choice).ok();
+    
+    let game_name = match choice.trim() {
+        "1" => "normal",
+        "2" => "multi",
+        "3" => "holding",
+        "4" => "wheel of fortune",
+        _ => {
+            println!("{}", "Invalid choice!".red());
+            return;
+        }
+    };
+    
+    match dbqueries::get_symbol_probabilities(conn, game_name) {
+        Ok(symbols) => {
+            println!("\n{}", format!("Current symbols for {}:", game_name).bright_cyan());
+            for (i, (symbol, _, payout)) in symbols.iter().enumerate() {
+                println!("{}. {} (payout: {}x)", i + 1, symbol, payout);
+            }
+            
+            print!("\nSelect symbol number: ");
+            io::stdout().flush().ok();
+            let mut sym_choice = String::new();
+            io::stdin().read_line(&mut sym_choice).ok();
+            
+            let sym_idx: usize = match sym_choice.trim().parse::<usize>() {
+                Ok(n) if n > 0 && n <= symbols.len() => n - 1,
+                _ => {
+                    println!("{}", "Invalid symbol!".red());
+                    return;
+                }
+            };
+            
+            let (symbol, _, old_payout) = &symbols[sym_idx];
+            
+            println!("\nCurrent payout for {}: {}x", symbol, old_payout);
+            print!("Enter new payout multiplier (0.5-50.0): ");
+            io::stdout().flush().ok();
+            let mut payout_input = String::new();
+            io::stdin().read_line(&mut payout_input).ok();
+            
+            let new_payout: f64 = match payout_input.trim().parse() {
+                Ok(p) if p >= 0.5 && p <= 50.0 => p,
+                _ => {
+                    println!("{}", "Invalid payout! Must be 0.5-50.0".red());
+                    return;
+                }
+            };
+            
+            match dbqueries::update_symbol_payout(conn, game_name, symbol, new_payout) {
+                Ok(_) => println!("{}", format!("âœ“ Payout updated for {} to {}x", symbol, new_payout).green()),
+                Err(e) => println!("{}", format!("Error updating payout: {}", e).red()),
+            }
+        }
+        Err(e) => println!("{}", format!("Error loading symbols: {}", e).red()),
+    }
+    
+    println!("\nPress Enter to continue...");
+    io::stdin().read_line(&mut String::new()).ok();
+}

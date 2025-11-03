@@ -43,15 +43,20 @@ pub fn login(conn: &Connection) -> rusqlite::Result<()> {
             match user.get_role(&conn).unwrap().as_str() {
                 "user" => {
                     logger::info(&format!("User ID: {} logged in as regular user", user.id));
-                    interfaces::user::user_menu(conn, &user)?
+                    interfaces::user::user_menu(conn, &user)?;
                 },
                 "technician" => {
                     logger::info(&format!("User ID: {} logged in as technician", user.id));
-                    interfaces::technician::technician_menu(conn, &user)?
+                    interfaces::technician::technician_menu(conn, &user)?;
+                },
+                "commissioner" => {
+                    logger::info(&format!("User ID: {} logged in as commissioner", user.id));
+                    // CRITICAL: why this function has one parameter loook at it
+                    interfaces::commisioner::commissioner_menu(conn); 
                 }, 
                 _ => {
                     logger::warning(&format!("User ID: {} has unknown role", user.id));
-                    println!("User not found")
+                    println!("User not found");
                 }
             }
         }
@@ -62,31 +67,80 @@ pub fn login(conn: &Connection) -> rusqlite::Result<()> {
 
 // Function to handle a new user trying to register their account, returns a user struct
 pub fn register(conn: &Connection) -> Result<Option<User>> {
+    // CRITICAL: inside libraries, is it more secure research it and figure it oout 
+    use crate::validation::validators::{validate_username, validate_password, display_validation_error};
+    use dialoguer::Password;
+    
+    println!("\n{}", "═══ 📝 User Registration 📝 ═══".bright_cyan().bold());
+    
     // Get username
-    print!("Username: ");
+    print!("{} ", "Username (3-30 chars):".bright_white().bold());
     io::stdout().flush().unwrap();
     let mut username = String::new();
     io::stdin().read_line(&mut username).unwrap();
     let username = username.trim();
     
-    // Get password
-    print!("Password: ");
-    io::stdout().flush().unwrap();
-    let mut password = String::new();
-    io::stdin().read_line(&mut password).unwrap();
-    let password = password.trim();
+    // Validate username (comprehensive validation with security checks)
+    if let Err(error) = validate_username(username) {
+        display_validation_error(&error);
+        logger::warning(&format!("Registration failed - invalid username: {}", username));
+        return Ok(None);
+    }
+    
+    // CRITICAL: solve this thing learn standarts and implement itgfh
+    // Get password with secure input (shows asterisks)
+    let password = match Password::new()
+        .with_prompt("Password (min 3 chars)")
+        .interact() {
+            Ok(pwd) => pwd,
+            Err(_) => {
+                println!("{}", "❌ Password input cancelled".red().bold());
+                return Ok(None);
+            }
+        };
+    
+    // Validate password (comprehensive validation)
+    if let Err(error) = validate_password(&password) {
+        display_validation_error(&error);
+        logger::warning(&format!("Registration failed - invalid password for username: {}", username));
+        return Ok(None);
+    }
+    
+    // Confirm password for security
+    let password_confirm = match Password::new()
+        .with_prompt("Confirm Password")
+        .interact() {
+            Ok(pwd) => pwd,
+            Err(_) => {
+                println!("{}", "❌ Password confirmation cancelled".red().bold());
+                return Ok(None);
+            }
+        };
+    
+    // Check if passwords match
+    if password != password_confirm {
+        println!("\n{}", "╔═══════════════════════════════════════════╗".red());
+        println!("{}", "║        ❌ Passwords Don't Match!          ║".red().bold());
+        println!("{}", "╠═══════════════════════════════════════════╣".red());
+        println!("{}", "║  The passwords you entered don't match.   ║".red());
+        println!("{}", "║  Please try again.                        ║".red());
+        println!("{}", "╚═══════════════════════════════════════════╝".red());
+        println!();
+        logger::warning(&format!("Registration failed - password mismatch for username: {}", username));
+        return Ok(None);
+    }
 
     // Log registration attempt (without the password)
     logger::security(&format!("Registration attempt for username: {}", username));
 
     // Insert user and check if insert was successful
-    match dbqueries::insert_users(conn, username, password)
+    match dbqueries::insert_users(conn, username, &password)
     {
         Ok(_) => {
             // Create user statistics functions
-            dbqueries::initialize_user_statistics(conn, username, password)?;
+            dbqueries::initialize_user_statistics(conn, username, &password)?;
             logger::security(&format!("Registration successful for username: {}", username));
-            // println!("Registration Complete!");
+            println!("{}", "✓ Registration successful!".green().bold());
             clearscreen::clear().expect("Failed clearscreen");
             let user = dbqueries::get_user(&username, &password, conn);
             if let Some(ref u) = user {
@@ -96,6 +150,22 @@ pub fn register(conn: &Connection) -> Result<Option<User>> {
         }
         Err(e) => {
             logger::error(&format!("Registration failed for username: {}. Error: {}", username, e));
+            
+            // Check if error is due to duplicate username
+            // CRITICAL: check it this one is good bad from internet
+            let error_msg = format!("{}", e);
+            if error_msg.contains("UNIQUE constraint failed") || error_msg.contains("username") {
+                println!("\n{}", "╔═══════════════════════════════════════════╗".red());
+                println!("{}", "║   ❌ Username Already Exists!            ║".red().bold());
+                println!("{}", "╠═══════════════════════════════════════════╣".red());
+                println!("{}", "║  That username is already taken.          ║".red());
+                println!("{}", "║  Please choose a different username.      ║".red());
+                println!("{}", "╚═══════════════════════════════════════════╝".red());
+                println!();
+            } else {
+                println!("{}", "Registration failed. Please try again.".red().bold());
+            }
+            
             Ok(None)
         },
     }
@@ -103,48 +173,102 @@ pub fn register(conn: &Connection) -> Result<Option<User>> {
 
 // function to handle user signing in with existing account in users db, returns a user struct wrapped in a Option wrapped in a Result
 pub fn sign_in(conn: &Connection) -> Result<Option<User>> {
-    println!();
+    // CRITICAL: inside functions importiung again
+    use crate::validation::validators::{validate_username, validate_password, display_validation_error};
+    use crate::authentication::brute_force::{is_account_locked, get_lockout_remaining, record_failed_attempt, record_successful_login};
+    use dialoguer::Password;
+    
+    const MAX_FAILED_ATTEMPTS: u32 = 5; // Match brute_force.rs constant
+    
+    println!("\n{}", "═══ 🔐 User Login 🔐 ═══".bright_cyan().bold());
+    
     // Get username
-    print!("Username: ");
+    print!("{} ", "Username:".bright_white().bold());
     io::stdout().flush().unwrap();
     let mut username = String::new();
     io::stdin().read_line(&mut username).unwrap();
     let username = username.trim();
     
-    // Get password
-    print!("Password: ");
-    io::stdout().flush().unwrap();
-    let mut password = String::new();
-    io::stdin().read_line(&mut password).unwrap();
-    let password = password.trim();
+    // Validate username
+    if let Err(error) = validate_username(username) {
+        display_validation_error(&error);
+        logger::warning(&format!("Login failed - invalid username format: {}", username));
+        return Ok(None);
+    }
     
-    // Log login attempt (without the password)
+    // BRUTE FORCE PROTECTION: Check if account is locked
+    if is_account_locked(username) {
+        if let Some(remaining) = get_lockout_remaining(username) {
+            println!("\n{}", "╔═══════════════════════════════════════════╗".red());
+            println!("{}", "║        🔒 ACCOUNT LOCKED 🔒               ║".red().bold());
+            println!("{}", "╠═══════════════════════════════════════════╣".red());
+            println!("{}", format!("║  Too many failed login attempts!          ║").red());
+            println!("{}", format!("║  Account locked for {} seconds.           ║", remaining).red());
+            println!("{}", format!("║  Try again later.                         ║").red());
+            println!("{}", "╚═══════════════════════════════════════════╝".red());
+            println!();
+            logger::security(&format!("Blocked login attempt for locked account: {}", username));
+            return Ok(None);
+        }
+    }
+    
+    // Get password with secure input (shows asterisks)
+    let password = match Password::new()
+        .with_prompt("Password")
+        .interact() {
+            Ok(pwd) => pwd,
+            Err(_) => {
+                println!("{}", "❌ Password input cancelled".red().bold());
+                return Ok(None);
+            }
+        };
+    
+    // Validate password
+    if let Err(error) = validate_password(&password) {
+        display_validation_error(&error);
+        logger::warning(&format!("Login failed - invalid password format for username: {}", username));
+        return Ok(None);
+    }
+    
+    // Log login attempt
     logger::security(&format!("Login attempt for username: {}", username));
     
     // Check if login credentials are valid
-    let result = dbqueries::check_users(conn, username, password);
+    let result = dbqueries::check_users(conn, username, &password);
 
     match result {
         Ok(id) => {
+            // BRUTE FORCE PROTECTION: Clear failed attempts on successful login
+            record_successful_login(username);
+            
             logger::security(&format!("Successful login for username: {} (User ID: {})", username, id));
-            // println!("{}", "Login successful!".green());
+            println!("{}", "✓ Login successful!".green().bold());
             clearscreen::clear().expect("Failed clearscreen");
             return Ok(Some(User { id: id}))
         }
         Err(e) => {
-            logger::security(&format!("Failed login for username: {}. Error: {}", username, e));
-            println!("{}", "Invalid credentials".red());
+            // BRUTE FORCE PROTECTION: Record failed attempt
+            record_failed_attempt(username);
+            let failed_count = crate::authentication::brute_force::get_failed_attempts(username);
             
-            // Check for multiple failed login attempts
-            match logger::verify_login_attempts(username, 10) {
-                Ok((_, failed_attempts)) => {
-                    if failed_attempts >= 3 {
-                        logger::warning(&format!("Multiple failed login attempts ({}) for username: {}", failed_attempts, username));
-                        println!("{}", "Multiple failed login attempts detected. Account may be locked soon.".yellow());
-                    }
-                },
-                Err(_) => {}
+            logger::security(&format!("Failed login for username: {}. Error: {}. Failed attempts: {}", 
+                                     username, e, failed_count));
+            
+            println!("\n{}", "╔═══════════════════════════════════════════╗".red());
+            println!("{}", "║        ❌ Invalid Credentials!            ║".red().bold());
+            println!("{}", "╠═══════════════════════════════════════════╣".red());
+            println!("{}", "║  Username or password incorrect.          ║".red());
+            
+            // Warn about approaching lockout
+            if failed_count >= 3 {
+                println!("{}", format!("║  ⚠️  Warning: {} failed attempts!          ║", failed_count).yellow().bold());
+                println!("{}", format!("║  Account will lock after {} attempts.      ║", MAX_FAILED_ATTEMPTS).yellow());
+            } else {
+                println!("{}", format!("║  Attempt {}/{}                              ║", failed_count, MAX_FAILED_ATTEMPTS).red());
             }
+            
+            println!("{}", "╚═══════════════════════════════════════════╝".red());
+            println!();
             
             return Ok(None)
         },

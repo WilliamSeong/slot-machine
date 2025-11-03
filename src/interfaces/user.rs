@@ -4,7 +4,7 @@ use std::io::{self, Write};
 use crate::play;
 use crate::logger::logger;
 use crate::interfaces::menus::menu_generator;
-
+// CRITICAL: check english in prints
 // User struct to hold the id of the user
 pub struct User {
     pub id: i32,
@@ -279,65 +279,133 @@ fn user_account(conn: &Connection, user: &User) {
     }
 }
 
+// CRITICAL: fix this and add input validation
 // Function to let users deposit funds
 fn deposit(conn: &Connection, user: &User) -> rusqlite::Result<bool>{
-    println!("{}", "═══ 🎰 Deposit 🎰 ═══".bright_cyan().bold());
-    print!("{}", "How much would you like to deposit: ".green());
+    // CRITICAL: check inside imports
+    use crate::validation::validators::{validate_deposit, display_validation_error};
+    
+    println!("\n{}", "═══ 💵 Deposit Funds 💵 ═══".bright_cyan().bold());
+    println!("{}", "Enter amount to deposit ($0.01 - $1,000,000)".bright_white());
+    print!("{} $", "Amount:".bright_white().bold());
     io::stdout().flush().ok();
 
     let mut choice: String = String::new();
     io::stdin().read_line(&mut choice).ok();
 
+    // Parse the input
     let deposit_amount: Result<f64, std::num::ParseFloatError> = choice.trim().parse();
-    if let Ok(amount) = deposit_amount {
-        if amount > 0.0 {
-            logger::transaction(&format!("User ID: {} deposited ${:.2}", user.id, amount));
-            println!("{}", amount);
-            dbqueries::change_balance(conn, user, amount)
-        } else {
-            logger::warning(&format!("User ID: {} attempted to deposit invalid amount: ${:.2}", user.id, amount));
-            println!("Amount must be greater than zero");
+    
+    match deposit_amount {
+        Ok(amount) => {
+            // Validate deposit amount
+            if let Err(error) = validate_deposit(amount) {
+                display_validation_error(&error);
+                logger::warning(&format!("User ID: {} attempted invalid deposit: ${:.2}", user.id, amount));
+                return Ok(false);
+            }
+            
+            // Amount is valid, process deposit
+            logger::transaction(&format!("User ID: {} depositing ${:.2}", user.id, amount));
+            
+            match dbqueries::change_balance(conn, user, amount) {
+                Ok(_) => {
+                    println!("\n{}", "✅ Deposit successful!".green().bold());
+                    println!("{} ${:.2}", "Deposited:".bright_white().bold(), amount);
+                    if let Ok(balance) = user.get_balance(conn) {
+                        println!("{} ${:.2}", "New Balance:".bright_white().bold(), balance);
+                    }
+                    println!();
+                    Ok(true)
+                }
+                Err(e) => {
+                    println!("{}", "❌ Deposit failed!".red().bold());
+                    logger::error(&format!("Deposit failed for User ID: {}: {}", user.id, e));
+                    Ok(false)
+                }
+            }
+        }
+        Err(_) => {
+            display_validation_error("❌ Invalid input! Please enter a valid number.");
+            logger::warning(&format!("User ID: {} provided invalid deposit input: {}", user.id, choice.trim()));
             Ok(false)
         }
-    } else {
-        logger::warning(&format!("User ID: {} provided invalid deposit input", user.id));
-        println!("Invalid input");
-        Ok(false)
     }
 }
 
 // Function to let user withdraw funds
 fn withdraw(conn: &Connection, user: &User) -> rusqlite::Result<bool>{
-    println!("{}", "═══ 🎰 Withdraw 🎰 ═══".bright_cyan().bold());
-    print!("{}", "How much would you like to withdraw: ".green());
+    // CRITICAL: check inside functions
+    use crate::validation::validators::{validate_withdrawal, display_validation_error};
+    
+    println!("\n{}", "═══ 💰 Withdraw Funds 💰 ═══".bright_cyan().bold());
+    
+    // Show current balance first
+    match user.get_balance(conn) {
+        Ok(balance) => {
+            println!("{} ${:.2}", "Current Balance:".bright_white().bold(), balance);
+        }
+        Err(_) => {
+            println!("{}", "❌ Cannot retrieve balance!".red().bold());
+            return Ok(false);
+        }
+    }
+    
+    println!("{}", "Enter amount to withdraw ($0.01 - $100,000)".bright_white());
+    print!("{} $", "Amount:".bright_white().bold());
     io::stdout().flush().ok();
 
     let mut choice: String = String::new();
     io::stdin().read_line(&mut choice).ok();
-
+    // CRITICAL: add parse here
+    // Parse the input
     let withdraw_amount: Result<f64, std::num::ParseFloatError> = choice.trim().parse();
     
-    if let Ok(amount) = withdraw_amount {
-        if amount > 0.0 {
-            // Check if user has sufficient funds
-            if !dbqueries::check_funds(conn, user, amount) {
-                logger::warning(&format!("User ID: {} attempted to withdraw ${:.2} with insufficient funds", user.id, amount));
-                println!("Insufficient funds");
+    match withdraw_amount {
+        Ok(amount) => {
+            // Get current balance for validation
+            let current_balance = match user.get_balance(conn) {
+                Ok(bal) => bal,
+                Err(e) => {
+                    logger::error(&format!("Failed to retrieve balance for withdrawal: {}", e));
+                    println!("{}", "❌ Cannot process withdrawal!".red().bold());
+                    return Ok(false);
+                }
+            };
+            
+            // Validate withdrawal amount
+            if let Err(error) = validate_withdrawal(amount, current_balance) {
+                display_validation_error(&error);
+                logger::warning(&format!("User ID: {} attempted invalid withdrawal: ${:.2} (balance: ${:.2})", 
+                                        user.id, amount, current_balance));
                 return Ok(false);
             }
             
-            logger::transaction(&format!("User ID: {} withdrew ${:.2}", user.id, amount));
-            println!("{}", amount);
-            dbqueries::change_balance(conn, user, -1.0 * amount)
-        } else {
-            logger::warning(&format!("User ID: {} attempted to withdraw invalid amount: ${:.2}", user.id, amount));
-            println!("Amount must be greater than zero");
+            // Amount is valid process withdrawal
+            logger::transaction(&format!("User ID: {} withdrawing ${:.2}", user.id, amount));
+            
+            match dbqueries::change_balance(conn, user, -amount) {
+                Ok(_) => {
+                    println!("\n{}", "✅ Withdrawal successful!".green().bold());
+                    println!("{} ${:.2}", "Withdrawn:".bright_white().bold(), amount);
+                    if let Ok(balance) = user.get_balance(conn) {
+                        println!("{} ${:.2}", "New Balance:".bright_white().bold(), balance);
+                    }
+                    println!();
+                    Ok(true)
+                }
+                Err(e) => {
+                    println!("{}", "❌ Withdrawal failed!".red().bold());
+                    logger::error(&format!("Withdrawal failed for User ID: {}: {}", user.id, e));
+                    Ok(false)
+                }
+            }
+        }
+        Err(_) => {
+            display_validation_error("❌ Invalid input! Please enter a valid number.");
+            logger::warning(&format!("User ID: {} provided invalid withdraw input: {}", user.id, choice.trim()));
             Ok(false)
         }
-    } else {
-        logger::warning(&format!("User ID: {} provided invalid withdraw input", user.id));
-        println!("Invalid input");
-        Ok(false)
     }
 }
 
