@@ -96,14 +96,14 @@ pub fn register(conn: &Connection) -> Result<Option<User>> {
     }
     let username = username.trim();
     
-    // Validate username (comprehensive validation with security checks)
+    // Validate username
     if let Err(error) = validate_username(username) {
         display_validation_error(&error);
         logger::warning(&format!("Registration failed - invalid username: {}", username));
         return Ok(None);
     }
     
-    // Get password with secure input (shows asterisks)
+    // Get password with secure input
     let password = match Password::new()
         .with_prompt("Password (min 3 chars)")
         .interact() {
@@ -241,7 +241,7 @@ pub fn sign_in(conn: &Connection) -> Result<Option<User>> {
         }
     }
     
-    // Get password with secure input (shows asterisks)
+    // Get password with secure input 
     let password = match Password::new()
         .with_prompt("Password")
         .interact() {
@@ -255,7 +255,7 @@ pub fn sign_in(conn: &Connection) -> Result<Option<User>> {
     // Validate password
     if let Err(error) = validate_password(&password) {
         display_validation_error(&error);
-        logger::warning(&format!("Login failed - invalid password format for username: {}", username));
+        logger::warning(&format!("Failed login - invalid password format for username: {}", username));
         return Ok(None);
     }
     

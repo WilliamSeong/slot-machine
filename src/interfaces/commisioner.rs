@@ -369,136 +369,195 @@ fn run_commissioner_test(conn: &Connection, user: &User) {
 }
 
 // // ---------------------------------------------------------------------------
-// // 🧪 Commissioner Boundary and Fairness Tests
-// // ---------------------------------------------------------------------------
-// #[cfg(test)]
-// mod tests {
-//     // Helper: create in-memory DB for isolated tests
-//     fn setup_db() -> Connection {
-//         let conn = Connection::open_in_memory().unwrap();
-//         conn.execute(
-//             "CREATE TABLE IF NOT EXISTS commissioner_log (
-//                 id INTEGER PRIMARY KEY,
-//                 seed INTEGER,
-//                 rounds INTEGER,
-//                 wins INTEGER,
-//                 partials INTEGER,
-//                 losses INTEGER,
-//                 rtp REAL,
-//                 timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
-//             )",
-//             [],
-//         ).unwrap();
-//         conn
-//     }
+/*
+mod tests {
+    use super::*;
+    use rusqlite::Connection;
 
-//     // 1️⃣ Boundary test: 0 rounds (should be invalid)
-//     #[test]
-//     fn test_zero_rounds() {
-//         let conn = setup_db();
-//         // simulate zero rounds input
-//         let rounds: u32 = 0;
-//         assert_eq!(rounds, 0, "Boundary test failed: rounds cannot be 0");
-//     }
+    fn setup_db() -> Connection {
+        let conn = Connection::open_in_memory().unwrap();
+        conn.execute(
+            "CREATE TABLE IF NOT EXISTS commissioner_log (
+                id INTEGER PRIMARY KEY,
+                seed TEXT,
+                rounds INTEGER,
+                wins INTEGER,
+                partials INTEGER,
+                losses INTEGER,
+                rtp REAL,
+                timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
+            )",
+            [],
+        ).unwrap();
+        conn
+    }
 
-//     // 2️⃣ Boundary test: 1 round (minimal valid)
-//     #[test]
-//     fn test_single_round_rtp() {
-//         let conn = setup_db();
-//         let seed = 42;
-//         let mut rng = ChaCha20Rng::seed_from_u64(seed);
-//         let symbols = ["🍒", "🍋", "🍊", "💎", "7️⃣", "⭐"];
-//         let slot1 = symbols[rng.gen_range(0..symbols.len())];
-//         let slot2 = symbols[rng.gen_range(0..symbols.len())];
-//         let slot3 = symbols[rng.gen_range(0..symbols.len())];
+    fn dummy_user(role: &str) -> User {
+        User {
+            id: 1,
+            username: "unit_test_user".to_string(),
+            role: role.to_string(),
+            password_hash: "dummy".to_string(),
+        }
+    }
 
-//         let bet = 1;
-//         let mut total_payout = 0;
+    // -------------------------------------------------------------------
+    // 1️⃣ commissioner_menu()
+    // -------------------------------------------------------------------
 
-//         if slot1 == slot2 && slot2 == slot3 {
-//             total_payout = 3 * bet;
-//         } else if slot1 == slot2 || slot2 == slot3 || slot1 == slot3 {
-//             total_payout = 2 * bet;
-//         }
+    #[test]
+    fn test_commissioner_menu_authorization_check() {
+        let conn = setup_db();
+        let user = dummy_user("player");
+        let result = auth::require_commissioner(&conn, &user);
+        assert!(result.is_err(), "Non-commissioners must not access commissioner menu");
+    }
 
-//         let rtp = (total_payout as f64 / bet as f64) * 100.0;
-//         assert!((0.0..=300.0).contains(&rtp), "RTP out of expected range");
-//     }
+    #[test]
+    fn test_commissioner_menu_allows_commissioner() {
+        let conn = setup_db();
+        let user = dummy_user("commissioner");
+        assert!(
+            auth::require_commissioner(&conn, &user).is_ok(),
+            "Commissioner role should have access"
+        );
+    }
 
-//     // 3️⃣ Boundary test: Large number of rounds (performance & overflow check)
-//     #[test]
-//     fn test_large_rounds() {
-//         let conn = setup_db();
-//         let rounds = 10_000;
-//         let seed = 123456;
-//         let mut rng = ChaCha20Rng::seed_from_u64(seed);
-//         let symbols = ["🍒", "🍋", "🍊", "💎", "7️⃣", "⭐"];
+    // -------------------------------------------------------------------
+    // 2️⃣ run_commissioner_test()
+    // -------------------------------------------------------------------
 
-//         let mut wins = 0;
-//         let mut partials = 0;
-//         let mut losses = 0;
+    #[test]
+    fn test_run_commissioner_test_rtp_calculation() {
+        let total_payout = 50.0;
+        let total_bet = 100.0;
+        let rtp = (total_payout / total_bet) * 100.0;
+        assert!(
+            (0.0..=300.0).contains(&rtp),
+            "RTP {:.2}% should be within logical bounds",
+            rtp
+        );
+    }
 
-//         for _ in 0..rounds {
-//             let s1 = symbols[rng.gen_range(0..symbols.len())];
-//             let s2 = symbols[rng.gen_range(0..symbols.len())];
-//             let s3 = symbols[rng.gen_range(0..symbols.len())];
-//             if s1 == s2 && s2 == s3 {
-//                 wins += 1;
-//             } else if s1 == s2 || s2 == s3 || s1 == s3 {
-//                 partials += 1;
-//             } else {
-//                 losses += 1;
-//             }
-//         }
+    #[test]
+    fn test_run_commissioner_test_db_insert_success() {
+        let conn = setup_db();
+        let result = conn.execute(
+            "INSERT INTO commissioner_log (seed, rounds, wins, partials, losses, rtp)
+             VALUES (?1, ?2, ?3, ?4, ?5, ?6)",
+            ("seed123", 100, 10, 20, 70, 95.0),
+        );
+        assert!(result.is_ok(), "commissioner_log insert should succeed");
+    }
 
-//         assert_eq!(wins + partials + losses, rounds, "Round total mismatch");
-//     }
+    // -------------------------------------------------------------------
+    // 3️⃣ view_game_probabilities()
+    // -------------------------------------------------------------------
 
-//     // 4️⃣ Fairness test: RTP within a reasonable range
-//     #[test]
-//     fn test_fairness_rtp_range() {
-//         let conn = setup_db();
-//         let rounds = 1000;
-//         let seed = 20251027;
-//         let mut rng = ChaCha20Rng::seed_from_u64(seed);
-//         let symbols = ["🍒", "🍋", "🍊", "💎", "7️⃣", "⭐"];
-//         let mut total_bet = 0;
-//         let mut total_payout = 0;
+    #[test]
+    fn test_view_game_probabilities_authorized_access() {
+        let conn = setup_db();
+        let user = dummy_user("commissioner");
+        assert!(
+            auth::require_commissioner(&conn, &user).is_ok(),
+            "Commissioner should be authorized to view game probabilities"
+        );
+    }
 
-//         for _ in 0..rounds {
-//             let s1 = symbols[rng.gen_range(0..symbols.len())];
-//             let s2 = symbols[rng.gen_range(0..symbols.len())];
-//             let s3 = symbols[rng.gen_range(0..symbols.len())];
-//             let bet = 1;
-//             total_bet += bet;
+    #[test]
+    fn test_view_game_probabilities_handles_empty_db() {
+        let conn = setup_db();
+        let user = dummy_user("commissioner");
+        assert!(
+            auth::require_commissioner(&conn, &user).is_ok(),
+            "Function should not panic with empty DB"
+        );
+    }
 
-//             if s1 == s2 && s2 == s3 {
-//                 total_payout += 3 * bet;
-//             } else if s1 == s2 || s2 == s3 || s1 == s3 {
-//                 total_payout += 2 * bet;
-//             }
-//         }
+    // -------------------------------------------------------------------
+    // 4️⃣ adjust_symbol_weights()
+    // -------------------------------------------------------------------
 
-//         let rtp = (total_payout as f64 / total_bet as f64) * 100.0;
-//         assert!(
-//             (70.0..=110.0).contains(&rtp),
-//             "RTP {:.2}% is outside fair range (70–110%)",
-//             rtp
-//         );
-//     }
+    #[test]
+    fn test_adjust_symbol_weights_valid_range() {
+        let valid_weight = 75usize;
+        assert!(
+            (1..=100).contains(&valid_weight),
+            "Valid weight must be between 1–100"
+        );
+    }
 
-//     // 5️⃣ Data integrity test: database insert works
-//     #[test]
-//     fn test_commissioner_log_insert() {
-//         let conn = setup_db();
-//         let result = conn.execute(
-//             "INSERT INTO commissioner_log (seed, rounds, wins, partials, losses, rtp)
-//              VALUES (?1, ?2, ?3, ?4, ?5, ?6)",
-//             (12345, 100, 10, 20, 70, 95.0),
-//         );
-//         assert!(result.is_ok(), "Database insert failed");
-//     }
-// }
+    #[test]
+    fn test_adjust_symbol_weights_invalid_range() {
+        let invalid_low = 0usize;
+        let invalid_high = 200usize;
+        assert!(
+            !(1..=100).contains(&invalid_low),
+            "Weight 0 must fail validation"
+        );
+        assert!(
+            !(1..=100).contains(&invalid_high),
+            "Weight 200 must fail validation"
+        );
+    }
+
+    // -------------------------------------------------------------------
+    // 5️⃣ adjust_symbol_payouts()
+    // -------------------------------------------------------------------
+
+    #[test]
+    fn test_adjust_symbol_payouts_valid_range() {
+        let valid_payout = 5.0;
+        assert!(
+            (0.5..=50.0).contains(&valid_payout),
+            "Valid payout must be between 0.5–50.0"
+        );
+    }
+
+    #[test]
+    fn test_adjust_symbol_payouts_invalid_range() {
+        let invalid_low = 0.1;
+        let invalid_high = 99.9;
+        assert!(
+            !(0.5..=50.0).contains(&invalid_low),
+            "Payout < 0.5 must fail validation"
+        );
+        assert!(
+            !(0.5..=50.0).contains(&invalid_high),
+            "Payout > 50.0 must fail validation"
+        );
+    }
+
+    // -------------------------------------------------------------------
+    // 6️⃣ Database Layer & Cross-checks
+    // -------------------------------------------------------------------
+
+    #[test]
+    fn test_commissioner_log_schema_integrity() {
+        let conn = setup_db();
+        let mut stmt = conn.prepare(
+            "SELECT name FROM sqlite_master WHERE type='table' AND name='commissioner_log'"
+        ).unwrap();
+        let exists: bool = stmt.exists([]).unwrap();
+        assert!(exists, "commissioner_log table must exist");
+    }
+
+    #[test]
+    fn test_authorization_consistency() {
+        let conn = setup_db();
+        let commissioner = dummy_user("commissioner");
+        let player = dummy_user("player");
+
+        assert!(
+            auth::require_commissioner(&conn, &commissioner).is_ok(),
+            "Commissioner should pass authorization"
+        );
+        assert!(
+            auth::require_commissioner(&conn, &player).is_err(),
+            "Player should fail authorization"
+        );
+    }
+}*/
 /// View probabilities for all games - REQUIRES COMMISSIONER ROLE
 fn view_game_probabilities(conn: &Connection, user: &User) {
     // SECURITY: Double-check authorization

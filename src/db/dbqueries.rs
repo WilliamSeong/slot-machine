@@ -55,6 +55,28 @@ pub fn insert_users(conn: &Connection, username: &str, password: &str) -> rusqli
     )
 }
 
+pub fn update_user_password(conn: &Connection, username: &str, password: &str) -> rusqlite::Result<usize> {
+    use crate::cryptography::crypto::{hash_password};
+    
+    logger::info(&format!("Attempting to update user's password: {}", username));
+    
+    // Hash the password before storing
+    // The hash includes: algorithm parameters + salt + password hash
+    let hashed_password = match hash_password(password) {
+        Ok(hash) => hash,
+        Err(e) => {
+            logger::error(&format!("Failed to hash password for user {}: {}", username, e));
+            return Err(rusqlite::Error::InvalidParameterName(e));
+        }
+    };
+        
+    // Store username with hashed password and encrypted balance
+    conn.execute(
+        "Update users set password = ?1 where username = ?2",
+        rusqlite::params![hashed_password, username],
+    )
+}
+
 // Verifies user credentials by checking username and password hash.
 pub fn check_users(conn: &Connection, username: &str, password: &str) -> rusqlite::Result<i32> {
     use crate::cryptography::crypto::verify_password;
@@ -486,7 +508,7 @@ pub fn add_user_loss(conn: &Connection, user: &User, game: &str) -> rusqlite::Re
 
     // Update the user_statistics table
     conn.execute(
-        "Update user_statistics Set loss = loss + 1, last_played = ?2 Where user_id = ?3 And game_id = ?4",
+        "Update user_statistics Set loss = loss + 1, last_played = ?1 Where user_id = ?2 And game_id = ?3",
         rusqlite::params![chrono::Local::now().to_rfc3339(), user.id, game_id],
     )?;
 
@@ -550,6 +572,7 @@ pub fn query_user_statistics(conn: &Connection, user: &User) -> rusqlite::Result
     
     logger::info(&format!("Retrieving statistics for User ID: {}", user.id));
     let mut stmt = conn.prepare("Select * From user_statistics Where user_id = ?1")?;
+    // FIX HERE
     let stats = stmt.query_map([user.id], |row| {
         Ok((row.get(2)?, row.get(3)?, row.get(4)?, row.get(5)?))
     })?;
@@ -563,6 +586,7 @@ pub fn query_user_statistics(conn: &Connection, user: &User) -> rusqlite::Result
     for stat in stats {
         let (game_id, win, loss, high): (i32, i32, i32, f64) = stat?;
         let mut stmt = conn.prepare("Select name From games Where id = ?1")?;
+
         let game_name = stmt.query_row([game_id], |row| row.get::<_, String>(0))?;
         
         let total_played = win + loss;
@@ -571,6 +595,7 @@ pub fn query_user_statistics(conn: &Connection, user: &User) -> rusqlite::Result
         } else {
             0.0
         };
+        // Fix Print Over there
         
         println!("{:<20} {:>10} {:>10} {:>10} {:>9.1}% {:>15.2}", 
             game_name, 

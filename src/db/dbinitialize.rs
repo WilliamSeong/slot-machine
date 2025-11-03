@@ -270,12 +270,12 @@ fn add_default_symbols(conn: &Connection) -> Result<(),rusqlite::Error> {
                 // More opportunities to win but need matching patterns
                 // Lower individual symbol payouts since multiple wins possible
                 vec![
-                    ("🍒", 22, 1.8),   // Cherry: 22% - Most common
-                    ("🍋", 20, 2.0),   // Lemon: 20% - Common
-                    ("🍊", 15, 2.5),   // Orange: 15% - Medium
-                    ("🍇", 10, 4.0),   // Grape: 10% - Less common
-                    ("💎", 6, 7.0),    // Diamond: 6% - Rare
-                    ("7️⃣", 3, 12.0),   // Seven: 3% - Very rare
+                    ("🍒", 22, 3.6),   // Cherry: 22% - Most common
+                    ("🍋", 20, 4.0),   // Lemon: 20% - Common
+                    ("🍊", 15, 5.0),   // Orange: 15% - Medium
+                    ("🍇", 10, 8.0),   // Grape: 10% - Less common
+                    ("💎", 6, 14.0),    // Diamond: 6% - Rare
+                    ("7️⃣", 3, 24.0),   // Seven: 3% - Very rare
                 ]
             },
             "holding" => {
@@ -283,12 +283,12 @@ fn add_default_symbols(conn: &Connection) -> Result<(),rusqlite::Error> {
                 // More frequent wins but smaller payouts (player pays to hold reels)
                 // Balanced for the hold mechanic which costs extra
                 vec![
-                    ("🍒", 28, 2.2),   // Cherry: 28% - Very common
-                    ("🍋", 24, 2.5),   // Lemon: 24% - Very common
-                    ("🍊", 20, 3.0),   // Orange: 20% - Common
-                    ("🍇", 15, 4.5),   // Grape: 15% - Medium
-                    ("💎", 10, 6.0),   // Diamond: 10% - Less rare
-                    ("7️⃣", 3, 10.0),   // Seven: 3% - Rare
+                    ("🍒", 28, 1.1),   // Cherry: 28% - Very common
+                    ("🍋", 24, 1.25),   // Lemon: 24% - Very common
+                    ("🍊", 20, 1.5),   // Orange: 20% - Common
+                    ("🍇", 15, 2.25),   // Grape: 15% - Medium
+                    ("💎", 10, 3.0),   // Diamond: 10% - Less rare
+                    ("7️⃣", 3, 5.0),   // Seven: 3% - Rare
                 ]
             },
             _ => {

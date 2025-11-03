@@ -126,7 +126,7 @@ pub fn multi_win(conn: &Connection, user: &User, bet: f64) -> bool{
             println!("{} ${:.2}", "Lost:".bright_white().bold(), bet);
             println!("{} ${:.2}", "Balance:".bright_white().bold(), balance_after_bet);
             println!();
-            let _ = dbqueries::add_loss(conn, "multi");
+            let _ = dbqueries::add_loss(conn, "holding");
             let _ = dbqueries::add_user_loss(conn, user, "multi");
         } else {
             // ADDED BY SUCA
@@ -175,8 +175,8 @@ pub fn multi_win(conn: &Connection, user: &User, bet: f64) -> bool{
                 println!("\n{} ${:.2} × {:.1}x = ${:.2}", "Payout:".bright_white().bold(), bet, payout_multiplier, winnings);
                 println!("{} ${:.2}", "Balance:".bright_white().bold(), final_balance);
                 println!();
-                let _ = dbqueries::add_win(conn, "multi");
-                let _ = dbqueries::add_user_win(conn, user, "multi", winnings);
+                let _ = dbqueries::add_win(conn, "holding");
+                let _ = dbqueries::add_user_win(conn, user, "holding", winnings);
             }
         }
 

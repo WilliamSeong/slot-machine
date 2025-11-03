@@ -49,10 +49,9 @@ pub fn normal_slots(conn: &Connection, bet: f64, user: &User) -> bool {
         }
     };
 
-    // Display payout table to user
-    display_payout_table(&symbol_probs, bet);
     
     loop {
+
         // Check if player has the funds
         if !dbqueries::check_funds(conn, user, bet as f64) {
             logger::warning(&format!("User ID: {} has insufficient funds for bet: ${:.2}", user.id, bet));
@@ -83,6 +82,10 @@ pub fn normal_slots(conn: &Connection, bet: f64, user: &User) -> bool {
 
         logger::info(&format!("User ID: {} spinning slots with bet: ${:.2}", user.id, bet));
         println!("\n{}", "🎰 SLOT MACHINE 🎰".bright_yellow().bold());
+        
+        // Display payout table to user
+        display_payout_table(&symbol_probs, bet);
+
                 
         // Spin the slots using cryptographically secure weighted random selection
         let slot1 = rng.weighted_choice(&weighted_symbols).unwrap();

@@ -120,9 +120,9 @@ pub fn verify_login_attempts(username: &str, time_window_minutes: u32) -> Result
                 );
                 
                 if log_time >= window_start {
-                    if line.contains("successful login") {
+                    if line.contains("Successful login") {
                         successful_attempts += 1;
-                    } else if line.contains("failed login") {
+                    } else if line.contains("Failed login") {
                         failed_attempts += 1;
                     }
                 }

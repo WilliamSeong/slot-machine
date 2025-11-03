@@ -36,13 +36,9 @@ pub fn log_verification_menu(conn: &Connection, user: &User) -> rusqlite::Result
 
 fn view_security_events() {
     println!("\n{}", "═══ Recent Security Events ═══".cyan());
-    print!("Time window in minutes (default 60): ");
-    io::stdout().flush().ok();
+    println!("Checking last 24 hours...\n");
     
-    let mut input = String::new();
-    io::stdin().read_line(&mut input).ok();
-    
-    let minutes: u32 = input.trim().parse().unwrap_or(60);
+    let minutes: u32 = 1440;
     
     match logger::verify_security_events(minutes) {
         Ok(events) => {
@@ -70,13 +66,8 @@ fn check_login_attempts() {
     io::stdin().read_line(&mut username).ok();
     let username = username.trim();
     
-    print!("Time window in minutes (default 60): ");
-    io::stdout().flush().ok();
-    
-    let mut input = String::new();
-    io::stdin().read_line(&mut input).ok();
-    
-    let minutes: u32 = input.trim().parse().unwrap_or(60);
+    println!("Checking last 24 hours...\n");
+    let minutes: u32 = 1440;
     
     match logger::verify_login_attempts(username, minutes) {
         Ok((successful, failed)) => {
@@ -110,13 +101,8 @@ fn view_user_transactions() {
         }
     };
     
-    print!("Time window in minutes (default 60): ");
-    io::stdout().flush().ok();
-    
-    let mut input = String::new();
-    io::stdin().read_line(&mut input).ok();
-    
-    let minutes: u32 = input.trim().parse().unwrap_or(60);
+    println!("Checking last 24 hours...\n");
+    let minutes: u32 = 1440;
     
     match logger::verify_transactions(user_id, minutes) {
         Ok(transactions) => {

@@ -23,7 +23,7 @@ impl User {
     }
 }
 
-use crate::db::dbqueries;
+use crate::db::dbqueries::{self, update_user_password};
 
 pub fn user_menu(conn: &Connection, user: &User) -> rusqlite::Result<()> {
     // Log user accessing the menu
@@ -225,7 +225,7 @@ fn user_account(conn: &Connection, user: &User) {
                 println!();
 
                 // Show options to user
-                let menu_options = vec!["Deposit", "Withdraw", "Statistics", "Exit"];
+                let menu_options = vec!["Deposit", "Withdraw", "Statistics", "Change Password", "Exit"];
                 let user_input = menu_generator("═══ 🎰 User Options 🎰 ═══", &menu_options);
 
                 match user_input.trim() {
@@ -254,6 +254,10 @@ fn user_account(conn: &Connection, user: &User) {
                     "Statistics" => {
                         logger::info(&format!("User ID: {} accessed statistics", user.id));
                         user_statistics(conn, user);
+                    }
+                    "Change Password" => {
+                        logger::info(&format!("User ID: {} attempt to change password", user.id));
+                        change_password(conn, user);
                     }
                     "Exit" => {
                         logger::info(&format!("User ID: {} exited account menu", user.id));
@@ -435,4 +439,146 @@ fn withdraw(conn: &Connection, user: &User) -> rusqlite::Result<bool>{
 fn user_statistics(conn: &Connection, user: &User) {
     logger::info(&format!("User ID: {} viewed their game statistics", user.id));
     let _ = dbqueries::query_user_statistics(conn, user);
+}
+
+// // williams version
+// fn change_password(conn: &Connection, user: &User) -> () {
+//     use dialoguer::Password;
+
+//     let password = match Password::new()
+//         .with_prompt("Password")
+//         .interact() {
+//             Ok(pwd) => pwd,
+//             Err(_) => {
+//                 println!("{}", "❌ Password input cancelled".red().bold());
+//                 return;
+//             }
+//         };
+    
+//     // Check if login credentials are valid
+//     let result = dbqueries::check_users(conn, user.get_username(conn).unwrap().as_str(), &password);
+
+//     match result {
+//         Ok(_) => {
+//             clearscreen::clear().expect("Failed clearscreen");
+//                 // Get password with secure input 
+//             let new_password = match Password::new()
+//                 .with_prompt("New Password")
+//                 .interact() {
+//                     Ok(pwd) => pwd,
+//                     Err(_) => {
+//                         println!("{}", "❌ Password input cancelled".red().bold());
+//                         return;
+//                     }
+//                 };
+
+//             let result = update_user_password(conn, user.get_username(conn).unwrap().as_str(), new_password.as_str());
+
+//             match result {
+//                 Ok(_) => {
+//                     println!("Successful password change");
+//                 }
+//                 Err(_) => {
+//                     println!("Bad password change!");
+//                 }
+//             }
+//         }
+//         Err(e) => {            
+//             println!("Failed check");
+//             return;
+//         },
+//     }
+// }
+
+fn change_password(conn: &Connection, user: &User) -> () {
+    use crate::db::validator::{validate_password, display_validation_error};
+    use dialoguer::Password;
+
+    // Get password with secure input 
+    let password = match Password::new()
+        .with_prompt("Password")
+        .interact() {
+            Ok(pwd) => pwd,
+            Err(_) => {
+                println!("{}", "❌ Password input cancelled".red().bold());
+                return;
+            }
+        };
+    
+    // Validate password
+    if let Err(error) = validate_password(&password) {
+        display_validation_error(&error);
+        logger::warning(&format!("Failed login - invalid password format for username: {}", user.get_username(conn).unwrap()));
+        return;
+    }
+    
+    // Log login attempt
+    logger::security(&format!("Login attempt for username: {}", user.get_username(conn).unwrap().as_str()));
+    
+    // Check if login credentials are valid
+    let result = dbqueries::check_users(conn, user.get_username(conn).unwrap().as_str(), &password);
+
+    match result {
+        Ok(id) => {
+            // Get password with secure input
+            let password = match Password::new()
+                .with_prompt("New Password (min 12 chars)")
+                .interact() {
+                    Ok(pwd) => pwd,
+                    Err(_) => {
+                        println!("{}", "❌ Password input cancelled".red().bold());
+                        return;
+                    }
+                };
+            
+            // Validate password
+            if let Err(error) = validate_password(&password) {
+                display_validation_error(&error);
+                logger::warning(&format!("Changing Password failed - invalid password for username: {}", user.get_username(conn).unwrap()));
+                return ;
+            }
+            
+            // Confirm password for security
+            let password_confirm = match Password::new()
+                .with_prompt("Confirm New Password")
+                .interact() {
+                    Ok(pwd) => pwd,
+                    Err(_) => {
+                        println!("{}", "❌ Password confirmation cancelled".red().bold());
+                        return;
+                    }
+                };
+            
+            // Check if passwords match
+            if password != password_confirm {
+                println!("\n{}", "╔═══════════════════════════════════════════╗".red());
+                println!("{}", "║        ❌ Passwords Don't Match!          ║".red().bold());
+                println!("{}", "╠═══════════════════════════════════════════╣".red());
+                println!("{}", "║  The passwords you entered don't match.   ║".red());
+                println!("{}", "║  Please try again.                        ║".red());
+                println!("{}", "╚═══════════════════════════════════════════╝".red());
+                println!();
+                logger::warning(&format!("Changing Password failed - password mismatch for username: {}", user.get_username(conn).unwrap()));
+                return;
+            }
+
+            logger::security(&format!("Login Password attempt for username: {}",  user.get_username(conn).unwrap()));
+            
+            let result = update_user_password(conn, user.get_username(conn).unwrap().as_str(), password.as_str());
+
+            match result {
+                Ok(_) => {
+                    println!("Successful password change");
+                }
+                Err(_) => {
+                    println!("Bad password change!");
+                }
+            }
+        }
+        Err(e) => {            
+            println!("Failed check");
+            return;
+        },
+    }
+
 }

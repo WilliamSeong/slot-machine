@@ -6,7 +6,7 @@ pub type ValidationResult = Result<(), String>;
 // Constants for validation limits - Authentication
 const MIN_USERNAME_LENGTH: usize = 3;
 const MAX_USERNAME_LENGTH: usize = 30;
-const MIN_PASSWORD_LENGTH: usize = 3;
+const MIN_PASSWORD_LENGTH: usize = 12;
 const MAX_PASSWORD_LENGTH: usize = 128;
 
 // Constants for validation limits - Financial

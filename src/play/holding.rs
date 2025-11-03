@@ -59,10 +59,7 @@ pub fn hold_game(conn: &Connection, user: &User, bet: f64) -> bool {
     println!("\n{}", "═══ 🎰 Welcome to Hold Slots! 🎰 ═══".bright_yellow().bold());
     println!("{}", "Hold up to 2 reels for a second spin!".bright_cyan());
     println!("{} ${:.2}\n", "Your bet:".bright_white().bold(), bet);
-    
-    // Display payout table to user
-    display_payout_table(&symbol_probs, bet);
-    
+        
     loop {
         // Check if player has the funds for base bet
         if !dbqueries::check_funds(conn, user, bet) {
@@ -94,6 +91,10 @@ pub fn hold_game(conn: &Connection, user: &User, bet: f64) -> bool {
 
         // First result
         println!("\n{}", "🎰 First Spin 🎰".bright_yellow().bold());
+
+        // Display payout table to user
+        display_payout_table(&symbol_probs, bet);
+
         // Animate
         for _ in 0..30 {
             print!("\r{} | {} | {} | {} | {}", 
@@ -111,7 +112,7 @@ pub fn hold_game(conn: &Connection, user: &User, bet: f64) -> bool {
         io::stdout().flush().ok();
         logger::info(&format!("User ID: {} slot result: {} | {} | {} | {} | {}", user.id, reels[0], reels[1], reels[2], reels[3], reels[4]));
         
-        
+        println!();
         let menu_options = vec!["1", "2", "3", "4", "5"];
         let user_input = menus::menu_generator_multi("Select up to 2 slots to hold (space to select)", &menu_options);
         
