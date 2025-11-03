@@ -16,8 +16,7 @@ fn main() -> Result<()> {
     // Initialize logger first thing
     logger::logger::info("Application is starting");
     
-    // CRITICAL: handle this thing everytime initializing db connection
-    // but i am deleting database every time solve it DONT FORGET
+    // Initialize encryption key
     db::encryption::initialize_encryption_key();
     logger::logger::info("Database encryption initialized");
     

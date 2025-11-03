@@ -480,7 +480,7 @@ pub fn get_symbol_probabilities(conn: &Connection, game_name: &str) -> rusqlite:
 
     Ok(symbols)
 }
-
+// CRITICAL: update this function dont use string conversation
 // Update the weight (probability) of a specific symbol in a game.
 pub fn update_symbol_weight(conn: &Connection, game_name: &str, symbol: &str, new_weight: usize) -> rusqlite::Result<()> {
     logger::security(&format!("Updating symbol weight for game: {}, symbol: {}, new weight: {}", game_name, symbol, new_weight));
