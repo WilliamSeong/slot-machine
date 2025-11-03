@@ -464,7 +464,7 @@ pub fn add_user_win(conn: &Connection, user: &User, game: &str, winnings: f64) -
 
     // Update the user_statistics table
     conn.execute(
-        "Update user_statistics SET win = win + 1, highest_payout = ?1, last_played = ?2 where user_id = ?3 And game_id = ?4",
+        "Update user_statistics Set win = win + 1, highest_payout = ?1, last_played = ?2 where user_id = ?3 And game_id = ?4",
         rusqlite::params![new_payout, chrono::Local::now().to_rfc3339(), user.id, game_id],
     )?;
 
@@ -484,13 +484,14 @@ pub fn add_user_loss(conn: &Connection, user: &User, game: &str) -> rusqlite::Re
 
     // Update the user_statistics table
     conn.execute(
-        "Update user_statistics Set loss = loss + 1, last_played = ?2 Where user_id = ?3 And game_id = ?4",
+        "Update user_statistics Set loss = loss + 1, last_played = ?1 Where user_id = ?2 And game_id = ?3",
         rusqlite::params![chrono::Local::now().to_rfc3339(), user.id, game_id],
     )?;
 
     Ok(())
 }
 
+// Get vec of all games (name string, active bool)
 pub fn get_games(conn: &Connection) -> rusqlite::Result<Vec<(String, bool)>> {
     logger::info("Retrieving list of games");
     let mut stmt = conn.prepare("Select * From games")?;
@@ -526,6 +527,7 @@ pub fn toggle_game(conn: &Connection, name: &str) -> rusqlite::Result<()> {
     }
 }
 
+// Get statistics for technician to see win/loss of each game
 pub fn get_game_statistics(conn: &Connection) -> rusqlite::Result<()>{
     logger::info("Retrieving game statistics");
     let mut stmt = conn.prepare("Select * From games")?;
@@ -541,6 +543,7 @@ pub fn get_game_statistics(conn: &Connection) -> rusqlite::Result<()>{
     Ok(())
 }
 
+// Get statistics for users for their win/loss/highest payout for each game
 pub fn query_user_statistics(conn: &Connection, user: &User) -> rusqlite::Result<()> {
     logger::info(&format!("Retrieving statistics for User ID: {}", user.id));
     let mut stmt = conn.prepare("Select * From user_statistics Where user_id = ?1")?;

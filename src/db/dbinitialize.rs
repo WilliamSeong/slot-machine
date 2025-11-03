@@ -220,7 +220,7 @@ fn add_default_symbols(conn: &Connection) -> Result<(),rusqlite::Error> {
         ("🍊", 15, 3.0),   // Orange: 15% chance, 3x payout
         ("🍇", 10, 5.0),   // Grape: 10% chance, 5x payout
         ("💎", 5, 10.0),  // Diamond: 5% chance, 10x payout
-        ("7️⃣", 1, 20.0),   // Seven: 1% chance, 20x payout
+        ("🔔", 1, 20.0),   // Seven: 1% chance, 20x payout
     ];
 
     // Add symbols for each game - Use proper types with rusqlite::params!

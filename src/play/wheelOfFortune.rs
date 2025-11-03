@@ -78,25 +78,6 @@ pub fn gameplay_wheel(conn: &Connection, user: &User, bet: f64) -> bool{
 
     loop {
         println!("\n------------------------------------");
-        // println!("Your Wallet: ${}", player_money);
-
-        // Check if player has funds and can still play
-        // if player_money < MIN_BET {
-        //     println!("You don't have enough money for the minimum bet (${}).", MIN_BET);
-        //     println!("Thanks for playing!");
-        //     break;
-        // }
-
-        // get bet from user
-        // let bet = get_player_bet(bet);
-
-        // check if user has money 
-        // if bet == 0 {
-        //     break;
-        // }
-
-        //Sub bet from wallet
-        // player_money -= bet;
         println!("You bet ${}. Spinning the wheel...", bet);
 
         //animation once bet is entered 

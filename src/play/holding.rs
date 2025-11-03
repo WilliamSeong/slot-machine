@@ -3,41 +3,39 @@ use std::io::{self, Write};
 use rusqlite::Connection;
 
 use crate::logger::logger;
-use crate::interfaces::menus::{menu_generator, menu_generator_multi};
 use crate::cryptography::rng::CasinoRng;
 
 use crate::interfaces::user::User;
 use crate::db::dbqueries;
+use crate::interfaces::menus;
 
 // Display payout table to user before playing
 fn display_payout_table(symbol_probs: &[(String, usize, f64)], bet: f64) {
-    println!("\n{}", "╔════════════════════════════════════════════════╗".bright_cyan());
-    println!("{}", "║          💰 PAYOUT TABLE 💰                   ║".bright_cyan().bold());
-    println!("{}", "╠════════════════════════════════════════════════╣".bright_cyan());
-    println!("{}", "║  Match Types (Based on Symbol Multiplier):    ║".bright_cyan());
-    println!("{}", "╠════════════════════════════════════════════════╣".bright_cyan());
+    menus::print_box_top(50);
+    menus::print_box_line("💰 PAYOUT TABLE 💰", 48);
+    menus::print_box_separator(50);
+    menus::print_box_line("Match Types (Based on Symbol Multiplier):", 50);
+    menus::print_box_separator(50);
     
     // Calculate total weight for probability display
     let total_weight: usize = symbol_probs.iter().map(|(_, w, _)| w).sum();
     
     for (symbol, weight, payout) in symbol_probs {
         let probability = (*weight as f64 / total_weight as f64) * 100.0;
-        println!("║  {} Symbol (base {:.1}x) [{:.1}% chance]:       ║", 
-            symbol, payout, probability);
-        println!("║    • 5 of a kind: ${:<6.2} ({:.1}x)           ║", 
-            payout * 5.0 * bet, payout * 5.0);
-        println!("║    • 4 of a kind: ${:<6.2} ({:.1}x)           ║", 
-            payout * 2.5 * bet, payout * 2.5);
-        println!("║    • 3 of a kind: ${:<6.2} ({:.1}x)           ║", 
-            payout * bet, payout);
+        menus::print_box_line(&format!("{} Symbol (base {:.1}x) [{:.1}% chance]:", symbol, payout, probability), 49);
+        menus::print_box_line(&format!("  • 5 of a kind: ${:<6.2} ({:.1}x)", payout * 5.0 * bet, payout * 5.0), 50);
+        menus::print_box_line(&format!("  • 4 of a kind: ${:<6.2} ({:.1}x)", payout * 2.5 * bet, payout * 2.5), 50);
+        menus::print_box_line(&format!("  • 3 of a kind: ${:<6.2} ({:.1}x)", payout * bet, payout), 50);
     }
     
-    println!("{}", "╠════════════════════════════════════════════════╣".bright_cyan());
-    println!("{}", "║  💡 Hold up to 2 reels for second spin!       ║".bright_cyan());
-    println!("{}", "║  ⚠️  Each held reel costs 50% of base bet     ║".bright_cyan());
-    println!("{}", "╚════════════════════════════════════════════════╝".bright_cyan());
+    menus::print_box_separator(50);
+    menus::print_box_line("💡 Hold up to 2 reels for second spin!", 49);
+    menus::print_box_line("⚠️  Each held reel costs 50% of base bet", 51);
+    menus::print_box_bottom(50);
     println!();
 }
+
+
 
 /// Hold 5x3 slot game - allows up to 2 reels to be held for next spin
 pub fn hold_game(conn: &Connection, user: &User, bet: f64) -> bool {
@@ -115,7 +113,7 @@ pub fn hold_game(conn: &Connection, user: &User, bet: f64) -> bool {
         
         
         let menu_options = vec!["1", "2", "3", "4", "5"];
-        let user_input = menu_generator_multi("Select up to 2 slots to hold (space to select)", &menu_options);
+        let user_input = menus::menu_generator_multi("Select up to 2 slots to hold (space to select)", &menu_options);
         
         for num in user_input {
             // println!("selected index {}", num);
@@ -237,7 +235,7 @@ pub fn hold_game(conn: &Connection, user: &User, bet: f64) -> bool {
 
         // Show options to user
         let menu_options = vec!["Spin Again", "Change Bet", "Exit"];
-        let user_input = menu_generator("═══ 🎰 Play Again? 🎰 ═══", &menu_options);
+        let user_input = menus::menu_generator("═══ 🎰 Play Again? 🎰 ═══", &menu_options);
 
         match user_input.trim() {
             "Spin Again" => {

@@ -2,6 +2,7 @@ use dialoguer::{Select, MultiSelect};
 use dialoguer::theme::ColorfulTheme;
 use clearscreen;
 use console::Style;
+use colored::*;
 
 pub fn menu_generator<'a>(prompt: &str, options: &Vec<&'a str>) -> &'a str {
 
@@ -54,4 +55,36 @@ pub fn menu_generator_multi<'a>(prompt: &str, options: &Vec<&'a str>) -> Vec<usi
         }
     }
 
+}
+
+pub fn print_box_top(width: usize) {
+    println!("{}{}{}", 
+        "╔".bright_cyan(), 
+        "═".repeat(width).bright_cyan(), 
+        "╗".bright_cyan()
+    );
+}
+
+pub fn print_box_line(text: &str, width: usize) {
+    println!("{}{}{}", 
+        "║".bright_cyan(), 
+        format!("{:^width$}", text).bright_cyan(), 
+        "║".bright_cyan()
+    );
+}
+
+pub fn print_box_separator(width: usize) {
+    println!("{}{}{}", 
+        "╠".bright_cyan(), 
+        "═".repeat(width).bright_cyan(), 
+        "╣".bright_cyan()
+    );
+}
+
+pub fn print_box_bottom(width: usize) {
+    println!("{}{}{}", 
+        "╚".bright_cyan(), 
+        "═".repeat(width).bright_cyan(), 
+        "╝".bright_cyan()
+    );
 }

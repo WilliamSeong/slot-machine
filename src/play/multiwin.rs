@@ -9,7 +9,7 @@ use crate::logger::logger;
 use crate::cryptography::rng::CasinoRng;
 use colored::*;
 
-use crate::interfaces::menus::menu_generator;
+use crate::interfaces::menus;
 
 // Display payout table to user before playing
 fn display_payout_table(symbol_probs: &[(String, usize, f64)], bet: f64) {
@@ -21,27 +21,27 @@ fn display_payout_table(symbol_probs: &[(String, usize, f64)], bet: f64) {
     let single_win = bet * base_multiplier;
     let double_jackpot = bet * base_multiplier * 2.0;
     
-    println!("\n{}", "╔════════════════════════════════════════════════╗".bright_cyan());
-    println!("{}", "║          💰 PAYOUT TABLE 💰                   ║".bright_cyan().bold());
-    println!("{}", "╠════════════════════════════════════════════════╣".bright_cyan());
-    println!("{}", "║  Match any ROW, COLUMN, or DIAGONAL:          ║".bright_cyan());
-    println!("║    Regular Win:     ${:<6.2} ({:.1}x)          ║", single_win, base_multiplier);
-    println!("{}", "╠════════════════════════════════════════════════╣".bright_cyan());
-    println!("{}", "║  Match ANY ROW + FOUR CORNERS:                 ║".bright_cyan());
-    println!("║    Double Jackpot:  ${:<6.2} ({:.1}x)          ║", double_jackpot, base_multiplier * 2.0);
-    println!("{}", "╠════════════════════════════════════════════════╣".bright_cyan());
-    println!("{}", "║  Symbols in play:                              ║".bright_cyan());
+    menus::print_box_top(50);
+    menus::print_box_line("💰 PAYOUT TABLE 💰", 48);
+    menus::print_box_line("Match any ROW, COLUMN, or DIAGONAL:", 50);
+    menus::print_box_line(&format!("  Regular Win:     ${:<6.2} ({:.1}x)", single_win, base_multiplier), 50);
+    menus::print_box_separator(50);
+    menus::print_box_line("Match ANY ROW + FOUR CORNERS:", 50);
+    menus::print_box_line(&format!("  Double Jackpot:  ${:<6.2} ({:.1}x)", double_jackpot, base_multiplier * 2.0), 50);
+    menus::print_box_separator(50);
+    menus::print_box_line("Symbols in play:", 50);
     
     // Calculate total weight for probability display
     let total_weight: usize = symbol_probs.iter().map(|(_, w, _)| w).sum();
     
     for (symbol, weight, payout) in symbol_probs {
         let probability = (*weight as f64 / total_weight as f64) * 100.0;
-        println!("║    {} - {:.1}x multiplier [{:.1}% chance]         ║", 
-            symbol, payout, probability);
+
+        menus::print_box_line(&format!("{} - {:.1}x multiplier [{:.1}% chance]", 
+            symbol, payout, probability), 49);
     }
     
-    println!("{}", "╚════════════════════════════════════════════════╝".bright_cyan());
+    menus::print_box_bottom(50);
     println!();
 }
 
@@ -79,8 +79,6 @@ pub fn multi_win(conn: &Connection, user: &User, bet: f64) -> bool{
     println!("{}", "Win by matching any row, column, or diagonal!".bright_cyan());
     println!("{} ${:.2}\n", "Your bet:".bright_white().bold(), bet);
     
-    // Display payout table to user
-    display_payout_table(&symbol_probs, bet);
 
     loop {
         // Check if player has the funds
@@ -112,6 +110,9 @@ pub fn multi_win(conn: &Connection, user: &User, bet: f64) -> bool{
         clearscreen::clear().expect("Failed to clear screen");
         println!("...And the result!\n");
         print_grid(&grid);
+
+        // Display payout table to user
+        display_payout_table(&symbol_probs, bet);
 
         //check dor wins
         let win_results = check_wins(&grid);
@@ -182,7 +183,7 @@ pub fn multi_win(conn: &Connection, user: &User, bet: f64) -> bool{
 
         // Show options to user
         let menu_options = vec!["Spin Again", "Change Bet", "Exit"];
-        let user_input = menu_generator("═══ 🎰 Play Again? 🎰 ═══", &menu_options);
+        let user_input = menus::menu_generator("═══ 🎰 Play Again? 🎰 ═══", &menu_options);
 
         match user_input.trim() {
             "Spin Again" => {

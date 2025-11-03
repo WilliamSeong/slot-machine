@@ -6,14 +6,14 @@ use crate::cryptography::rng::CasinoRng;
 use colored::*;
 use std::io::{self, Write};
 
-use crate::interfaces::menus::menu_generator;
+use crate::interfaces::menus;
 // Display payout table to user before playing
 fn display_payout_table(symbol_probs: &[(String, usize, f64)], bet: f64) {
-    println!("\n{}", "╔════════════════════════════════════════════════╗".bright_cyan());
-    println!("{}", "║          💰 PAYOUT TABLE 💰                   ║".bright_cyan().bold());
-    println!("{}", "╠════════════════════════════════════════════════╣".bright_cyan());
-    println!("{}", "║  Three of a Kind Pays:                        ║".bright_cyan());
-    println!("{}", "╠════════════════════════════════════════════════╣".bright_cyan());
+    menus::print_box_top(50);
+    menus::print_box_line("💰 PAYOUT TABLE 💰", 48);
+    menus::print_box_separator(50);
+    menus::print_box_line("Three of a kind pays:", 50);
+    menus::print_box_separator(50);
     
     // Calculate total weight for probability display
     let total_weight: usize = symbol_probs.iter().map(|(_, w, _)| w).sum();
@@ -21,18 +21,17 @@ fn display_payout_table(symbol_probs: &[(String, usize, f64)], bet: f64) {
     for (symbol, weight, payout) in symbol_probs {
         let probability = (*weight as f64 / total_weight as f64) * 100.0;
         let winnings = payout * bet;
-        println!("║  {} {} {} = ${:<6.2} ({}x) [{:.1}% chance]  ║", 
+        menus::print_box_line(&format!("{} {} {} = ${:<6.2} ({}x) [{:.1}% chance]", 
             symbol, symbol, symbol, 
             winnings, 
             payout,
-            probability
-        );
+            probability), 47);
     }
     
-    println!("{}", "╠════════════════════════════════════════════════╣".bright_cyan());
-    println!("{}", "║  Two Matching Pays:                           ║".bright_cyan());
-    println!("{}", "║  Any two symbols = 50% of three-match payout  ║".bright_cyan());
-    println!("{}", "╚════════════════════════════════════════════════╝".bright_cyan());
+    menus::print_box_separator(50);
+    menus::print_box_line("Two matching pays:", 50);
+    menus::print_box_line("Any two symbols = 50% of three-match payout", 50);
+    menus::print_box_bottom(50);
     println!();
 }
 
@@ -169,7 +168,7 @@ pub fn normal_slots(conn: &Connection, bet: f64, user: &User) -> bool {
 
         // Show options to user
         let menu_options = vec!["Spin Again", "Change Bet", "Exit"];
-        let user_input = menu_generator("═══ 🎰 Play Again? 🎰 ═══", &menu_options);
+        let user_input = menus::menu_generator("═══ 🎰 Play Again? 🎰 ═══", &menu_options);
 
         match user_input.trim() {
             "Spin Again" => {
