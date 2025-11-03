@@ -96,7 +96,7 @@ pub fn hold_game(conn: &Connection, user: &User, bet: f64) -> bool {
         println!("\n{}", "🎰 First Spin 🎰".bright_yellow().bold());
         // Animate
         for _ in 0..30 {
-            print!("\r{} | {} | {} | {} | {} ANIMATION", 
+            print!("\r{} | {} | {} | {} | {}", 
                 rng.weighted_choice(&weighted_symbols).unwrap(),
                 rng.weighted_choice(&weighted_symbols).unwrap(),
                 rng.weighted_choice(&weighted_symbols).unwrap(),
