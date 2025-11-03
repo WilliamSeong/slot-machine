@@ -2,6 +2,7 @@ use rusqlite::Connection;
 use chrono;
 use std::collections::HashMap;
 use std::sync::Mutex;
+use std::io;
 
 use crate::interfaces::user::User;
 use crate::logger::logger;
@@ -549,14 +550,28 @@ pub fn query_user_statistics(conn: &Connection, user: &User) -> rusqlite::Result
     logger::info(&format!("Retrieving statistics for User ID: {}", user.id));
     let mut stmt = conn.prepare("Select * From user_statistics Where user_id = ?1")?;
     let stats = stmt.query_map([user.id], |row| {
-        Ok((row.get(2)?,row.get(3)?, row.get(4)?, row.get(5)?))
+        Ok((row.get(2)?, row.get(3)?, row.get(4)?, row.get(5)?))
     })?;
+
+    println!("\n{}", "=".repeat(80));
+    println!("{:^80}", format!("Statistics for {}", user.get_username(conn).unwrap()));
+    println!("{}", "=".repeat(80));
+    println!("{:<20} {:>10} {:>10} {:>10} {:>10} {:>15}", "Game", "Played", "Wins", "Losses", "Win %", "Highest Payout");
+    println!("{}", "-".repeat(80));
 
     for stat in stats {
         let (game_id, win, loss, high): (i32, i32, i32, f64) = stat?;
         let mut stmt = conn.prepare("Select name From games Where id = ?1")?;
         let game_name = stmt.query_row([game_id], |row| row.get::<_, String>(0))?;
- println!("{:<20} {:>10} {:>10} {:>10} {:>9.1}% {:>15.2}", 
+        
+        let total_played = win + loss;
+        let win_percentage = if total_played > 0 {
+            (win as f64 / total_played as f64) * 100.0
+        } else {
+            0.0
+        };
+        
+        println!("{:<20} {:>10} {:>10} {:>10} {:>9.1}% {:>15.2}", 
             game_name, 
             total_played, 
             win, 
@@ -568,9 +583,6 @@ pub fn query_user_statistics(conn: &Connection, user: &User) -> rusqlite::Result
     
     println!("{}", "=".repeat(80));
     println!();
-    println!("\nPress Enter to continue...");
-    io::stdin().read_line(&mut String::new()).ok();
-
     Ok(())
 }
 
