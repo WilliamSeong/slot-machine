@@ -40,24 +40,31 @@ pub fn login(conn: &Connection) -> rusqlite::Result<()> {
 
         // if registration or sign in was successful and returned the User struct
         if let Some(user) = user {
-            match user.get_role(&conn).unwrap().as_str() {
-                "user" => {
-                    logger::info(&format!("User ID: {} logged in as regular user", user.id));
-                    interfaces::user::user_menu(conn, &user)?;
-                },
-                "technician" => {
-                    logger::info(&format!("User ID: {} logged in as technician", user.id));
-                    interfaces::technician::technician_menu(conn, &user)?;
-                },
-                "commissioner" => {
-                    logger::info(&format!("User ID: {} logged in as commissioner", user.id));
-                    // CRITICAL: why this function has one parameter loook at it
-                    // CRITICAL: missed access control in Commissioner Menu
-                    interfaces::commisioner::commissioner_menu(conn); 
-                }, 
-                _ => {
-                    logger::warning(&format!("User ID: {} has unknown role", user.id));
-                    println!("User not found");
+            // Get user role with proper error handling
+            match user.get_role(&conn) {
+                Ok(role) => {
+                    match role.as_str() {
+                        "user" => {
+                            logger::info(&format!("User ID: {} logged in as regular user", user.id));
+                            interfaces::user::user_menu(conn, &user)?;
+                        },
+                        "technician" => {
+                            logger::info(&format!("User ID: {} logged in as technician", user.id));
+                            interfaces::technician::technician_menu(conn, &user)?;
+                        },
+                        "commissioner" => {
+                            logger::info(&format!("User ID: {} logged in as commissioner", user.id));
+                            interfaces::commisioner::commissioner_menu(conn, &user)?;
+                        }, 
+                        _ => {
+                            logger::warning(&format!("User ID: {} has unknown role: {}", user.id, role));
+                            println!("{}", "Error: Unknown user role. Please contact administrator.".red().bold());
+                        }
+                    }
+                }
+                Err(e) => {
+                    logger::error(&format!("Failed to retrieve role for User ID: {}. Error: {}", user.id, e));
+                    println!("{}", "Error: Could not verify user role. Please try again.".red().bold());
                 }
             }
         }
@@ -76,9 +83,18 @@ pub fn register(conn: &Connection) -> Result<Option<User>> {
     
     // Get username
     print!("{} ", "Username (3-30 chars):".bright_white().bold());
-    io::stdout().flush().unwrap();
+    if io::stdout().flush().is_err() {
+        logger::error("Failed to flush stdout during registration");
+        println!("{}", "❌ System error occurred".red().bold());
+        return Ok(None);
+    }
+    
     let mut username = String::new();
-    io::stdin().read_line(&mut username).unwrap();
+    if io::stdin().read_line(&mut username).is_err() {
+        logger::error("Failed to read username input during registration");
+        println!("{}", "❌ Input error occurred".red().bold());
+        return Ok(None);
+    }
     let username = username.trim();
     
     // Validate username (comprehensive validation with security checks)
@@ -185,9 +201,18 @@ pub fn sign_in(conn: &Connection) -> Result<Option<User>> {
     
     // Get username
     print!("{} ", "Username:".bright_white().bold());
-    io::stdout().flush().unwrap();
+    if io::stdout().flush().is_err() {
+        logger::error("Failed to flush stdout during sign-in");
+        println!("{}", "❌ System error occurred".red().bold());
+        return Ok(None);
+    }
+    
     let mut username = String::new();
-    io::stdin().read_line(&mut username).unwrap();
+    if io::stdin().read_line(&mut username).is_err() {
+        logger::error("Failed to read username input during sign-in");
+        println!("{}", "❌ Input error occurred".red().bold());
+        return Ok(None);
+    }
     let username = username.trim();
     
     // Validate username

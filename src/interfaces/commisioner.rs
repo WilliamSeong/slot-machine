@@ -4,10 +4,19 @@ use colored::*;
 use std::io;
 use std::io::Write;
 use rusqlite::Connection;
-use super::*;
+use crate::interfaces::user::User;
+use crate::authentication::authorization;
+use crate::logger::logger;
 
-// CRITICAL: dont forget work on this
-pub fn commissioner_menu(conn: &Connection) {
+/// Commissioner Control Panel - Requires commissioner role
+pub fn commissioner_menu(conn: &Connection, user: &User) -> rusqlite::Result<()> {
+    // SECURITY: Verify user has commissioner role
+    if let Err(e) = authorization::require_commissioner(conn, user) {
+        logger::security(&format!("Blocked unauthorized access to commissioner menu by User ID: {}: {}", user.id, e));
+        return Ok(());
+    }
+    
+    logger::security(&format!("Commissioner (User ID: {}) accessed commissioner menu", user.id));
     loop {
         println!("\n{}", "═══ 🧮 Commissioner Control Panel 🧮 ═══".bright_blue().bold());
         println!("{}. Run fairness test", "1".yellow());
@@ -22,18 +31,43 @@ pub fn commissioner_menu(conn: &Connection) {
         io::stdin().read_line(&mut choice).ok();
 
         match choice.trim() {
-            "1" => run_commissioner_test(conn),
-            "2" => view_game_probabilities(conn),
-            "3" => adjust_symbol_weights(conn),
-            "4" => adjust_symbol_payouts(conn),
-            "5" => break,
-            _ => println!("Invalid input"),
+            "1" => {
+                logger::info(&format!("Commissioner (User ID: {}) running fairness test", user.id));
+                run_commissioner_test(conn, user)
+            },
+            "2" => {
+                logger::info(&format!("Commissioner (User ID: {}) viewing game probabilities", user.id));
+                view_game_probabilities(conn, user)
+            },
+            "3" => {
+                logger::security(&format!("Commissioner (User ID: {}) adjusting symbol weights", user.id));
+                adjust_symbol_weights(conn, user)
+            },
+            "4" => {
+                logger::security(&format!("Commissioner (User ID: {}) adjusting symbol payouts", user.id));
+                adjust_symbol_payouts(conn, user)
+            },
+            "5" => {
+                logger::info(&format!("Commissioner (User ID: {}) exited commissioner menu", user.id));
+                break;
+            },
+            _ => {
+                logger::warning(&format!("Commissioner (User ID: {}) entered invalid menu choice", user.id));
+                println!("Invalid input");
+            }
         }
     }
+    Ok(())
 }
 
-/// automated fairness test for X rounds
-fn run_commissioner_test(conn: &Connection) {
+/// Automated fairness test for X rounds - REQUIRES COMMISSIONER ROLE
+fn run_commissioner_test(conn: &Connection, user: &User) {
+    // SECURITY: Double-check authorization
+    if authorization::require_commissioner(conn, user).is_err() {
+        return;
+    }
+    
+    logger::security(&format!("Commissioner (User ID: {}) initiated fairness test", user.id));
     println!("\nEnter number of rounds to test:");
     io::stdout().flush().unwrap();
     let mut input = String::new();
@@ -244,9 +278,14 @@ mod tests {
         assert!(result.is_ok(), "Database insert failed");
     }
 }
-// CRITICAL: manuel test this and check suitibality be sure this prints may not be visible on partners pc
-// View probabilities for all games
-fn view_game_probabilities(conn: &Connection) {
+/// View probabilities for all games - REQUIRES COMMISSIONER ROLE
+fn view_game_probabilities(conn: &Connection, user: &User) {
+    // SECURITY: Double-check authorization
+    if authorization::require_commissioner(conn, user).is_err() {
+        return;
+    }
+    
+    logger::info(&format!("Commissioner (User ID: {}) viewing game probabilities", user.id));
     use crate::db::dbqueries;
     
     let games = vec!["normal", "multi", "holding", "wheel of fortune"];
@@ -280,8 +319,14 @@ fn view_game_probabilities(conn: &Connection) {
     io::stdin().read_line(&mut String::new()).ok();
 }
 
-// Adjust symbol weights (probabilities) for a game
-fn adjust_symbol_weights(conn: &Connection) {
+/// Adjust symbol weights (probabilities) for a game - REQUIRES COMMISSIONER ROLE
+fn adjust_symbol_weights(conn: &Connection, user: &User) {
+    // SECURITY: Double-check authorization before allowing game modifications
+    if authorization::require_commissioner(conn, user).is_err() {
+        return;
+    }
+    
+    logger::security(&format!("Commissioner (User ID: {}) accessing symbol weight adjustment", user.id));
     use crate::db::dbqueries;
     
     println!("\n{}", "Select Game:".bright_cyan());
@@ -354,8 +399,14 @@ fn adjust_symbol_weights(conn: &Connection) {
     io::stdin().read_line(&mut String::new()).ok();
 }
 
-// Adjust symbol payout multipliers for a game
-fn adjust_symbol_payouts(conn: &Connection) {
+/// Adjust symbol payout multipliers for a game - REQUIRES COMMISSIONER ROLE
+fn adjust_symbol_payouts(conn: &Connection, user: &User) {
+    // SECURITY: Double-check authorization before allowing payout modifications
+    if authorization::require_commissioner(conn, user).is_err() {
+        return;
+    }
+    
+    logger::security(&format!("Commissioner (User ID: {}) accessing symbol payout adjustment", user.id));
     use crate::db::dbqueries;
     
     println!("\n{}", "Select Game:".bright_cyan());

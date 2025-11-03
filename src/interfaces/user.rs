@@ -242,17 +242,24 @@ fn user_account(conn: &Connection, user: &User) {
                 match user_input.trim() {
                     "Deposit" => {
                         logger::info(&format!("User ID: {} selected deposit option", user.id));
-                        if deposit(conn, user).unwrap() {
-                            println!("Deposit Successful");
-                        } else {
-                            println!("Deposit Failed");
+                        match deposit(conn, user) {
+                            Ok(true) => println!("Deposit Successful"),
+                            Ok(false) => println!("Deposit Failed"),
+                            Err(e) => {
+                                logger::error(&format!("Deposit error for User ID: {}: {}", user.id, e));
+                                println!("{}", "System error during deposit".red().bold());
+                            }
                         }
                     }
                     "Withdraw" => {
                         logger::info(&format!("User ID: {} selected withdraw option", user.id));
-                        if withdraw(conn, user).unwrap() {
-                        } else {
-                            println!("Withdraw Failed");
+                        match withdraw(conn, user) {
+                            Ok(true) => {},
+                            Ok(false) => println!("Withdraw Failed"),
+                            Err(e) => {
+                                logger::error(&format!("Withdraw error for User ID: {}: {}", user.id, e));
+                                println!("{}", "System error during withdrawal".red().bold());
+                            }
                         }
                     }
                     "Statistics" => {
