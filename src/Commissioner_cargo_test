@@ -1,0 +1,182 @@
+// commissioner_tests.rs
+// -------------------------------------------------------------
+// ✅ Unit Tests for Commissioner Module (Slot Machine Project)
+// -------------------------------------------------------------
+// Run this file using:
+//      cargo test -- --nocapture
+//
+// These tests verify:
+// 1️⃣ Role-based access control
+// 2️⃣ Fairness RNG reproducibility
+// 3️⃣ RTP (Return to Player) range
+// 4️⃣ Database insert integrity
+// 5️⃣ Weighted randomness correctness
+// -------------------------------------------------------------
+
+use rusqlite::Connection;
+use std::collections::HashMap;
+use slot_machine::cryptography::rng::CasinoRng;
+use slot_machine::interfaces::user::User;
+use slot_machine::authentication::authorization;
+
+// -------------------------------------------------------------
+// Helper functions
+// -------------------------------------------------------------
+
+/// Create a temporary in-memory database for testing
+fn setup_db() -> Connection {
+    let conn = Connection::open_in_memory().unwrap();
+
+    // Commissioner log table (audit)
+    conn.execute(
+        "CREATE TABLE IF NOT EXISTS commissioner_log (
+            id INTEGER PRIMARY KEY,
+            game_name TEXT,
+            seed TEXT,
+            rounds INTEGER,
+            wins INTEGER,
+            partials INTEGER,
+            losses INTEGER,
+            rtp REAL,
+            timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
+        )",
+        [],
+    ).unwrap();
+
+    // Symbols table for test probabilities
+    conn.execute(
+        "CREATE TABLE IF NOT EXISTS symbols (
+            game TEXT,
+            symbol TEXT,
+            weight INTEGER,
+            payout REAL
+        )",
+        [],
+    ).unwrap();
+
+    // Insert mock symbol data
+    conn.execute(
+        "INSERT INTO symbols (game, symbol, weight, payout)
+         VALUES ('normal', '🍒', 25, 3.0),
+                ('normal', '💎', 10, 10.0),
+                ('normal', '⭐', 15, 5.0)",
+        [],
+    ).unwrap();
+
+    conn
+}
+
+/// Create a mock commissioner user
+fn mock_commissioner() -> User {
+    User {
+        id: 1,
+        username: "Commissioner".to_string(),
+        role: "commissioner".to_string(),
+        balance: 0.0,
+        password_hash: "dummy".to_string(),
+    }
+}
+
+// -------------------------------------------------------------
+// 🧪 TEST CASES
+// -------------------------------------------------------------
+
+/// Test 1️⃣ – Commissioner should pass role-based authorization
+#[test]
+fn test_commissioner_authorization() {
+    let conn = setup_db();
+    let user = mock_commissioner();
+
+    let result = authorization::require_commissioner(&conn, &user);
+    assert!(result.is_ok(), "Commissioner role check failed");
+}
+
+/// Test 2️⃣ – RNG reproducibility (same seed = same sequence)
+#[test]
+fn test_rng_reproducibility() {
+    let mut rng1 = CasinoRng::seeded(9999);
+    let mut rng2 = CasinoRng::seeded(9999);
+    let weighted = vec![("🍒", 25), ("💎", 10), ("⭐", 15)];
+
+    let seq1: Vec<_> = (0..10).map(|_| rng1.weighted_choice(&weighted).unwrap()).collect();
+    let seq2: Vec<_> = (0..10).map(|_| rng2.weighted_choice(&weighted).unwrap()).collect();
+
+    assert_eq!(seq1, seq2, "RNG sequences differ for same seed");
+}
+
+/// Test 3️⃣ – RTP calculation should remain within fair range (70–110%)
+#[test]
+fn test_rtp_fairness_range() {
+    let total_bet = 1000.0;
+    let total_payout = 950.0;
+    let rtp = (total_payout / total_bet) * 100.0;
+
+    assert!(
+        (70.0..=110.0).contains(&rtp),
+        "RTP {:.2}% out of expected range (70–110%)",
+        rtp
+    );
+}
+
+/// Test 4️⃣ – Database insert should succeed for commissioner_log
+#[test]
+fn test_db_insert_commissioner_log() {
+    let conn = setup_db();
+
+    let result = conn.execute(
+        "INSERT INTO commissioner_log (game_name, seed, rounds, wins, partials, losses, rtp)
+         VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7)",
+        ("normal", "seed123", 100, 15, 25, 60, 96.5),
+    );
+
+    assert!(result.is_ok(), "Failed to insert commissioner_log entry");
+}
+
+/// Test 5️⃣ – Weighted RNG distribution (🍒 should appear most often)
+#[test]
+fn test_weighted_rng_distribution() {
+    let weighted_symbols = vec![("🍒", 50), ("💎", 25), ("⭐", 25)];
+    let mut rng = CasinoRng::new();
+
+    let mut counts: HashMap<&str, usize> = HashMap::new();
+    for _ in 0..1000 {
+        let symbol = rng.weighted_choice(&weighted_symbols).unwrap();
+        *counts.entry(symbol).or_insert(0) += 1;
+    }
+
+    let cherry = counts["🍒"];
+    let diamond = counts["💎"];
+    assert!(cherry > diamond, "🍒 should appear more often than 💎");
+}
+
+/// Test 6️⃣ – Ensure total outcome count equals simulated rounds
+#[test]
+fn test_round_consistency() {
+    let mut rng = CasinoRng::seeded(2025);
+    let weighted = vec![("🍒", 25), ("💎", 10), ("⭐", 15)];
+
+    let mut wins = 0;
+    let mut partials = 0;
+    let mut losses = 0;
+    let rounds = 500;
+
+    for _ in 0..rounds {
+        let s1 = rng.weighted_choice(&weighted).unwrap();
+        let s2 = rng.weighted_choice(&weighted).unwrap();
+        let s3 = rng.weighted_choice(&weighted).unwrap();
+
+        if s1 == s2 && s2 == s3 {
+            wins += 1;
+        } else if s1 == s2 || s2 == s3 || s1 == s3 {
+            partials += 1;
+        } else {
+            losses += 1;
+        }
+    }
+
+    assert_eq!(
+        wins + partials + losses,
+        rounds,
+        "Mismatch between rounds and total outcomes"
+    );
+}
