@@ -2,7 +2,6 @@ use rusqlite::Connection;
 use chrono;
 use std::collections::HashMap;
 use std::sync::Mutex;
-use std::io;
 
 use crate::interfaces::user::User;
 use crate::logger::logger;
@@ -277,6 +276,7 @@ fn check_rate_limit(user_id: i32) -> Result<(), String> {
     if last_minute >= MAX_TRANSACTIONS_PER_MINUTE {
         return Err(format!("Rate limit: {} transactions per minute", MAX_TRANSACTIONS_PER_MINUTE));
     }
+    
     Ok(())
 }
 
@@ -303,6 +303,7 @@ fn detect_fraud_patterns(user_id: i32, _amount: f64) -> bool {
             return true;
         }
     }
+    
     false
 }
 
@@ -464,7 +465,7 @@ pub fn add_user_win(conn: &Connection, user: &User, game: &str, winnings: f64) -
 
     // Update the user_statistics table
     conn.execute(
-        "Update user_statistics Set win = win + 1, highest_payout = ?1, last_played = ?2 where user_id = ?3 And game_id = ?4",
+        "Update user_statistics SET win = win + 1, highest_payout = ?1, last_played = ?2 where user_id = ?3 And game_id = ?4",
         rusqlite::params![new_payout, chrono::Local::now().to_rfc3339(), user.id, game_id],
     )?;
 
@@ -484,7 +485,7 @@ pub fn add_user_loss(conn: &Connection, user: &User, game: &str) -> rusqlite::Re
 
     // Update the user_statistics table
     conn.execute(
-        "Update user_statistics Set loss = loss + 1, last_played = ?1 Where user_id = ?2 And game_id = ?3",
+        "Update user_statistics Set loss = loss + 1, last_played = ?2 Where user_id = ?3 And game_id = ?4",
         rusqlite::params![chrono::Local::now().to_rfc3339(), user.id, game_id],
     )?;
 
@@ -548,28 +549,14 @@ pub fn query_user_statistics(conn: &Connection, user: &User) -> rusqlite::Result
     logger::info(&format!("Retrieving statistics for User ID: {}", user.id));
     let mut stmt = conn.prepare("Select * From user_statistics Where user_id = ?1")?;
     let stats = stmt.query_map([user.id], |row| {
-        Ok((row.get(2)?, row.get(3)?, row.get(4)?, row.get(5)?))
+        Ok((row.get(2)?,row.get(3)?, row.get(4)?, row.get(5)?))
     })?;
-
-    println!("\n{}", "=".repeat(80));
-    println!("{:^80}", format!("Statistics for {}", user.get_username(conn).unwrap()));
-    println!("{}", "=".repeat(80));
-    println!("{:<20} {:>10} {:>10} {:>10} {:>10} {:>15}", "Game", "Played", "Wins", "Losses", "Win %", "Highest Score");
-    println!("{}", "-".repeat(80));
 
     for stat in stats {
         let (game_id, win, loss, high): (i32, i32, i32, f64) = stat?;
         let mut stmt = conn.prepare("Select name From games Where id = ?1")?;
         let game_name = stmt.query_row([game_id], |row| row.get::<_, String>(0))?;
-        
-        let total_played = win + loss;
-        let win_percentage = if total_played > 0 {
-            (win as f64 / total_played as f64) * 100.0
-        } else {
-            0.0
-        };
-        
-        println!("{:<20} {:>10} {:>10} {:>10} {:>9.1}% {:>15.2}", 
+ println!("{:<20} {:>10} {:>10} {:>10} {:>9.1}% {:>15.2}", 
             game_name, 
             total_played, 
             win, 
@@ -682,5 +669,30 @@ pub fn update_symbol_payout(conn: &Connection, game_name: &str, symbol: &str, ne
     )?;
 
     logger::security(&format!("Payout multiplier updated successfully for {} in {}", symbol, game_name));
+    Ok(())
+}
+
+/// Insert a commissioner test log entry
+pub fn insert_commissioner_log(
+    conn: &Connection,
+    game_name: &str,
+    seed: &str,
+    rounds: u32,
+    wins: u32,
+    partials: u32,
+    losses: u32,
+    rtp: f64
+) -> rusqlite::Result<()> {
+    logger::info(&format!(
+        "Storing commissioner test: game={}, seed={}, rounds={}, rtp={:.2}%",
+        game_name, seed, rounds, rtp
+    ));
+    
+    conn.execute(
+        "INSERT INTO commissioner_log (game_name, seed, rounds, wins, partials, losses, rtp)
+         VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7)",
+        rusqlite::params![game_name, seed, rounds as i32, wins as i32, partials as i32, losses as i32, rtp],
+    )?;
+    
     Ok(())
 }

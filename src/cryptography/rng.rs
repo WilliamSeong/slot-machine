@@ -1,15 +1,29 @@
-use argon2::password_hash::rand_core::{OsRng, RngCore};
+use argon2::password_hash::rand_core::{OsRng, RngCore as ArgonRngCore};
+use rand::{RngCore as RandRngCore, SeedableRng};
+use rand_chacha::ChaCha20Rng;
 use crate::logger::logger;
+
+enum RngType {
+    Secure(OsRng),
+    Seeded(ChaCha20Rng),
+}
+
 pub struct CasinoRng {
-    // OS-provided cryptographically secure RNG
-    rng: OsRng,
+    // OS-provided cryptographically secure RNG or seeded RNG for testing
+    rng: RngType,
 }
 
 impl CasinoRng {
     // Create a new cryptographically secure random number generator.
     pub fn new() -> Self {
         logger::info("Cryptographically secure RNG initialized");
-        CasinoRng { rng: OsRng }
+        CasinoRng { rng: RngType::Secure(OsRng) }
+    }
+    
+    // Create a seeded RNG for reproducible testing (commissioner use only)
+    pub fn seeded(seed: u64) -> Self {
+        logger::info(&format!("Seeded RNG initialized with seed: {}", seed));
+        CasinoRng { rng: RngType::Seeded(ChaCha20Rng::seed_from_u64(seed)) }
     }
 
     // Generate a random number in the range [min, max).
@@ -22,7 +36,10 @@ impl CasinoRng {
         // This ensures no bias in the random numbers
         loop {
             let mut bytes = [0u8; 8];
-            self.rng.fill_bytes(&mut bytes);
+            match &mut self.rng {
+                RngType::Secure(rng) => ArgonRngCore::fill_bytes(rng, &mut bytes),
+                RngType::Seeded(rng) => RandRngCore::fill_bytes(rng, &mut bytes),
+            }
             let random_value = u64::from_le_bytes(bytes);
             
             // Use the random value if it's within our usable range

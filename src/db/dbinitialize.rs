@@ -59,6 +59,22 @@ pub fn initialize_dbs(conn: &Connection) -> Result<(), rusqlite::Error> {
         [],
     )?;
 
+     // Create table with proper schema
+     conn.execute(
+        "CREATE TABLE IF NOT EXISTS commissioner_log (
+            id INTEGER PRIMARY KEY,
+            game_name TEXT,
+            seed TEXT,
+            rounds INTEGER,
+            wins INTEGER,
+            partials INTEGER,
+            losses INTEGER,
+            rtp REAL,
+            timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
+        )",
+        [],
+    )?;
+
     add_technician_commissioner(&conn)?;
     add_games(&conn)?;
     add_default_symbols(&conn)?;
@@ -70,7 +86,6 @@ pub fn initialize_dbs(conn: &Connection) -> Result<(), rusqlite::Error> {
 /// SECURITY: Credentials loaded from environment or generated and saved to .env
 fn add_technician_commissioner(conn: &Connection) -> Result<(),rusqlite::Error> {
     use crate::cryptography::crypto::{hash_password, encrypt_balance};
-    use crate::logger::logger;
     use std::env;
     
     const ENV_FILE: &str = ".env";
@@ -220,7 +235,7 @@ fn add_default_symbols(conn: &Connection) -> Result<(),rusqlite::Error> {
         ("🍊", 15, 3.0),   // Orange: 15% chance, 3x payout
         ("🍇", 10, 5.0),   // Grape: 10% chance, 5x payout
         ("💎", 5, 10.0),  // Diamond: 5% chance, 10x payout
-        ("🔔", 1, 20.0),   // Seven: 1% chance, 20x payout
+        ("7️⃣", 1, 20.0),   // Seven: 1% chance, 20x payout
     ];
 
     // Add symbols for each game - Use proper types with rusqlite::params!

@@ -63,17 +63,8 @@ fn run_commissioner_test(conn: &Connection, user: &User) {
     logger::security(&format!("Commissioner (User ID: {}) initiated fairness test", user.id));
     
     // Select game to test
-    // Show options to technician
-    // query all games
-    let games_data = dbqueries::get_games(conn).unwrap();
-    let mut all_games: Vec<&str> = games_data
-        .iter()
-        .map(|(name, _)| name.as_str())
-        .collect();
-    // add exit
-    all_games.push("Cancel");
-    // let game_options = vec!["normal", "multi", "holding", "Cancel"];
-    let game_choice = menu_generator("Select Game to Test", &all_games);
+    let game_options = vec!["normal", "multi", "holding", "Cancel"];
+    let game_choice = menu_generator("Select Game to Test", &game_options);
     
     if game_choice == "Cancel" {
         return;
@@ -92,6 +83,20 @@ fn run_commissioner_test(conn: &Connection, user: &User) {
     };
     
     println!("\n{}", format!("═══ Testing {} Game ═══", game_name.to_uppercase()).bright_cyan().bold());
+    
+    // Ask for seed (for reproducible testing)
+    println!("\nEnter seed for testing (leave empty for random):");
+    io::stdout().flush().unwrap();
+    let mut seed_input = String::new();
+    io::stdin().read_line(&mut seed_input).unwrap();
+    let seed_str = seed_input.trim();
+    
+    if !seed_str.is_empty() {
+        println!("Using seed: {}", seed_str);
+    } else {
+        println!("Using random seed");
+    }
+    
     println!("\nEnter number of rounds to test:");
     io::stdout().flush().unwrap();
     let mut input = String::new();
@@ -105,7 +110,21 @@ fn run_commissioner_test(conn: &Connection, user: &User) {
         .map(|(sym, weight, _)| (sym.as_str(), *weight))
         .collect();
 
-    let mut rng = CasinoRng::new();
+    // Initialize RNG (seeded if seed provided, otherwise random)
+    let mut rng = if seed_str.is_empty() {
+        CasinoRng::new()
+    } else {
+        let seed: u64 = seed_str.parse().unwrap_or_else(|_| {
+            // If parsing fails, hash the string to get a seed
+            let mut hash = 0u64;
+            for (i, byte) in seed_str.bytes().enumerate() {
+                hash = hash.wrapping_mul(31).wrapping_add(byte as u64);
+                if i >= 8 { break; }
+            }
+            hash
+        });
+        CasinoRng::seeded(seed)
+    };
 
     let mut wins = 0;
     let mut partials = 0;
@@ -156,7 +175,7 @@ fn run_commissioner_test(conn: &Connection, user: &User) {
                 let bet = 1.0;
                 total_bet += bet;
 
-                // Generate 5x5 grid
+                // Generate 5x5 grid using weighted symbols
                 let mut grid = [[' '; 5]; 5];
                 for i in 0..5 {
                     for j in 0..5 {
@@ -165,40 +184,41 @@ fn run_commissioner_test(conn: &Connection, user: &User) {
                     }
                 }
 
-                // Check for wins (simplified: check rows, columns, diagonals)
+                // Check for wins - must match actual game logic
                 let mut has_horizontal_win = false;
                 let mut has_four_corner_win = false;
-                let mut line_wins = 0;
+                let mut any_win = false;
 
-                // Check rows
-                for (_row_idx, row) in grid.iter().enumerate() {
+                // Check rows (horizontal wins)
+                for row in grid.iter() {
                     if row.iter().all(|&s| s == row[0]) {
-                        line_wins += 1;
-                        has_horizontal_win = true; // Any row counts as horizontal
+                        has_horizontal_win = true;
+                        any_win = true;
                     }
                 }
 
                 // Check columns
                 for col in 0..5 {
                     if (0..5).all(|row| grid[row][col] == grid[0][col]) {
-                        line_wins += 1;
+                        any_win = true;
                     }
                 }
 
                 // Check diagonals
                 if (0..5).all(|i| grid[i][i] == grid[0][0]) {
-                    line_wins += 1;
+                    any_win = true;
                 }
                 if (0..5).all(|i| grid[i][4-i] == grid[0][4]) {
-                    line_wins += 1;
+                    any_win = true;
                 }
 
                 // Check four corners
                 if grid[0][0] == grid[0][4] && grid[0][0] == grid[4][0] && grid[0][0] == grid[4][4] {
                     has_four_corner_win = true;
+                    any_win = true;
                 }
 
-                if line_wins > 0 {
+                if any_win {
                     wins += 1;
                     if has_horizontal_win && has_four_corner_win {
                         total_payout += base_multiplier * 2.0 * bet; // Double jackpot
@@ -211,23 +231,58 @@ fn run_commissioner_test(conn: &Connection, user: &User) {
             }
         },
         "holding" => {
-            // Holding: 5 symbols, match 3/4/5 of a kind
+            // Holding: 5 symbols with hold feature (2 spins)
+            // This simulation models the actual game with hold mechanics
             for _ in 0..rounds {
                 let bet = 1.0;
                 total_bet += bet;
 
-                // Generate 5 symbols
-                let reels: Vec<&str> = (0..5)
+                // First spin: Generate 5 symbols
+                let mut reels: Vec<&str> = (0..5)
                     .map(|_| *rng.weighted_choice(&weighted_symbols).unwrap())
                     .collect();
 
-                // Count occurrences
+                // Count occurrences after first spin
                 let mut counts = std::collections::HashMap::new();
                 for &symbol in &reels {
                     *counts.entry(symbol).or_insert(0) += 1;
                 }
 
+                // Simple hold strategy: hold reels with most common symbol (up to 2)
+                let most_common_symbol = counts.iter()
+                    .max_by_key(|(_, &count)| count)
+                    .map(|(sym, _)| *sym)
+                    .unwrap_or(&"");
+                
+                let mut held_indices = Vec::new();
+                for (i, &symbol) in reels.iter().enumerate() {
+                    if symbol == most_common_symbol && held_indices.len() < 2 {
+                        held_indices.push(i);
+                    }
+                }
+                
+                // Calculate hold charge (25% per held reel)
+                let held_count = held_indices.len();
+                let hold_charge = bet * 0.25 * held_count as f64;
+                total_bet += hold_charge;
+
+                // Second spin: Respin non-held reels
+                for i in 0..5 {
+                    if !held_indices.contains(&i) {
+                        reels[i] = *rng.weighted_choice(&weighted_symbols).unwrap();
+                    }
+                }
+
+                // Count occurrences after second spin
+                counts.clear();
+                for &symbol in &reels {
+                    *counts.entry(symbol).or_insert(0) += 1;
+                }
+
                 let max_count = counts.values().copied().max().unwrap_or(0);
+                
+                // Calculate final bet (base + hold charges)
+                let final_bet = bet * (1.0 + 0.25 * held_count as f64);
                 
                 if max_count >= 3 {
                     let winning_symbol = counts.iter()
@@ -241,9 +296,9 @@ fn run_commissioner_test(conn: &Connection, user: &User) {
                         .unwrap_or(2.0);
 
                     let payout = match max_count {
-                        5 => base_multiplier * 5.0 * bet,
-                        4 => base_multiplier * 2.5 * bet,
-                        3 => base_multiplier * bet,
+                        5 => base_multiplier * 5.0 * final_bet,
+                        4 => base_multiplier * 2.5 * final_bet,
+                        3 => base_multiplier * final_bet,
                         _ => 0.0,
                     };
 
@@ -264,6 +319,9 @@ fn run_commissioner_test(conn: &Connection, user: &User) {
 
     println!("\n{}", "🎰 Test Results 🎰".bright_yellow().bold());
     println!("Game: {}", game_name);
+    if !seed_str.is_empty() {
+        println!("Seed: {}", seed_str);
+    }
     println!("Total rounds: {}", rounds);
     
     match game_name {
@@ -296,30 +354,15 @@ fn run_commissioner_test(conn: &Connection, user: &User) {
     }
 
     // Store test summary in DB
-    // Drop old table if it exists (to update schema)
-    conn.execute("DROP TABLE IF EXISTS commissioner_log", []).ok();
+    let seed_for_db = if seed_str.is_empty() { "random" } else { seed_str };
     
-    conn.execute(
-        "CREATE TABLE IF NOT EXISTS commissioner_log (
-            id INTEGER PRIMARY KEY,
-            game_name TEXT,
-            rounds INTEGER,
-            wins INTEGER,
-            partials INTEGER,
-            losses INTEGER,
-            rtp REAL,
-            timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
-        )",
-        [],
-    ).unwrap();
-
-    conn.execute(
-        "INSERT INTO commissioner_log (game_name, rounds, wins, partials, losses, rtp)
-         VALUES (?1, ?2, ?3, ?4, ?5, ?6)",
-        (game_name, rounds, wins, partials, losses, rtp),
-    ).unwrap();
-
-    println!("\n{}", "✓ Test results stored in commissioner_log table.".green().bold());
+    match dbqueries::insert_commissioner_log(conn, game_name, seed_for_db, rounds, wins, partials, losses, rtp) {
+        Ok(_) => println!("\n{}", "✓ Test results stored in commissioner_log table.".green().bold()),
+        Err(e) => {
+            logger::error(&format!("Failed to store test results: {}", e));
+            println!("{}", format!("Warning: Failed to store test results: {}", e).yellow());
+        }
+    }
     
     println!("\nPress Enter to continue...");
     io::stdin().read_line(&mut String::new()).ok();
