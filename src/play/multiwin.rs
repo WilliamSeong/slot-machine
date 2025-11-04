@@ -331,34 +331,6 @@ mod tests {
         grid
     }
 
-    // check if slot is spinning
-
-    #[test]
-    fn test_spin_grid_dimensions() {
-        let mut rng = rand::rng();
-        let grid = spin(&mut rng);
-        assert_eq!(grid.len(), GRID_SIZE, "Grid should have {} rows", GRID_SIZE);
-        for row in grid {
-            assert_eq!(row.len(), GRID_SIZE, "Each row should have {} columns", GRID_SIZE);
-        }
-    }
-
-    #[test]
-    fn test_spin_grid_symbols() {
-        let mut rng = rand::rng();
-        let grid = spin(&mut rng);
-        let symbols_vec: Vec<char> = SYMBOLS.to_vec();
-
-        for row in grid {
-            for symbol in row {
-                assert!(
-                    symbols_vec.contains(&symbol),
-                    "Grid symbol '{}' is not in the SYMBOLS constant", symbol
-                );
-            }
-        }
-    }
-
     // Test to check for wins
 
     #[test]

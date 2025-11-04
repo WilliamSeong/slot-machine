@@ -532,7 +532,6 @@ pub fn toggle_game(conn: &Connection, name: &str) -> rusqlite::Result<()> {
 
     logger::security(&format!("Game status toggle attempt for: {}", name));
 
-    // Use proper error handling instead of .unwrap()
     let mut stmt = conn.prepare(
         "Update games Set active = Not active Where name = ?1"
     )?;

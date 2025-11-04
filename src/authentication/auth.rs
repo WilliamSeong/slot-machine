@@ -105,7 +105,7 @@ pub fn register(conn: &Connection) -> Result<Option<User>> {
     
     // Get password with secure input
     let password = match Password::new()
-        .with_prompt("Password (min 3 chars)")
+        .with_prompt("Password (min 12 chars)")
         .interact() {
             Ok(pwd) => pwd,
             Err(_) => {

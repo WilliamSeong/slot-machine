@@ -441,55 +441,6 @@ fn user_statistics(conn: &Connection, user: &User) {
     let _ = dbqueries::query_user_statistics(conn, user);
 }
 
-// // williams version
-// fn change_password(conn: &Connection, user: &User) -> () {
-//     use dialoguer::Password;
-
-//     let password = match Password::new()
-//         .with_prompt("Password")
-//         .interact() {
-//             Ok(pwd) => pwd,
-//             Err(_) => {
-//                 println!("{}", "❌ Password input cancelled".red().bold());
-//                 return;
-//             }
-//         };
-    
-//     // Check if login credentials are valid
-//     let result = dbqueries::check_users(conn, user.get_username(conn).unwrap().as_str(), &password);
-
-//     match result {
-//         Ok(_) => {
-//             clearscreen::clear().expect("Failed clearscreen");
-//                 // Get password with secure input 
-//             let new_password = match Password::new()
-//                 .with_prompt("New Password")
-//                 .interact() {
-//                     Ok(pwd) => pwd,
-//                     Err(_) => {
-//                         println!("{}", "❌ Password input cancelled".red().bold());
-//                         return;
-//                     }
-//                 };
-
-//             let result = update_user_password(conn, user.get_username(conn).unwrap().as_str(), new_password.as_str());
-
-//             match result {
-//                 Ok(_) => {
-//                     println!("Successful password change");
-//                 }
-//                 Err(_) => {
-//                     println!("Bad password change!");
-//                 }
-//             }
-//         }
-//         Err(e) => {            
-//             println!("Failed check");
-//             return;
-//         },
-//     }
-// }
-
 fn change_password(conn: &Connection, user: &User) -> () {
     use crate::db::validator::{validate_password, display_validation_error};
     use dialoguer::Password;
@@ -580,5 +531,213 @@ fn change_password(conn: &Connection, user: &User) -> () {
             return;
         },
     }
+}
 
+#[cfg(test)]
+mod integration_tests {
+    use super::*;
+    use rusqlite::Connection;
+    use crate::db::dbqueries::{self, change_balance, insert_users};
+
+    // create a test database
+    fn setup_test_db() -> Connection {
+        // Initialize encryption BEFORE opening database
+        crate::cryptography::crypto::initialize_encryption_key();
+
+        let conn = Connection::open_in_memory().unwrap();
+        
+        // Enable foreign keys
+        conn.execute("PRAGMA foreign_keys = ON", []).unwrap();
+
+        // Use your actual initialization function
+        crate::db::dbinitialize::initialize_dbs(&conn).unwrap();
+        
+        conn
+    }
+
+    // Create a test user in the database
+    fn create_test_user(conn: &Connection, username: &str, password: &str) -> i32 {
+        // You'll need to use your actual user creation function
+        // This is a simplified version - adjust based on your actual API
+
+        let _ = insert_users(conn, username, password);
+        
+        conn.last_insert_rowid() as i32
+    }
+
+    // Deposit balance for user
+    fn deposit_balance(conn: &Connection, user: &User, deposit: f64) {
+        let _ = change_balance(conn, user, deposit);
+    }
+
+    #[test]
+    fn test_user_get_username() {
+        let conn = setup_test_db();
+        let user_id = create_test_user(&conn, "alice", "password1234");
+        let user = User { id: user_id };
+        
+        
+        let username = user.get_username(&conn).unwrap();
+        println!("in caego test test_user_get_username the username retrieved was: {}", username);
+        assert_eq!(username, "alice");
+    }
+
+    #[test]
+    fn test_user_get_balance() {
+        let conn = setup_test_db();
+        let user_id = create_test_user(&conn, "bob", "password1234");
+        let user = User { id: user_id };
+        deposit_balance(&conn, &user, 250.50);
+        
+        let balance = user.get_balance(&conn).unwrap();
+        assert_eq!(balance, 250.50);
+    }
+
+    #[test]
+    fn test_user_get_role() {
+        let conn = setup_test_db();
+        let user_id = create_test_user(&conn, "charlie", "password1234");
+        let user = User { id: user_id };
+        
+        let role = user.get_role(&conn).unwrap();
+        assert_eq!(role, "user");
+    }
+
+    #[test]
+    fn test_user_nonexistent() {
+        let conn = setup_test_db();
+        let user = User { id: 99999 }; // Non-existent user
+        
+        assert!(user.get_username(&conn).is_err());
+        assert!(user.get_balance(&conn).is_err());
+        assert!(user.get_role(&conn).is_err());
+    }
+
+    #[test]
+    fn test_multiple_users() {
+        let conn = setup_test_db();
+        
+        let user1_id = create_test_user(&conn, "user1", "password1234");
+        let user2_id = create_test_user(&conn, "user2", "password1234");
+        
+        let user1 = User { id: user1_id };
+        let user2 = User { id: user2_id };
+        
+        assert_eq!(user1.get_username(&conn).unwrap(), "user1");
+        assert_eq!(user2.get_username(&conn).unwrap(), "user2");
+        
+        assert_eq!(user1.get_balance(&conn).unwrap(), 0.0);
+        assert_eq!(user2.get_balance(&conn).unwrap(), 0.0);
+    }
+
+    #[test]
+    fn test_user_balance_after_multiple_transaction() {
+        let conn = setup_test_db();
+        let user_id = create_test_user(&conn, "dave", "password1234");
+        let user = User { id: user_id };
+        
+        // Perform a transaction (deposit)
+        dbqueries::change_balance(&conn, &user, 50.0).unwrap();
+        let original_balance = user.get_balance(&conn).unwrap();
+        
+        // Perform another transaction (deposit)
+        dbqueries::change_balance(&conn, &user, 50.0).unwrap();
+        let new_balance = user.get_balance(&conn).unwrap();
+        assert_eq!(original_balance, 50.0);
+        assert_eq!(new_balance, 100.0);
+    }
+
+    #[test]
+    fn test_user_balance_after_withdrawal() {
+        let conn = setup_test_db();
+        let user_id = create_test_user(&conn, "eve", "password1234");
+        let user = User { id: user_id };
+        
+        // Perform a deposit
+        dbqueries::change_balance(&conn, &user, 50.0).unwrap();
+
+        // Perform a withdrawal
+        dbqueries::change_balance(&conn, &user, -30.0).unwrap();
+        let new_balance = user.get_balance(&conn).unwrap();
+        assert_eq!(new_balance, 20.0);
+    }
+
+    #[test]
+    fn test_check_funds_sufficient() {
+        let conn = setup_test_db();
+        let user_id = create_test_user(&conn, "frank", "password1234");
+        let user = User { id: user_id };
+
+        // Perform a deposit
+        dbqueries::change_balance(&conn, &user, 200.0).unwrap();
+
+        
+        assert!(dbqueries::check_funds(&conn, &user, 50.0));
+        assert!(dbqueries::check_funds(&conn, &user, 100.0));
+    }
+
+    #[test]
+    fn test_check_funds_insufficient() {
+        let conn = setup_test_db();
+        let user_id = create_test_user(&conn, "grace", "password1234");
+        let user = User { id: user_id };
+
+        // Perform a deposit
+        dbqueries::change_balance(&conn, &user, 100.0).unwrap();
+        assert!(!dbqueries::check_funds(&conn, &user, 150.0));
+    }
+
+    #[test]
+    fn test_username_uniqueness() {
+        let conn = setup_test_db();
+        
+        create_test_user(&conn, "unique_user", "password1234");
+        
+        // Attempt to create another user with the same username
+        let result = conn.execute(
+            "INSERT INTO users (username, password, balance, role) VALUES (?1, ?2, ?3, 'user')",
+            ["unique_user", "password4321", "50.0"],
+        );
+        
+        // Should fail due to UNIQUE constraint
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_default_role_is_user() {
+        let conn = setup_test_db();
+        let user_id = create_test_user(&conn, "default_role_user", "password1234");
+        let user = User { id: user_id };
+        
+        let role = user.get_role(&conn).unwrap();
+        assert_eq!(role, "user");
+    }
+
+    #[test]
+    fn test_games_table_exists() {
+        let conn = setup_test_db();
+        
+        // Query the games table to ensure it was created
+        let result: Result<i32, _> = conn.query_row(
+            "SELECT COUNT(*) FROM games",
+            [],
+            |row| row.get(0)
+        );
+        
+        // Should succeed if table exists
+        assert!(result.is_ok());
+    }
+
+    #[test]
+    fn test_user_statistics_table_exists() {
+        let conn = setup_test_db();
+        
+        let result: Result<i32, _> = conn.query_row(
+            "SELECT COUNT(*) FROM user_statistics",
+            [],
+            |row| row.get(0)
+        );
+        
+        assert!(result.is_ok());
+    }
 }
