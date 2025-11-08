@@ -17,8 +17,8 @@ lazy_static::lazy_static! {
 }
 
 // Transaction security limits
-const MAX_TRANSACTIONS_PER_MINUTE: usize = 100000; // DONT FORGET TO SET THIS BACK TO 5
-const SUSPICIOUS_PATTERN_THRESHOLD: usize = 50; // Rapid identical transactions DONT FORGET TO SET THIS BACK TO 3
+const MAX_TRANSACTIONS_PER_MINUTE: usize = 5; // DONT FORGET TO SET THIS BACK TO 5
+const SUSPICIOUS_PATTERN_THRESHOLD: usize = 3; // Rapid identical transactions DONT FORGET TO SET THIS BACK TO 3
 
 /*  ---------------------------------------------------------------------------------------------------------------------------------- */
 // db queries for registering and signing in users
@@ -299,7 +299,6 @@ fn check_rate_limit(user_id: i32) -> Result<(), String> {
     if last_minute >= MAX_TRANSACTIONS_PER_MINUTE {
         return Err(format!("Rate limit: {} transactions per minute", MAX_TRANSACTIONS_PER_MINUTE));
     }
-    
     Ok(())
 }
 
